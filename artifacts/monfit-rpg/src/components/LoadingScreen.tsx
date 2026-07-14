@@ -5,15 +5,28 @@ import logoImg from "@assets/06a9ab81-20e3-439e-952a-49091b8534d0_removalai_prev
 export default function LoadingScreen() {
   const [progress, setProgress] = useState(0);
 
-  // JS-driven progress — aria-valuenow updates live
+  // JS-driven progress — paused when tab is hidden (PageVisibility API)
   useEffect(() => {
-    const id = setInterval(() => {
+    let id: ReturnType<typeof setInterval>;
+
+    const tick = () => {
       setProgress((p) => {
         if (p >= 100) return 0;
         return Math.min(100, p + Math.random() * 2.2 + 0.6);
       });
-    }, 55);
-    return () => clearInterval(id);
+    };
+
+    const start = () => { id = setInterval(tick, 55); };
+    const stop  = () => clearInterval(id);
+
+    const onVisibility = () => (document.hidden ? stop() : start());
+
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   const pct = Math.round(progress);
@@ -78,6 +91,9 @@ export default function LoadingScreen() {
               <img
                 src={logoImg}
                 alt="MONFIT RPG — sword and dumbbell emblem"
+                width={240}
+                height={240}
+                decoding="async"
                 className="w-full h-full object-contain relative z-10"
               />
             </div>
@@ -126,12 +142,13 @@ export default function LoadingScreen() {
                 border: "1px solid rgba(110,84,255,0.2)",
               }}
             >
-              {/* Fill */}
+              {/* Fill — scaleX is compositor-only, no layout thrash */}
               <div
-                className="absolute top-0 left-0 h-full rounded-full"
+                className="absolute top-0 left-0 w-full h-full rounded-full"
                 style={{
-                  width: `${progress}%`,
-                  transition: "width 55ms linear",
+                  transform: `scaleX(${progress / 100})`,
+                  transformOrigin: "left center",
+                  transition: "transform 60ms linear",
                   background: "hsl(var(--primary))",
                   boxShadow:
                     "0 0 10px rgba(110,84,255,0.7), 0 0 2px rgba(133,230,255,0.35)",
