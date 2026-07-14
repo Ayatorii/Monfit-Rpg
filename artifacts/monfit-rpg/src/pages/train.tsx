@@ -1,16 +1,17 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Coins, Sparkles, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useGame } from "@/lib/game-context";
 import { cn } from "@/lib/utils";
 import { GOALS, PROGRAMS, DAILY_QUESTS, type Goal } from "@/data/train-data";
+import ResourceBadges from "@/components/ResourceBadges";
 
 export default function TrainPage() {
   const { toast } = useToast();
+  const { gold, xp, addGold, addXp } = useGame();
   const [goal, setGoal] = useState<Goal>("muscle");
   const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [gold, setGold] = useState(0);
-  const [xp, setXp] = useState(0);
 
   const programs = useMemo(() => PROGRAMS[goal], [goal]);
 
@@ -19,12 +20,12 @@ export default function TrainPage() {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-        setGold((g) => Math.max(0, g - questGold));
-        setXp((x) => Math.max(0, x - questXp));
+        addGold(-questGold);
+        addXp(-questXp);
       } else {
         next.add(id);
-        setGold((g) => g + questGold);
-        setXp((x) => x + questXp);
+        addGold(questGold);
+        addXp(questXp);
         toast({
           title: `Quest complete: ${label}`,
           description: `+${questGold} Gold, +${questXp} XP`,
@@ -46,26 +47,7 @@ export default function TrainPage() {
             Pick a goal, follow a program, complete your daily quests.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-surface border border-surface-border"
-            aria-label={`${gold} Gold`}
-          >
-            <Coins className="h-4 w-4 text-gold" aria-hidden="true" />
-            <span className="font-mono text-sm tabular-nums text-gold font-semibold">
-              {gold}
-            </span>
-          </div>
-          <div
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-surface border border-surface-border"
-            aria-label={`${xp} XP`}
-          >
-            <Sparkles className="h-4 w-4 text-xp" aria-hidden="true" />
-            <span className="font-mono text-sm tabular-nums text-xp font-semibold">
-              {xp} XP
-            </span>
-          </div>
-        </div>
+        <ResourceBadges gold={gold} xp={xp} />
       </header>
 
       {/* Goal selection */}

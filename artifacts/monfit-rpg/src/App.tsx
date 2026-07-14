@@ -5,6 +5,7 @@ import NotFound from "@/pages/not-found";
 import { Redirect, Route, Switch, Router as WouterRouter } from "wouter";
 import LoadingScreen from "@/components/LoadingScreen";
 import AppShell from "@/components/nav/AppShell";
+import { GameProvider } from "@/lib/game-context";
 import TrainPage from "@/pages/train";
 import CharacterPage from "@/pages/character";
 import ShopPage from "@/pages/shop";
@@ -52,10 +53,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
+        <GameProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </GameProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

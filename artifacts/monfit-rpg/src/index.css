@@ -46,6 +46,10 @@
   --color-gold: hsl(var(--gold));
   --color-xp: hsl(var(--xp));
 
+  --color-rarity-common: hsl(var(--rarity-common));
+  --color-rarity-rare: hsl(var(--rarity-rare));
+  --color-rarity-epic: hsl(var(--rarity-epic));
+
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
@@ -97,6 +101,11 @@
   /* RPG resource accents */
   --gold: 43 96% 56%; /* coin/reward accent */
   --xp: 189 94% 70%; /* cyan XP accent, echoes loading-screen ghost bloom */
+
+  /* Loot rarity accents */
+  --rarity-common: 258 8% 56%; /* muted stone, tinted toward brand hue */
+  --rarity-rare: 199 89% 60%; /* cyan/blue */
+  --rarity-epic: 38 92% 58%; /* gold/amber */
 
   --radius: 0.5rem;
   --app-font-sans: "Onest", sans-serif;

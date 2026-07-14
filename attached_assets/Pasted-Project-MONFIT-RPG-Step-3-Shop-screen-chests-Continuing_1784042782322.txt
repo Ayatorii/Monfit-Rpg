@@ -1,0 +1,42 @@
+Project: MONFIT RPG — Step 3: Shop screen (chests)
+
+Continuing the piece-by-piece build. Loading Screen and Train (with nav shell) are done and approved (Train scored 18/20 on $impeccable audit, all P2/P3 fixed). We are skipping Character for now and building Shop next — Character will come later.
+
+Critical prerequisite — lift Gold/XP state to app-level
+Gold and XP are currently tracked as local state on the Train page. Before building Shop, refactor this into a shared app-level state (React Context or a lightweight store like Zustand — pick whichever is simpler given what's already in the project) so that:
+- Gold/XP earned from completing a Train quest is visible and spendable on the Shop screen.
+- The Gold/XP counter shown in the header (already built) reads from this shared state regardless of which tab is active.
+- This should be a clean refactor, not a rewrite — Train's existing quest-completion logic just needs to write to the shared store instead of local state.
+
+Scope boundaries for this step
+- Still frontend only, no backend/database/wallet yet.
+- Character screen (paperdoll, equip slots) does not exist yet — see "temporary inventory" note below for how purchased items are handled without it.
+
+Shop screen content
+1. **Header**: current Gold balance (reuse the shared state/header pattern already established), screen title ("Shop"), short description line.
+2. **Chest card**: one chest type for this step — "Common Chest" — with a price in Gold (e.g. 100), an icon/illustration (can be a simple stylized chest icon/SVG in the token color palette, not a photo), and a "Buy & Open" button.
+   - Button is disabled (with a clear visual state, not just faded) if the player doesn't have enough Gold.
+   - On purchase: deduct Gold from the shared state immediately.
+3. **Loot table** (config file, not hard-coded inline — e.g. `src/data/lootTable.ts`): define 8-12 possible items across 3 rarities:
+   - Common (70% drop weight): 5-6 items — basic gear names fitting the RPG-fitness theme (e.g. "Worn Leather Gloves", "Training Shorts").
+   - Rare (25% drop weight): 3-4 items (e.g. "Reinforced Gauntlets", "Endurance Boots").
+   - Epic (5% drop weight): 2 items (e.g. "Champion's Warhelm", "Titan Grip Gauntlets").
+   - Each item has: name, rarity, an equipment slot it belongs to (head/body/leftHand/rightHand/legs/feet — these slots will matter once Character exists), and a small stat bonus value (e.g. +STR 3) — doesn't need to do anything mechanically yet, just store it.
+4. **Open animation**: clicking "Buy & Open" runs the Gold deduction, rolls the loot table (weighted random), then shows a modal/overlay reveal:
+   - Rarity-colored glow/border matching that rarity's token color (define `--rarity-common`, `--rarity-rare`, `--rarity-epic` tokens — common should be a muted stone tone, rare a cyan/blue, epic a gold/amber, consistent with the existing palette).
+   - Item name, rarity label, and stat bonus shown clearly.
+   - Keep the reveal animation simple and GPU-cheap (opacity/scale/transform only, respects prefers-reduced-motion) — no heavy particle effects.
+5. **Temporary inventory list** (since Character/equip doesn't exist yet): below the chest, a simple "My Items" list showing everything the player has looted so far (name, rarity color, slot). No "equip" action yet — just a running collection view, so purchases feel persistent and real even without the paperdoll screen. This section will be replaced/linked once Character is built.
+
+Apply all standing anti-slop + accessibility rules (see attached rules file) from the start:
+- transform-based animations only, no width/layout animations
+- focus-visible ring on the buy button and any interactive item cards
+- full card is the click target where relevant, 44px minimum touch targets
+- zero hard-coded hex/rgba — everything through CSS variable tokens, including the new rarity colors
+- proper ARIA: role="dialog" + aria-label on the reveal modal, focus trapped inside it while open, Escape closes it
+
+Self-check before calling this done
+- Run `$impeccable audit` on the Shop screen and report the score/findings.
+- Confirm Gold spent on Shop correctly reflects back on the Train screen's header counter (proof the shared state refactor worked).
+
+Deliverable for this step: working Shop screen with purchasable/openable chest, weighted loot roll, rarity-styled reveal, and a temporary inventory list — plus the Gold/XP state now shared app-wide.
