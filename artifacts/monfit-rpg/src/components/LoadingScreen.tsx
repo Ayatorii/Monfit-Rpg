@@ -3,11 +3,11 @@ import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import logoImg from "@assets/06a9ab81-20e3-439e-952a-49091b8534d0_removalai_preview_1784032498122.png";
 
 const FLAVOR_TEXTS = [
-  "Затачиваем меч...",
-  "Считаем шаги...",
-  "Загружаем подземелье...",
-  "Готовим зелья восстановления...",
-  "Призываем тренера...",
+  "Sharpening the sword...",
+  "Counting your steps...",
+  "Loading the dungeon...",
+  "Brewing recovery potions...",
+  "Summoning your trainer...",
 ];
 
 export default function LoadingScreen() {
@@ -55,7 +55,7 @@ export default function LoadingScreen() {
               />
               <img
                 src={logoImg}
-                alt="MONFIT RPG — герб с мечом и гантелями"
+                alt="MONFIT RPG — sword and dumbbell emblem"
                 role="img"
                 className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(110,84,255,0.5)]"
               />
@@ -82,7 +82,7 @@ export default function LoadingScreen() {
             {/* Progress Bar Container — ARIA progressbar */}
             <div
               role="progressbar"
-              aria-label="Загрузка"
+              aria-label="Loading"
               aria-valuemin={0}
               aria-valuemax={100}
               className="w-full h-2 md:h-3 bg-[#130E24] rounded-full overflow-hidden relative shadow-[inset_0_1px_4px_rgba(0,0,0,0.8)] border border-[#2D214F]"
@@ -110,7 +110,6 @@ export default function LoadingScreen() {
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.3 }}
                   className="text-muted-foreground text-xs md:text-sm italic absolute text-center w-full"
-                  lang="ru"
                 >
                   {FLAVOR_TEXTS[flavorIndex]}
                 </motion.p>
