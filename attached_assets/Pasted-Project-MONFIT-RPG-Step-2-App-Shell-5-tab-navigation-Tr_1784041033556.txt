@@ -1,0 +1,50 @@
+Project: MONFIT RPG — Step 2: App Shell (5-tab navigation) + Train screen
+
+We are continuing the piece-by-piece rebuild. Step 1 (Loading Screen) is done and approved. This step builds the persistent app navigation shell and the first tab's content (Train).
+
+IMPORTANT — ignore any previously-invented flow (auth/wallet-first, character-creation-first, etc.). The confirmed app structure is:
+
+ONE persistent navigation with exactly 5 tabs — bottom nav bar on mobile, sidebar on desktop:
+Train · Character · Shop · Arena · Leaderboard
+
+This step builds the nav shell (all 5 tabs visible/clickable) and full content for the Train tab only. The other 4 tabs can be empty placeholder screens for now (just enough to confirm routing works) — do not build their content yet, that's later steps.
+
+Language: English is the primary interface language for the whole app going forward (confirmed decision — all UI text, quest names, buttons, labels in English from here on).
+
+Scope boundaries for this step
+- Frontend only, local React state — no backend, no database, no wallet connect yet. That's the next step after this one is approved.
+- Do not install auth/wallet packages yet.
+
+Tech stack (unchanged, keep consistent with Step 1)
+- Vite + React 18 + TypeScript + TailwindCSS
+- Fonts already set up: "Onest" (body/UI) + "Barlow Condensed" (display/headers) via Google Fonts
+- Design tokens already established in index.css from Step 1 — reuse them, do not redefine: background #0E091C, primary violet #6E54FF, etc. Add any new tokens needed (e.g. surface/card colors) as proper CSS variables, not hard-coded hex or Tailwind defaults.
+
+Lessons from the Step 1 audit — apply these from the start this time, don't wait for a fix pass:
+- Any progress/percentage bars or animated fills: animate `transform: scaleX()`, never animate `width` (layout thrash).
+- All interactive/dynamic elements need proper ARIA (nav needs `role="navigation"` + `aria-label`, active tab needs `aria-current="page"`, any progress indicators need `role="progressbar"` with `aria-valuenow`/min/max).
+- Respect `prefers-reduced-motion` for any entrance/transition animations (reuse the MotionConfig pattern already set up in Step 1).
+- No hard-coded hex colors outside the token system — every color used must trace back to a CSS variable.
+- No Tailwind default palette colors (slate/gray/indigo defaults) anywhere — everything must come from the MONFIT RPG token set.
+- No decorative blur() glows over ~60px — expensive on mobile GPU; use flat radial-gradient backgrounds instead if atmosphere is needed.
+
+Navigation shell
+- Mobile (`< md`): fixed bottom nav bar, 5 icon+label tabs, current tab visually distinct (violet accent), safe-area-inset padding for iOS home indicator.
+- Desktop (`≥ md`): left sidebar, same 5 items, can show full labels (not just icons).
+- Use React Router (or the routing already present in the project) — each tab is a real route (`/train`, `/character`, `/shop`, `/arena`, `/leaderboard`), not just a state toggle, so routing/deep-linking works correctly.
+- Icons: pick a consistent icon set (lucide-react is fine) — do not mix icon styles across tabs.
+
+Train tab — full content for this step
+1. **Goal selection** (onboarding-style card/section, shown even if this will later move behind auth — build the UI now): 3-4 selectable goal cards — e.g. "Build Muscle", "Lose Weight", "Endurance", "General Fitness". Selecting one visually highlights it (violet border/glow using token colors, not a raw box-shadow hack). Store selection in local React state for now.
+2. **Suggested workout programs**: based on the selected goal, show a short list (2-3) of program cards (name, short description, duration/frequency, e.g. "Push Pull Legs — 6 days/week"). Static content is fine for now (hard-coded array), this isn't meant to be a real program engine yet.
+3. **Daily Quests list**: 4-5 quest cards (e.g. "Complete today's workout", "Log 8000 steps", "Drink 2L water", "Stretch for 10 minutes"). Each quest shows its Gold + XP reward (e.g. "+50 Gold, +20 XP"). Tapping/clicking a quest's checkbox marks it complete — visually distinct completed state (not just a color change; also strike-through or a checkmark icon), and triggers a small non-blocking toast/animation confirming the reward (local state only, nothing persisted to a backend yet).
+4. A small header area showing current Gold and XP totals (static/local numbers for now, e.g. starting at 0) that visibly increments when a quest is completed — this previews the mechanic even before real persistence exists.
+
+Anti-slop checklist (self-check before calling this done)
+- No purple-to-blue default gradients beyond the established token palette.
+- No cards nested inside cards.
+- No default rounded-square icon tile sitting above every card heading.
+- Distinct RPG identity carried through consistently from the Loading Screen (same fonts, same token colors, same visual language) — this should feel like the same app, not a new one.
+- Run `$impeccable audit` on this screen when done and report the score/findings before moving to the next step.
+
+Deliverable for this step: a working nav shell (all 5 routes reachable) with the Train tab fully built as described. I'll review before we move to Character.
