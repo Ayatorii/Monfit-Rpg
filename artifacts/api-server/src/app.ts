@@ -1,10 +1,19 @@
+import "./lib/session"; // Session type augmentation — must be first.
 import express, { type Express } from "express";
 import cors from "cors";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
+import { pool } from "@workspace/db";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
+const PgSession = connectPgSimple(session);
+
 const app: Express = express();
+
+// Trust the Replit reverse proxy so secure cookies work correctly.
+app.set("trust proxy", 1);
 
 app.use(
   pinoHttp({
@@ -25,9 +34,37 @@ app.use(
     },
   }),
 );
-app.use(cors());
+
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET environment variable is required");
+}
+
+app.use(
+  session({
+    store: new PgSession({
+      pool,
+      tableName: "sessions",
+      createTableIfMissing: false, // Table pre-created via migration.
+      errorLog: (...args: unknown[]) => console.error("[PgSession]", ...args),
+    }),
+    name: "monfit.sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      // Replit dev proxies HTTPS → HTTP; secure: false works for both envs.
+      // Flip to true in production behind a proper TLS terminator.
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+  }),
+);
 
 app.use("/api", router);
 
