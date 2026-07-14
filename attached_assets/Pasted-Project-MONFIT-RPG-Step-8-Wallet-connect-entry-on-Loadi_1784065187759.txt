@@ -1,0 +1,38 @@
+Project: MONFIT RPG — Step 8: Wallet connect entry on Loading Screen
+
+This step revises the existing Loading Screen (Step 1). It assumes Step 7 (wallet auth + database) is already built — reuse that same wallet connect modal (RainbowKit/wagmi) and SIWE sign-in flow, don't build a second one.
+
+What changes on the Loading Screen
+- Remove the old fake timed progress bar entirely — no progress bar anywhere in this flow anymore.
+- The Loading Screen becomes a simple entry/sign-in screen: logo + title + a connect action. Once connected, the app navigates straight into Train — no intermediate loading step.
+
+State 1 — Idle (no wallet connected, no existing session)
+- Logo + title (unchanged from Step 1).
+- Primary CTA button: "Connect Wallet" — opens the existing wallet connect modal from Step 7.
+- Secondary, visually lighter action below it: "Continue as Guest" (text link or ghost button) — skips straight to the Train tab using local/guest state. Don't remove this option; forcing a wallet connect wall before anyone can see the app is bad for a hackathon demo.
+
+State 2 — Connecting (brief, no progress bar)
+- After clicking "Connect Wallet" and picking a wallet in the modal, show a small inline status text next to/below the button (e.g. "Waiting for signature...", then "Verifying...") with a simple, subtle indicator (e.g. a small spinning icon, not a progress bar) — this state should be quick and doesn't need a dedicated visual moment. Use aria-live="polite" on this status text.
+
+State 3 — Success
+- Immediately navigate to /train — no separate "welcome back" screen, no delay for its own sake. If it's a returning wallet with saved progress, that just shows up naturally once Train renders (Gold/XP/Level already reflect their saved state).
+
+State 4 — Returning session (already has a valid session/cookie)
+- Skip the Idle screen entirely — go straight to /train while the session/data rehydrates in the background (Train can show its own lightweight loading state for its data if needed, that's Train's concern, not the Loading Screen's).
+
+Error handling
+- If the signature is rejected or the connection fails, return to State 1 with a clear, non-alarming inline error message (not a browser alert), and let them retry or continue as guest instead.
+
+Apply all standing anti-slop + accessibility rules (see attached rules file):
+- transform-based animations only (existing entrance animations for logo/title stay as they are)
+- focus-visible ring on both the "Connect Wallet" button and the "Continue as Guest" link
+- zero hard-coded hex/rgba — reuse existing tokens, no new colors needed for this step
+- respects prefers-reduced-motion, same as before
+
+Self-check before calling this done
+- Test full flow: click Connect Wallet → approve in wallet → sign SIWE message → land directly on Train with correct Gold/XP/Level loaded from the database, no progress bar shown anywhere.
+- Test guest flow: click Continue as Guest → land directly on Train with local/guest state.
+- Refresh the page after connecting — confirm it goes straight to Train (State 4) instead of showing the Connect button again.
+- Run $impeccable audit on the updated Loading Screen and report the score/findings.
+
+Deliverable for this step: Loading Screen now serves purely as a wallet sign-in / guest-entry point, with no progress bar — successful connection (or guest choice) leads directly into the app.
