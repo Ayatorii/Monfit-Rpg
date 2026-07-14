@@ -79,7 +79,6 @@ export default function LoadingScreen() {
                 src={logoImg}
                 alt="MONFIT RPG — sword and dumbbell emblem"
                 className="w-full h-full object-contain relative z-10"
-                style={{ filter: "drop-shadow(0 0 28px rgba(110,84,255,0.6))" }}
               />
             </div>
           </motion.div>
@@ -97,12 +96,7 @@ export default function LoadingScreen() {
             }}
           >
             MONFIT{" "}
-            <span
-              className="text-primary"
-              style={{ filter: "drop-shadow(0 0 16px rgba(110,84,255,0.75))" }}
-            >
-              RPG
-            </span>
+            <span className="text-primary">RPG</span>
           </motion.h1>
 
           {/* Load bar — corner-bracket frame */}
@@ -113,9 +107,9 @@ export default function LoadingScreen() {
             className="w-full"
           >
             {/* Percentage */}
-            <div className="flex justify-end mb-[7px]">
-              <span className="font-mono text-[11px] text-primary/60 tabular-nums">
-                {String(pct).padStart(3, "\u2007")}%
+            <div className="flex justify-center mb-[7px]">
+              <span className="font-mono text-[11px] text-white/80 tabular-nums">
+                {pct}%
               </span>
             </div>
 
