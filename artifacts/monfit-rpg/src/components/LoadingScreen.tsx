@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import logoImg from "@assets/06a9ab81-20e3-439e-952a-49091b8534d0_removalai_preview_1784032498122.png";
 
 const FLAVOR_TEXTS = [
   "Затачиваем меч...",
@@ -32,141 +33,16 @@ export default function LoadingScreen() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="flex flex-col items-center w-full"
         >
-          {/* Custom SVG Emblem (Sword + Dumbbell) */}
-          <div className="relative w-[120px] h-[120px] md:w-[180px] md:h-[180px] mb-6 flex items-center justify-center">
+          {/* Logo Image */}
+          <div className="relative w-[140px] h-[140px] md:w-[200px] md:h-[200px] mb-6 flex items-center justify-center">
             {/* Ambient glow behind logo */}
-            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-
-            <svg
-              viewBox="0 0 100 100"
-              className="w-full h-full relative z-10 drop-shadow-[0_0_15px_rgba(110,84,255,0.6)]"
-            >
-              {/* Dumbbell background shadow block for depth */}
-              <rect
-                x="25"
-                y="43"
-                width="50"
-                height="14"
-                fill="#0E091C"
-                rx="3"
-              />
-              <rect
-                x="13"
-                y="28"
-                width="14"
-                height="44"
-                fill="#0E091C"
-                rx="4"
-              />
-              <rect
-                x="73"
-                y="28"
-                width="14"
-                height="44"
-                fill="#0E091C"
-                rx="4"
-              />
-
-              {/* Dumbbell Handle */}
-              <rect
-                x="27"
-                y="45"
-                width="46"
-                height="10"
-                fill="#2D214F"
-                rx="2"
-              />
-
-              {/* Dumbbell Left Weights */}
-              <rect
-                x="15"
-                y="30"
-                width="10"
-                height="40"
-                fill="#6E54FF"
-                rx="3"
-              />
-              <rect x="5" y="35" width="8" height="30" fill="#4B39B5" rx="2" />
-              {/* Left Weight Highlight */}
-              <rect
-                x="16"
-                y="32"
-                width="2"
-                height="36"
-                fill="#85E6FF"
-                opacity="0.4"
-                rx="1"
-              />
-
-              {/* Dumbbell Right Weights */}
-              <rect
-                x="75"
-                y="30"
-                width="10"
-                height="40"
-                fill="#6E54FF"
-                rx="3"
-              />
-              <rect x="87" y="35" width="8" height="30" fill="#4B39B5" rx="2" />
-              {/* Right Weight Highlight */}
-              <rect
-                x="76"
-                y="32"
-                width="2"
-                height="36"
-                fill="#85E6FF"
-                opacity="0.4"
-                rx="1"
-              />
-
-              {/* Sword Diagonal */}
-              <g transform="rotate(45 50 50)">
-                {/* Blade shadow drop */}
-                <path
-                  d="M46 10 L50 2 L54 10 L54 60 L46 60 Z"
-                  fill="#0E091C"
-                  opacity="0.5"
-                />
-                {/* Main Blade */}
-                <path d="M46 10 L50 2 L54 10 L54 60 L46 60 Z" fill="#E2E8F0" />
-                {/* Blade dark edge for 3D effect */}
-                <path d="M50 2 L54 10 L54 60 L50 60 Z" fill="#94A3B8" />
-                {/* Inner blade cyan groove */}
-                <path
-                  d="M49 12 L51 12 L51 55 L49 55 Z"
-                  fill="#85E6FF"
-                  opacity="0.8"
-                />
-
-                {/* Crossguard */}
-                <rect
-                  x="33"
-                  y="60"
-                  width="34"
-                  height="6"
-                  fill="#6E54FF"
-                  rx="1"
-                />
-                {/* Crossguard highlight */}
-                <rect
-                  x="34"
-                  y="61"
-                  width="32"
-                  height="2"
-                  fill="#85E6FF"
-                  opacity="0.5"
-                  rx="0.5"
-                />
-
-                {/* Grip */}
-                <rect x="46" y="66" width="8" height="20" fill="#1C1438" />
-
-                {/* Pommel */}
-                <circle cx="50" cy="88" r="6" fill="#6E54FF" />
-                {/* Pommel highlight */}
-                <circle cx="50" cy="88" r="3" fill="#85E6FF" opacity="0.6" />
-              </g>
-            </svg>
+            <div className="absolute inset-0 bg-primary/15 blur-2xl rounded-full" />
+            <img
+              src={logoImg}
+              alt="MONFIT RPG — sword and dumbbell emblem"
+              role="img"
+              className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(110,84,255,0.5)]"
+            />
           </div>
 
           <h1 className="text-4xl md:text-5xl font-black tracking-wider text-white text-center drop-shadow-[0_0_10px_rgba(110,84,255,0.3)] mb-2">
