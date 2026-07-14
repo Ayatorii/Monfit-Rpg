@@ -1,0 +1,34 @@
+Project: MONFIT RPG — Step 1: Loading / Splash Screen ONLY
+
+We are rebuilding this project from scratch, one piece at a time. Do NOT build the game loop, auth, database, or wallet connect yet — this step is scoped to the loading screen only. Keep the codebase minimal and clean; do not scaffold routes or pages beyond what's described below.
+
+Tech stack for this step
+- Vite + React 18 + TypeScript + TailwindCSS
+- No backend, no database, no wallet connect yet — pure frontend for this step.
+
+What to build
+A splash/loading screen shown on app launch, before the main app UI exists. This will later sit between app-boot and whatever screen loads first (Train/Hub), so build it as a standalone, self-contained component that can later be wired into a router.
+
+Visual identity (anti-slop — this sets the visual tone for the whole app going forward)
+- RPG fantasy tone, NOT a generic SaaS/dashboard look. Dark-mode base — do NOT default to a light/lavender theme, even though violet is a primary color; a dark base is what keeps this from reading as generic AI-generated SaaS.
+- Color tokens (define these as CSS variables / Tailwind theme extension, reused across the whole app going forward):
+  - Primary: #6E54FF (violet — use for key interactive elements/accents, NOT as a background wash)
+  - Primary light: #DDD7FE (use sparingly — highlights, active states, small surfaces only)
+  - Background base: #0E091C (deep near-black purple — this is the dominant surface color)
+  - Base black: #000000, Base white: #FFFFFF (text/contrast only)
+  - Secondary accents: #85E6FF (cyan), #B9E3F9 (pale blue), #FF8EE4 (pink), #FFAE45 (orange/gold) — use these for rarity tiers, status effects, XP/gold indicators later; don't overuse on this screen.
+- Typography: use "Onest" (free, OFL license, full Cyrillic support, Google Fonts) — geometric sans with soft rounded warmth, closest free equivalent to Britti Sans. Load via Google Fonts. Use for both display/headers and body text.
+- Centerpiece: "MONFIT RPG" logo (the sword + dumbbell + violet emblem icon) above the title text, title in Onest with the violet (#6E54FF) accent, simple entrance animation (fade + slight scale, or a subtle glow pulse — nothing over-designed) against the #0E091C background.
+- A progress indicator (loading bar or spinner) using the violet/cyan accents against the dark background — not a default browser/Tailwind spinner.
+- Optional: a short rotating flavor-text line under the progress bar (e.g. "Затачиваем меч...", "Считаем шаги...") that cycles every 1.5–2s — purely decorative, no real loading logic needed yet.
+
+Responsiveness
+- Must look correct on both mobile (narrow viewport, portrait) and desktop (wide viewport) — test both.
+- No horizontal scroll or overflow at any width.
+
+Scope boundaries (important)
+- No routing to other screens yet — this is a single isolated component/page.
+- No backend calls, no fake "loading real data" — the loading bar can run on a simple timer/animation for now.
+- Do not install wallet, auth, or database packages in this step.
+
+Deliverable for this step: a single polished, responsive LoadingScreen component I can view and approve before we move to the next piece (Train/Hub screen).

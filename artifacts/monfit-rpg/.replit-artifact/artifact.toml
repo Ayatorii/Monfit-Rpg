@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "MONFIT RPG"
+version = "1.0.0"
+id = "artifacts/monfit-rpg"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26223
+
+[services.development]
+run = "pnpm --filter @workspace/monfit-rpg run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/monfit-rpg", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/monfit-rpg/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26223"
+BASE_PATH = "/"
