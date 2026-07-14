@@ -1,119 +1,153 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence, MotionConfig } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
 import logoImg from "@assets/06a9ab81-20e3-439e-952a-49091b8534d0_removalai_preview_1784032498122.png";
 
-const FLAVOR_TEXTS = [
-  "Sharpening the sword...",
-  "Counting your steps...",
-  "Loading the dungeon...",
-  "Brewing recovery potions...",
-  "Summoning your trainer...",
-];
-
 export default function LoadingScreen() {
-  const [flavorIndex, setFlavorIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
 
+  // JS-driven progress — aria-valuenow updates live
   useEffect(() => {
-    const interval = setInterval(() => {
-      setFlavorIndex((prev) => (prev + 1) % FLAVOR_TEXTS.length);
-    }, 1800);
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 100) return 0;
+        return Math.min(100, p + Math.random() * 2.2 + 0.6);
+      });
+    }, 55);
+    return () => clearInterval(id);
   }, []);
 
-  return (
-    // MotionConfig reducedMotion="user" tells framer-motion to respect OS setting
-    <MotionConfig reducedMotion="user">
-      <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background p-4 overflow-hidden relative">
-        {/* Ambient background glow — radial-gradient instead of blur-[100px] */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(110,84,255,0.1) 0%, transparent 70%)",
-          }}
-          aria-hidden="true"
-        />
+  const pct = Math.round(progress);
 
-        <div className="relative z-10 flex flex-col items-center w-full max-w-[400px]">
-          {/* Logo and Title Group */}
+  return (
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background overflow-hidden relative select-none">
+
+        {/* ── Background: violet bloom + cyan ghost + vignette ── */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 70% 60% at 50% 44%, rgba(110,84,255,0.15) 0%, transparent 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 40% 35% at 18% 88%, rgba(133,230,255,0.05) 0%, transparent 70%)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.6) 100%)",
+            }}
+          />
+        </div>
+
+        {/* ── Version stamp ── */}
+        <p
+          className="absolute bottom-5 right-5 font-mono text-[10px] tracking-[0.2em] text-primary/20 uppercase"
+          aria-hidden="true"
+        >
+          v&thinsp;0.1&thinsp;ALPHA
+        </p>
+
+        {/* ── Main column ── */}
+        <div className="relative z-10 flex flex-col items-center w-full max-w-[420px] px-6">
+
+          {/* Logo */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.85, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col items-center w-full"
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-8"
           >
-            {/* Logo Image */}
-            <div className="relative w-[140px] h-[140px] md:w-[200px] md:h-[200px] mb-6 flex items-center justify-center">
-              {/* Logo glow — radial-gradient instead of blur-2xl */}
+            <div className="relative w-[200px] h-[200px] md:w-[240px] md:h-[240px] flex items-center justify-center">
+              {/* Breathing halo */}
               <div
-                className="absolute inset-0 rounded-full"
+                className="absolute inset-[-28%] rounded-full animate-logo-pulse"
                 style={{
                   background:
-                    "radial-gradient(ellipse at center, rgba(110,84,255,0.25) 0%, transparent 70%)",
+                    "radial-gradient(ellipse at center, rgba(110,84,255,0.3) 0%, transparent 62%)",
                 }}
                 aria-hidden="true"
               />
               <img
                 src={logoImg}
                 alt="MONFIT RPG — sword and dumbbell emblem"
-                role="img"
-                className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(110,84,255,0.5)]"
+                className="w-full h-full object-contain relative z-10"
+                style={{ filter: "drop-shadow(0 0 28px rgba(110,84,255,0.6))" }}
               />
             </div>
-
-            <h1 className="text-4xl md:text-5xl font-black tracking-wider text-white text-center drop-shadow-[0_0_10px_rgba(110,84,255,0.3)] mb-2">
-              MONFIT{" "}
-              <span className="text-primary drop-shadow-[0_0_12px_rgba(110,84,255,0.8)]">
-                RPG
-              </span>
-            </h1>
-            <p className="text-muted-foreground text-sm md:text-base font-medium uppercase tracking-[0.2em] mb-12 text-center">
-              Train. Level Up. Conquer.
-            </p>
           </motion.div>
 
-          {/* Loading Bar Group */}
+          {/* Title — Barlow Condensed Black */}
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="font-display font-black text-white leading-none text-center mb-14"
+            style={{
+              fontSize: "clamp(3.6rem, 14vw, 5.2rem)",
+              letterSpacing: "-0.025em",
+              textWrap: "balance",
+            }}
+          >
+            MONFIT{" "}
+            <span
+              className="text-primary"
+              style={{ filter: "drop-shadow(0 0 16px rgba(110,84,255,0.75))" }}
+            >
+              RPG
+            </span>
+          </motion.h1>
+
+          {/* Load bar — corner-bracket frame */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
-            className="w-full flex flex-col items-center px-4 md:px-0"
+            transition={{ duration: 0.6, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full"
           >
-            {/* Progress Bar Container — ARIA progressbar */}
-            <div
-              role="progressbar"
-              aria-label="Loading"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              className="w-full h-2 md:h-3 bg-[#130E24] rounded-full overflow-hidden relative shadow-[inset_0_1px_4px_rgba(0,0,0,0.8)] border border-[#2D214F]"
-            >
-              {/* Progress Bar Fill — scaleX animation, transform-origin: left */}
-              <div className="absolute top-0 left-0 w-full h-full bg-primary rounded-full animate-progress-fill shadow-[0_0_12px_rgba(110,84,255,0.9)] flex items-center">
-                {/* Shimmer Effect overlay */}
-                <div className="absolute top-0 left-0 w-full h-full animate-shimmer-sweep overflow-hidden">
-                  <div className="w-[30%] h-full bg-gradient-to-r from-transparent via-[#85E6FF] to-transparent opacity-40 skew-x-[-20deg]" />
-                </div>
-              </div>
+            {/* Percentage */}
+            <div className="flex justify-end mb-[7px]">
+              <span className="font-mono text-[11px] text-primary/60 tabular-nums">
+                {String(pct).padStart(3, "\u2007")}%
+              </span>
             </div>
 
-            {/* Flavor Text — aria-live so screen readers announce rotations */}
+            {/* Bar track */}
             <div
-              className="h-6 mt-6 relative w-full flex justify-center items-center"
-              aria-live="polite"
-              aria-atomic="true"
+              role="progressbar"
+              aria-label="Loading MONFIT RPG"
+              aria-valuenow={pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="relative w-full h-[6px] rounded-full overflow-hidden"
+              style={{
+                background: "rgba(110,84,255,0.1)",
+                border: "1px solid rgba(110,84,255,0.2)",
+              }}
             >
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={flavorIndex}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-muted-foreground text-xs md:text-sm italic absolute text-center w-full"
-                >
-                  {FLAVOR_TEXTS[flavorIndex]}
-                </motion.p>
-              </AnimatePresence>
+              {/* Fill */}
+              <div
+                className="absolute top-0 left-0 h-full rounded-full"
+                style={{
+                  width: `${progress}%`,
+                  transition: "width 55ms linear",
+                  background: "hsl(var(--primary))",
+                  boxShadow:
+                    "0 0 10px rgba(110,84,255,0.7), 0 0 2px rgba(133,230,255,0.35)",
+                }}
+              >
+                {/* Shimmer */}
+                <div className="absolute inset-0 animate-shimmer-sweep overflow-hidden rounded-full">
+                  <div className="w-[38%] h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-25 -skew-x-12" />
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>

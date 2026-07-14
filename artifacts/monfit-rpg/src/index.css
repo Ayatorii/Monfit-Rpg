@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Onest:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -43,6 +43,7 @@
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
+  --font-display: var(--app-font-display);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -87,6 +88,7 @@
   --app-font-sans: "Onest", sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
+  --app-font-display: "Barlow Condensed", sans-serif;
 }
 
 @layer base {
@@ -99,15 +101,6 @@
   }
 }
 
-@keyframes progress-fill {
-  0% {
-    transform: scaleX(0);
-  }
-  100% {
-    transform: scaleX(1);
-  }
-}
-
 @keyframes shimmer-sweep {
   0% {
     transform: translateX(-150%);
@@ -117,25 +110,34 @@
   }
 }
 
+@keyframes logo-pulse {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.12);
+  }
+}
+
 @layer utilities {
-  .animate-progress-fill {
-    animation: progress-fill 3s ease-out infinite;
-    transform-origin: left center;
-    will-change: transform;
+  .animate-shimmer-sweep {
+    animation: shimmer-sweep 2.8s linear infinite;
   }
 
-  .animate-shimmer-sweep {
-    animation: shimmer-sweep 3s linear infinite;
+  .animate-logo-pulse {
+    animation: logo-pulse 3.2s ease-in-out infinite;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-progress-fill {
+  .animate-shimmer-sweep,
+  .animate-logo-pulse {
     animation: none;
-    transform: scaleX(0.6);
   }
 
-  .animate-shimmer-sweep {
-    animation: none;
+  .animate-logo-pulse {
+    opacity: 0.3;
   }
 }
