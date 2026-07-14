@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Coins, Sparkles, Check } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { GOALS, PROGRAMS, DAILY_QUESTS, type Goal } from "@/data/train-data";
@@ -89,6 +88,7 @@ export default function TrainPage() {
                 onClick={() => setGoal(g.id)}
                 className={cn(
                   "flex flex-col items-start gap-2.5 rounded-lg border bg-card px-4 py-4 text-left transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isSelected
                     ? "border-primary"
                     : "border-card-border hover:border-primary/40",
@@ -161,34 +161,40 @@ export default function TrainPage() {
           {DAILY_QUESTS.map((q) => {
             const isDone = completed.has(q.id);
             return (
-              <div
+              <button
                 key={q.id}
+                type="button"
+                role="checkbox"
+                aria-checked={isDone}
+                aria-label={`${q.label} — ${isDone ? "completed" : `mark complete for +${q.gold} Gold, +${q.xp} XP`}`}
+                onClick={() => toggleQuest(q.id, q.gold, q.xp, q.label)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg border px-4 py-3.5 transition-colors",
+                  "flex w-full items-center gap-3 rounded-lg border px-4 py-3.5 min-h-11 text-left transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isDone
                     ? "border-primary/30 bg-primary/5"
-                    : "border-card-border bg-card",
+                    : "border-card-border bg-card hover:border-primary/30",
                 )}
               >
-                <Checkbox
-                  id={`quest-${q.id}`}
-                  checked={isDone}
-                  onCheckedChange={() =>
-                    toggleQuest(q.id, q.gold, q.xp, q.label)
-                  }
-                  aria-label={`Mark "${q.label}" as ${isDone ? "incomplete" : "complete"}`}
-                />
-                <label
-                  htmlFor={`quest-${q.id}`}
+                <span
+                  aria-hidden="true"
                   className={cn(
-                    "flex-1 text-sm font-medium cursor-pointer select-none",
+                    "grid place-content-center shrink-0 h-4 w-4 rounded-sm border border-primary transition-colors",
+                    isDone && "bg-primary text-primary-foreground",
+                  )}
+                >
+                  {isDone && <Check className="h-3 w-3" />}
+                </span>
+                <span
+                  className={cn(
+                    "flex-1 text-sm font-medium select-none",
                     isDone
                       ? "text-muted-foreground line-through"
                       : "text-foreground",
                   )}
                 >
                   {q.label}
-                </label>
+                </span>
                 {isDone ? (
                   <motion.span
                     initial={{ opacity: 0, scale: 0.7 }}
@@ -203,7 +209,7 @@ export default function TrainPage() {
                     +{q.gold} Gold, +{q.xp} XP
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>

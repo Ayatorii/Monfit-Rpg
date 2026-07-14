@@ -31,6 +31,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-sm transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                   isActive
                     ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5",
@@ -66,6 +67,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 flex-1 py-2.5 text-[11px] font-medium transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                     isActive ? "text-primary" : "text-muted-foreground",
                   )}
                 >
