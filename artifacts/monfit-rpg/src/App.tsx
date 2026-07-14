@@ -9,16 +9,49 @@ import { Redirect, Route, Switch, Router as WouterRouter } from "wouter";
 import LoadingScreen from "@/components/LoadingScreen";
 import AppShell from "@/components/nav/AppShell";
 import { GameProvider } from "@/lib/game-context";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { wagmiConfig } from "@/lib/wagmi-config";
 import TrainPage from "@/pages/train";
 import CharacterPage from "@/pages/character";
 import ShopPage from "@/pages/shop";
 import ArenaPage from "@/pages/arena";
 import LeaderboardPage from "@/pages/leaderboard";
+import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 
 // QueryClient must live inside WagmiProvider when using wagmi v2 + RainbowKit.
 const queryClient = new QueryClient();
+
+/**
+ * Guards all inner routes behind the auth gate.
+ *
+ * - While the session check is in-flight → hold at a full-screen spinner so
+ *   the user never sees a flash of an unprotected page.
+ * - Session check done, no auth → redirect to "/" (LoadingScreen entry gate).
+ * - Session check done, auth present → render the requested page normally.
+ *
+ * This means a browser refresh at /train (or any deep link) is always safe:
+ * the user either resumes their session or is sent back to sign in.
+ */
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { authMode, isCheckingSession } = useAuth();
+
+  if (isCheckingSession) {
+    // Hold here until we know whether a valid session exists.
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 text-primary animate-spin" aria-label="Loading…" />
+      </div>
+    );
+  }
+
+  if (authMode === null) {
+    // No session and no guest choice → back to the entry gate.
+    return <Redirect to="/" />;
+  }
+
+  return <>{children}</>;
+}
 
 function Router() {
   return (
@@ -28,29 +61,39 @@ function Router() {
       {/* Legacy /loading route redirects to root. */}
       <Route path="/loading" component={() => <Redirect to="/" />} />
       <Route path="/train">
-        <AppShell>
-          <TrainPage />
-        </AppShell>
+        <RequireAuth>
+          <AppShell>
+            <TrainPage />
+          </AppShell>
+        </RequireAuth>
       </Route>
       <Route path="/character">
-        <AppShell>
-          <CharacterPage />
-        </AppShell>
+        <RequireAuth>
+          <AppShell>
+            <CharacterPage />
+          </AppShell>
+        </RequireAuth>
       </Route>
       <Route path="/shop">
-        <AppShell>
-          <ShopPage />
-        </AppShell>
+        <RequireAuth>
+          <AppShell>
+            <ShopPage />
+          </AppShell>
+        </RequireAuth>
       </Route>
       <Route path="/arena">
-        <AppShell>
-          <ArenaPage />
-        </AppShell>
+        <RequireAuth>
+          <AppShell>
+            <ArenaPage />
+          </AppShell>
+        </RequireAuth>
       </Route>
       <Route path="/leaderboard">
-        <AppShell>
-          <LeaderboardPage />
-        </AppShell>
+        <RequireAuth>
+          <AppShell>
+            <LeaderboardPage />
+          </AppShell>
+        </RequireAuth>
       </Route>
       <Route component={NotFound} />
     </Switch>
