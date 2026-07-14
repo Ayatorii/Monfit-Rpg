@@ -49,7 +49,7 @@ export default function LoadingScreen() {
 
         {/* ── Version stamp ── */}
         <p
-          className="absolute bottom-5 right-5 font-mono text-[10px] tracking-[0.2em] text-primary/20 uppercase"
+          className="absolute bottom-5 left-0 right-0 text-center font-mono text-[10px] tracking-[0.2em] text-white/60 uppercase"
           aria-hidden="true"
         >
           v&thinsp;0.1&thinsp;ALPHA
