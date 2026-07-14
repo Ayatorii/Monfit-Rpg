@@ -46,6 +46,13 @@ const SLOT_ICONS: Record<Slot, React.FC<React.SVGProps<SVGSVGElement>>> = {
 const LEFT_SLOTS: Slot[] = ["head", "leftHand", "legs"];
 const RIGHT_SLOTS: Slot[] = ["body", "rightHand", "feet"];
 
+// Mobile grid pairs slots by body region (top → bottom)
+const MOBILE_SLOT_PAIRS: [Slot, Slot][] = [
+  ["head", "body"],
+  ["leftHand", "rightHand"],
+  ["legs", "feet"],
+];
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function statBonus(
@@ -230,7 +237,7 @@ function SlotButton({
           </span>
         </div>
       ) : (
-        <span className="text-sm text-muted-foreground italic">Empty</span>
+        <span className="text-sm text-muted-foreground/70">+ Add gear</span>
       )}
     </button>
   );
@@ -261,7 +268,7 @@ function StatPanel({
       {/* Level + XP */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="font-display font-bold text-sm text-white uppercase tracking-wider">
+          <span className="font-sans font-semibold text-sm text-white uppercase tracking-wider">
             Level {level}
           </span>
           <span className="text-xs font-mono text-muted-foreground">
@@ -408,7 +415,7 @@ function ItemPickerDialog({
                     +{item.statValue} {item.statLabel}
                   </span>
                   {isEquipped && (
-                    <span className="text-xs font-semibold text-primary shrink-0">
+                    <span className="text-xs font-semibold text-primary-text shrink-0">
                       Unequip
                     </span>
                   )}
@@ -478,7 +485,7 @@ function InventoryList({
               {item.name}
             </span>
             {isEquipped && (
-              <span className="flex items-center gap-1 text-xs font-semibold text-primary shrink-0">
+              <span className="flex items-center gap-1 text-xs font-semibold text-primary-text shrink-0">
                 <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                 Equipped
               </span>
@@ -518,7 +525,7 @@ function EquipFeedback({ message }: { message: string | null }) {
           className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
         >
           <div className="flex items-center gap-2 rounded-lg border border-card-border bg-card px-4 py-2.5 shadow-none">
-            <CheckCircle2 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="h-4 w-4 text-primary-text shrink-0" aria-hidden="true" />
             <span className="text-sm font-medium text-foreground whitespace-nowrap">
               {message}
             </span>
@@ -579,7 +586,7 @@ export default function CharacterPage() {
         {/* ── Desktop layout ── */}
         <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] md:gap-6 mb-10">
           {/* Left slots */}
-          <div className="flex flex-col gap-3 justify-center">
+          <div className="flex flex-col gap-3">
             {LEFT_SLOTS.map((slot) => (
               <SlotButton
                 key={slot}
@@ -591,7 +598,7 @@ export default function CharacterPage() {
           </div>
 
           {/* Silhouette */}
-          <div className="flex items-center justify-center">
+          <div className="flex items-start justify-center pt-1">
             <div className="w-36 h-56" aria-hidden="true">
               <CharacterSilhouette equippedItems={equippedItems} />
             </div>
@@ -620,32 +627,20 @@ export default function CharacterPage() {
             </div>
           </div>
 
-          {/* 2×3 slot grid */}
+          {/* 2×3 slot grid — paired by body region: Head|Body / L.Hand|R.Hand / Legs|Feet */}
           <div
             className="grid grid-cols-2 gap-3"
             role="group"
             aria-label="Equipment slots"
           >
-            {[...LEFT_SLOTS, ...RIGHT_SLOTS]
-              .reduce<Slot[][]>(
-                (pairs, slot, i) => {
-                  const col = i % 2;
-                  const row = Math.floor(i / 2);
-                  if (!pairs[row]) pairs[row] = [];
-                  pairs[row][col] = slot;
-                  return pairs;
-                },
-                [],
-              )
-              .flat()
-              .map((slot) => (
-                <SlotButton
-                  key={slot}
-                  slot={slot}
-                  equippedItem={equippedItems[slot]}
-                  onClick={() => openSlot(slot)}
-                />
-              ))}
+            {MOBILE_SLOT_PAIRS.flat().map((slot) => (
+              <SlotButton
+                key={slot}
+                slot={slot}
+                equippedItem={equippedItems[slot]}
+                onClick={() => openSlot(slot)}
+              />
+            ))}
           </div>
 
           {/* Stat panel */}

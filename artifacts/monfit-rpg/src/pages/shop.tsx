@@ -153,7 +153,7 @@ export default function ShopPage() {
                     {item.name}
                   </span>
                   {isEquipped && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-primary shrink-0">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary-text shrink-0">
                       <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                       Equipped
                     </span>
