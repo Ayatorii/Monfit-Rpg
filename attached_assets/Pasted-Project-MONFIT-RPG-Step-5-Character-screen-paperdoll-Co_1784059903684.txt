@@ -1,0 +1,40 @@
+Project: MONFIT RPG — Step 5: Character screen (paperdoll)
+
+Continuing the piece-by-piece build. Loading Screen, Train, and Shop are done and approved. This step builds the Character screen standalone — do not reference or modify Arena, we're not touching that right now.
+
+Scope boundaries for this step
+- Still frontend only, no backend/database/wallet yet.
+- No new art assets required — see "character visual" note below for how to represent the character without a custom sprite.
+
+Character screen layout
+- **6 equipment slots**: Head, Body, Left Hand, Right Hand, Legs, Feet.
+- **Desktop (`≥ md`)**: character visual centered, with 3 slots on the left (Head, Left Hand, Legs) and 3 on the right (Body, Right Hand, Feet) — classic RPG inventory layout. Stat panel (STR/AGI/VIT + derived values) visible alongside, e.g. in a card to the side or below.
+- **Mobile (`< md`)**: character visual large at top, then a 2×3 grid of the 6 slots below it, then the stat panel below that. Tapping an empty or filled slot opens a bottom sheet listing all inventory items that fit that slot (filtered by the item's `slot` field from the Shop loot table), each with an "Equip" button; tapping an equipped slot's bottom sheet also offers "Unequip".
+- Build this as ONE component with conditional Tailwind classes per breakpoint, not two separate components (same approach used for the nav shell).
+
+Character visual (no custom art needed)
+Since we don't have a character sprite/artwork yet, represent the character as a simple centered humanoid silhouette — an SVG built from basic geometric shapes (circle for head, rounded rectangle for torso, etc.), styled with the token palette (e.g. a violet-tinted outline/fill on the dark background). Each equipped item's rarity color can show as a subtle colored outline/glow around the corresponding body region (e.g. equipped Head item gives the head-circle a rarity-colored ring) — this is a placeholder visual system, not final art, but should look intentional rather than like a debug shape.
+
+Stat panel
+- Show STR / AGI / VIT as base values + bonuses, e.g. "STR: 10 (+6) = 16" — base from a fixed starting block (reuse the same base stats used in Arena: STR 10, AGI 10, VIT 10), bonus from summed equipped items.
+- Show a Level + XP bar (reuse the shared XP state already tracked from Train/Arena rewards) — simple level formula is fine for now (e.g. `level = floor(XP / 100) + 1`), doesn't need to be a finalized progression curve.
+- Show current Gold (reuse shared state, same header pattern as other tabs).
+
+Equip/unequip interaction
+- Selecting an item in the bottom sheet (or the desktop equivalent — could be a modal/popover on desktop instead of a bottom sheet) updates the `equipped` record in shared state immediately.
+- If a different item is already equipped in that slot, equipping the new one auto-unequips the old one (a slot can only hold one item).
+- Visual feedback on equip/unequip: a small toast or inline confirmation (transform/opacity animation, not layout-shifting), respecting `prefers-reduced-motion`.
+- Unequipped items remain visible in a simple inventory list on this screen too (reuse/extend the "My Items" list from Shop, now showing an "Equipped" badge on whichever item currently occupies its slot).
+
+Apply all standing anti-slop + accessibility rules (see attached rules file) from the start:
+- transform-based animations only, no width/layout animations
+- focus-visible ring on all slot buttons, equip/unequip buttons, and item rows in the bottom sheet
+- full row/card is the click target, 44px minimum touch targets
+- zero hard-coded hex/rgba — everything through CSS variable tokens, including any new equip-state ring colors
+- bottom sheet / modal needs role="dialog", aria-label, focus trapped while open, Escape closes it — same pattern as the Shop reveal modal
+
+Self-check before calling this done
+- Run `$impeccable audit` on the Character screen and report the score/findings.
+- Confirm equip/unequip actually updates the stat panel numbers in real time (equip an item with a stat bonus, verify STR/AGI/VIT values update immediately; unequip it, verify they drop back down).
+
+Deliverable for this step: working Character screen with responsive paperdoll (6 slots), equip/unequip flow wired to shared inventory, and a stat panel showing equipped-only bonuses.

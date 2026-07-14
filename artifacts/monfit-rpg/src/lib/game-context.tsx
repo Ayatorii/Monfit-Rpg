@@ -1,15 +1,18 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import type { LootItem } from "@/data/lootTable";
+import type { LootItem, Slot } from "@/data/lootTable";
 
 export type OwnedItem = LootItem & {
   instanceId: string;
   obtainedAt: number;
 };
 
+export type EquippedItems = Partial<Record<Slot, OwnedItem>>;
+
 type GameContextValue = {
   gold: number;
   xp: number;
   inventory: OwnedItem[];
+  equippedItems: EquippedItems;
   /** Adjust gold by a delta (positive or negative). Never drops below 0. */
   addGold: (delta: number) => void;
   /** Adjust xp by a delta (positive or negative). Never drops below 0. */
@@ -18,6 +21,10 @@ type GameContextValue = {
   spendGold: (amount: number) => boolean;
   /** Adds a looted item to the persistent inventory list and returns the owned instance. */
   addToInventory: (item: LootItem) => OwnedItem;
+  /** Equips an item into its slot, auto-unequipping whatever was there before. */
+  equipItem: (item: OwnedItem) => void;
+  /** Removes the item from a slot. */
+  unequipItem: (slot: Slot) => void;
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -26,6 +33,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [gold, setGold] = useState(0);
   const [xp, setXp] = useState(0);
   const [inventory, setInventory] = useState<OwnedItem[]>([]);
+  const [equippedItems, setEquippedItems] = useState<EquippedItems>({});
 
   const addGold = useCallback((delta: number) => {
     setGold((g) => Math.max(0, g + delta));
@@ -61,9 +69,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return owned;
   }, []);
 
+  const equipItem = useCallback((item: OwnedItem) => {
+    setEquippedItems((prev) => ({ ...prev, [item.slot]: item }));
+  }, []);
+
+  const unequipItem = useCallback((slot: Slot) => {
+    setEquippedItems((prev) => {
+      const next = { ...prev };
+      delete next[slot];
+      return next;
+    });
+  }, []);
+
   return (
     <GameContext.Provider
-      value={{ gold, xp, inventory, addGold, addXp, spendGold, addToInventory }}
+      value={{
+        gold,
+        xp,
+        inventory,
+        equippedItems,
+        addGold,
+        addXp,
+        spendGold,
+        addToInventory,
+        equipItem,
+        unequipItem,
+      }}
     >
       {children}
     </GameContext.Provider>

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Package, Lock } from "lucide-react";
+import { Package, Lock, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ const RARITY_BORDER_VAR: Record<LootItem["rarity"], string> = {
 };
 
 export default function ShopPage() {
-  const { gold, xp, spendGold, addToInventory, inventory } = useGame();
+  const { gold, xp, spendGold, addToInventory, inventory, equippedItems } = useGame();
   const [revealItem, setRevealItem] = useState<OwnedItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const buyButtonRef = useRef<HTMLButtonElement>(null);
@@ -131,32 +131,47 @@ export default function ShopPage() {
           </p>
         ) : (
           <div className="flex flex-col gap-2">
-            {inventory.map((item) => (
-              <div
-                key={item.instanceId}
-                className="flex items-center gap-3 rounded-lg border border-card-border bg-card px-4 py-3"
-              >
-                <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{ backgroundColor: RARITY_BORDER_VAR[item.rarity] }}
-                  aria-hidden="true"
-                />
-                <span className="flex-1 text-sm font-medium text-foreground">
-                  {item.name}
-                </span>
-                <span
+            {inventory.map((item) => {
+              const isEquipped =
+                equippedItems[item.slot]?.instanceId === item.instanceId;
+              return (
+                <div
+                  key={item.instanceId}
                   className={cn(
-                    "text-xs font-semibold uppercase tracking-wide shrink-0",
-                    RARITY_TEXT_CLASS[item.rarity],
+                    "flex items-center gap-3 rounded-lg border px-4 py-3",
+                    isEquipped
+                      ? "border-primary/30 bg-primary/5"
+                      : "border-card-border bg-card",
                   )}
                 >
-                  {RARITY_LABELS[item.rarity]}
-                </span>
-                <span className="text-xs font-mono text-muted-foreground shrink-0 whitespace-nowrap">
-                  {SLOT_LABELS[item.slot]}
-                </span>
-              </div>
-            ))}
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: RARITY_BORDER_VAR[item.rarity] }}
+                    aria-hidden="true"
+                  />
+                  <span className="flex-1 text-sm font-medium text-foreground">
+                    {item.name}
+                  </span>
+                  {isEquipped && (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary shrink-0">
+                      <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                      Equipped
+                    </span>
+                  )}
+                  <span
+                    className={cn(
+                      "text-xs font-semibold uppercase tracking-wide shrink-0",
+                      RARITY_TEXT_CLASS[item.rarity],
+                    )}
+                  >
+                    {RARITY_LABELS[item.rarity]}
+                  </span>
+                  <span className="text-xs font-mono text-muted-foreground shrink-0 whitespace-nowrap">
+                    {SLOT_LABELS[item.slot]}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
