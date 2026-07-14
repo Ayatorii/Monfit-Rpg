@@ -8,11 +8,19 @@ export type OwnedItem = LootItem & {
 
 export type EquippedItems = Partial<Record<Slot, OwnedItem>>;
 
+export type MatchRecord = {
+  opponentId: string;
+  opponentName: string;
+  result: "win" | "loss" | "draw";
+  date: number;
+};
+
 type GameContextValue = {
   gold: number;
   xp: number;
   inventory: OwnedItem[];
   equippedItems: EquippedItems;
+  matchHistory: MatchRecord[];
   /** Adjust gold by a delta (positive or negative). Never drops below 0. */
   addGold: (delta: number) => void;
   /** Adjust xp by a delta (positive or negative). Never drops below 0. */
@@ -25,6 +33,8 @@ type GameContextValue = {
   equipItem: (item: OwnedItem) => void;
   /** Removes the item from a slot. */
   unequipItem: (slot: Slot) => void;
+  /** Records a completed arena match in the history. */
+  addMatchResult: (record: MatchRecord) => void;
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -34,6 +44,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [xp, setXp] = useState(0);
   const [inventory, setInventory] = useState<OwnedItem[]>([]);
   const [equippedItems, setEquippedItems] = useState<EquippedItems>({});
+  const [matchHistory, setMatchHistory] = useState<MatchRecord[]>([]);
 
   const addGold = useCallback((delta: number) => {
     setGold((g) => Math.max(0, g + delta));
@@ -81,6 +92,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addMatchResult = useCallback((record: MatchRecord) => {
+    setMatchHistory((prev) => [record, ...prev]);
+  }, []);
+
   return (
     <GameContext.Provider
       value={{
@@ -88,12 +103,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         xp,
         inventory,
         equippedItems,
+        matchHistory,
         addGold,
         addXp,
         spendGold,
         addToInventory,
         equipItem,
         unequipItem,
+        addMatchResult,
       }}
     >
       {children}

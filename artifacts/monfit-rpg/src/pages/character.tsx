@@ -9,18 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { useGame, type OwnedItem } from "@/lib/game-context";
 import { SLOT_LABELS, RARITY_LABELS, type Slot, type Rarity } from "@/data/lootTable";
+import { BASE_STATS, statBonus } from "@/lib/playerStats";
 import ResourceBadges from "@/components/ResourceBadges";
 import { cn } from "@/lib/utils";
-
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const BASE_STATS = { STR: 10, AGI: 10, VIT: 10 } as const;
-
-const STAT_LABEL_MAP: Record<"STR" | "AGI" | "VIT", string[]> = {
-  STR: ["STR", "GRP"],
-  AGI: ["SPD", "FOC"],
-  VIT: ["END", "STA"],
-};
 
 const RARITY_COLOR_VAR: Record<Rarity, string> = {
   common: "hsl(var(--rarity-common))",
@@ -52,18 +43,6 @@ const MOBILE_SLOT_PAIRS: [Slot, Slot][] = [
   ["leftHand", "rightHand"],
   ["legs", "feet"],
 ];
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-function statBonus(
-  equippedItems: Partial<Record<Slot, OwnedItem>>,
-  stat: "STR" | "AGI" | "VIT",
-): number {
-  return Object.values(equippedItems)
-    .filter(Boolean)
-    .filter((item) => STAT_LABEL_MAP[stat].includes(item!.statLabel))
-    .reduce((sum, item) => sum + item!.statValue, 0);
-}
 
 // ─── Character Silhouette SVG ────────────────────────────────────────────────
 

@@ -1,0 +1,49 @@
+Project: MONFIT RPG — Step 6: Arena screen
+
+Continuing the piece-by-piece build. Loading Screen, Train, Shop, and Character are done and approved. Character's equip system (6 slots, `equipped` record in shared state, stat panel showing base + equipped-item bonuses) is already working — Arena should use that real system, not a placeholder.
+
+Important architectural note — this is temporary PvE, not real PvP yet
+The original spec calls for server-side combat between two real players' saved builds. We don't have a backend/database/wallet yet, so for THIS step:
+- Combat is simulated entirely client-side (pure TypeScript function, no server call).
+- Opponents are a small set of mock NPC characters (not real other players).
+- When backend/auth is added in a later step, this same simulation function should move server-side and opponent selection should switch to real player builds pulled from the database — architect the simulation logic as a pure, isolated function (e.g. `src/lib/simulateBattle.ts`) that takes two stat blocks and returns a battle log, so it can be lifted into an API route later with minimal rework.
+
+Player stats for combat
+Use the same stat calculation already built for the Character screen: base stats (STR 10, AGI 10, VIT 10) + sum of bonuses from currently EQUIPPED items only (read from the shared `equipped` state). Do not reintroduce a separate/simplified stat calc for Arena — import or reuse the exact function from Character (e.g. `src/lib/playerStats.ts`) so the two screens can never drift out of sync.
+
+Scope boundaries for this step
+- Still frontend only — reuse the shared Gold/XP state (Context/Zustand) from Shop/Character, extend it with match history / arena rating if needed.
+- No real matchmaking, no websockets, no live opponent — this is a single-player "fight the NPC roster" screen for now.
+
+Mock opponent roster
+Define 5 NPC opponents in a config file (e.g. `src/data/npcOpponents.ts`), each with: name (RPG-flavored, fitting the Monad/fantasy theme), a difficulty label (Easy/Medium/Hard/Boss), STR/AGI/VIT stat block, and a short flavor description. Scale stats so difficulty roughly correlates with the player's likely stat range at this stage (easy opponents beatable with just base stats, harder ones require some loot from Shop).
+
+Battle simulation formula (implement exactly, in the isolated function described above)
+1. Both fighters start at HP = 100 (or a formula involving VIT, e.g. `80 + VIT * 2` — pick one and keep it consistent).
+2. Run up to 5 rounds. Each round:
+   - AGI determines turn order (higher AGI acts first); on a tie, player goes first.
+   - Attacker's damage = `STR * 4`, modified by a random factor in the range 0.85–1.15 (±15%), reduced by `defender's VIT * 1.5` (floor damage at a small minimum, e.g. 5, so fights can't stall at 0 forever).
+   - Small dodge chance based on AGI difference (e.g. `(attackerAGI - defenderAGI) * 1%`, clamped 0–20%) — a dodge means 0 damage that turn, log it distinctly.
+   - Both fighters act each round (attacker/defender roles can alternate based on turn order, or both act — pick the simpler "both act per round" model and be consistent).
+   - Track HP; stop early if either reaches 0.
+3. If rounds run out with both HP > 0, whoever has the higher HP% wins; exact tie is a draw.
+4. Return a structured battle log: array of round objects `{ round, actor, action: 'hit'|'dodge', damage, targetHpAfter }` plus the final result (`win`/`loss`/`draw`) and rewards.
+
+Arena screen UI
+1. **Opponent selection**: list/grid of the 5 NPC cards (name, difficulty label with a color per tier, short flavor text, a "Fight" button). Difficulty colors should be new tokens consistent with the existing rarity-color pattern from Shop (reuse that convention, don't invent a new one).
+2. **Battle sequence**: on clicking "Fight", run the simulation immediately (it's instant/deterministic), but reveal the battle log as an animated step-through — one round appearing every ~800ms–1s (respecting `prefers-reduced-motion`: if reduced motion is on, skip straight to the result instead of a timed reveal), each round showing attacker, action (hit/dodge), damage dealt, and a simple HP bar update (transform: scaleX(), not width — same rule as before) for both fighters.
+3. **Result screen**: win/loss/draw banner, Gold + XP reward on a win (add to the shared state — same pattern as Train quests), option to fight again or return to opponent list.
+4. **Match history** (simple, local): keep a running list in shared state of past fights (opponent, result, date) — this will feed the Leaderboard step later, so structure it as an array of match records now even if Leaderboard isn't built yet.
+
+Apply all standing anti-slop + accessibility rules (see attached rules file) from the start:
+- transform-based animations only
+- focus-visible ring on opponent cards and Fight/Continue buttons
+- full card is the click target, 44px minimum touch targets
+- zero hard-coded hex/rgba — everything through CSS variable tokens
+- battle log updates should use aria-live="polite" on the log container so screen readers get round-by-round updates without needing a fully custom accessible replay UI
+
+Self-check before calling this done
+- Run `$impeccable audit` on the Arena screen and report the score/findings.
+- Confirm equipped-item stats actually affect battle outcomes: fight the same NPC opponent with an item equipped vs. unequipped (toggle it on the Character screen between fights) and confirm the battle log/damage numbers differ accordingly — proof the shared stat function is wired correctly between Character and Arena.
+
+Deliverable for this step: working Arena screen — opponent roster, deterministic battle simulation with animated log reveal, win/loss rewards feeding the shared Gold/XP state, and a match history array ready to power Leaderboard next.
