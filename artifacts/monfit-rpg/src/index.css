@@ -101,10 +101,10 @@
 
 @keyframes progress-fill {
   0% {
-    width: 0%;
+    transform: scaleX(0);
   }
   100% {
-    width: 100%;
+    transform: scaleX(1);
   }
 }
 
@@ -120,9 +120,22 @@
 @layer utilities {
   .animate-progress-fill {
     animation: progress-fill 3s ease-out infinite;
+    transform-origin: left center;
+    will-change: transform;
   }
 
   .animate-shimmer-sweep {
     animation: shimmer-sweep 3s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-progress-fill {
+    animation: none;
+    transform: scaleX(0.6);
+  }
+
+  .animate-shimmer-sweep {
+    animation: none;
   }
 }
