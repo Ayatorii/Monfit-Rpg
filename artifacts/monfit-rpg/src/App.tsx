@@ -17,6 +17,7 @@ import ShopPage from "@/pages/shop";
 import ArenaPage from "@/pages/arena";
 import LeaderboardPage from "@/pages/leaderboard";
 import { Loader2 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 
 // QueryClient must live inside WagmiProvider when using wagmi v2 + RainbowKit.
@@ -35,12 +36,27 @@ const queryClient = new QueryClient();
  */
 function RequireAuth({ children }: { children: ReactNode }) {
   const { authMode, isCheckingSession } = useAuth();
+  // Must be called unconditionally — hooks cannot be inside conditionals.
+  const reduced = useReducedMotion() ?? false;
 
   if (isCheckingSession) {
     // Hold here until we know whether a valid session exists.
+    // Matches the accessibility pattern used in LoadingScreen's checking state:
+    //   role="status" on the container + sr-only label + Framer Motion spin
+    //   (respects prefers-reduced-motion via useReducedMotion, not animate-spin).
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 text-primary animate-spin" aria-label="Loading…" />
+      <div
+        role="status"
+        className="min-h-[100dvh] flex items-center justify-center bg-background"
+      >
+        <motion.div
+          animate={reduced ? {} : { rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1.1, ease: "linear" }}
+          aria-hidden="true"
+        >
+          <Loader2 className="h-6 w-6 text-primary" />
+        </motion.div>
+        <span className="sr-only">Checking session…</span>
       </div>
     );
   }
