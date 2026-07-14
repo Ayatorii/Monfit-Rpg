@@ -52,7 +52,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile bottom nav */}
         <nav
           role="navigation"
-          aria-label="Main navigation"
+          aria-label="Tab bar navigation"
           className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-surface border-t border-surface-border"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >

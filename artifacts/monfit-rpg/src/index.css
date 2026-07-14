@@ -157,9 +157,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-shimmer-sweep,
-  .animate-logo-pulse {
-    animation: none;
+  /* Blanket suppressor for all Tailwind animate-* utilities */
+  [class*="animate-"] {
+    animation: none !important;
   }
 
   .animate-logo-pulse {

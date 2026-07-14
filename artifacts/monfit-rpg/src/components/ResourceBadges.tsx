@@ -8,6 +8,7 @@ export default function ResourceBadges({ gold, xp }: { gold: number; xp: number 
   return (
     <div className="flex items-center gap-3 shrink-0">
       <div
+        role="status"
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-surface border border-surface-border"
         aria-label={`${gold} Gold`}
       >
@@ -17,6 +18,7 @@ export default function ResourceBadges({ gold, xp }: { gold: number; xp: number 
         </span>
       </div>
       <div
+        role="status"
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-surface border border-surface-border"
         aria-label={`${xp} XP`}
       >

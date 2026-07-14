@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useReducer } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Swords, Shield, Zap, Heart, ChevronLeft, Trophy, SkullIcon } from "lucide-react";
 import { useGame } from "@/lib/game-context";
 import { calcPlayerStats } from "@/lib/playerStats";
@@ -16,13 +16,6 @@ import { cn } from "@/lib/utils";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const ROUND_REVEAL_MS = 850;
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 // ─── HP Bar ──────────────────────────────────────────────────────────────────
 
@@ -148,7 +141,7 @@ function BattleView({
   log: BattleLog;
   onDone: () => void;
 }) {
-  const reduced = prefersReducedMotion();
+  const reduced = useReducedMotion() ?? false;
   const [revealCount, setRevealCount] = useState(reduced ? log.events.length : 0);
   const logRef = useRef<HTMLDivElement>(null);
 
@@ -213,8 +206,13 @@ function BattleView({
         </AnimatePresence>
 
         {!done && !reduced && (
-          <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground" aria-live="polite">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary-text animate-pulse" aria-hidden="true" />
+          <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+            <motion.span
+              className="inline-block h-1.5 w-1.5 rounded-full bg-primary-text"
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
+              aria-hidden="true"
+            />
             Fighting…
           </div>
         )}
@@ -303,7 +301,7 @@ function ResultView({
   onBack: () => void;
 }) {
   const { result, rewards, playerHpFinal, npcHpFinal, playerHpMax, npcHpMax } = log;
-  const reduced = prefersReducedMotion();
+  const reduced = useReducedMotion() ?? false;
 
   const bannerConfig = {
     win: {
@@ -505,7 +503,7 @@ export default function ArenaPage() {
               onClick={handleBack}
               aria-label="Back to opponent roster"
               className={cn(
-                "flex items-center justify-center h-9 w-9 rounded-lg border border-card-border bg-card transition-colors hover:border-muted-foreground/40",
+                "flex items-center justify-center h-11 w-11 rounded-lg border border-card-border bg-card transition-colors hover:border-muted-foreground/40",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >
