@@ -69,20 +69,12 @@ export default function TrainPage() {
                 aria-pressed={isSelected}
                 onClick={() => setGoal(g.id)}
                 className={cn(
-                  "flex flex-col items-start gap-2.5 rounded-lg border bg-card px-4 py-4 text-left transition-colors",
+                  "flex flex-col items-start gap-2.5 rounded-lg border-2 bg-card px-4 py-4 text-left transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isSelected
-                    ? "border-primary"
+                    ? "border-primary bg-primary/10"
                     : "border-card-border hover:border-primary/40",
                 )}
-                style={
-                  isSelected
-                    ? {
-                        boxShadow:
-                          "0 0 0 1px hsl(var(--primary)), 0 0 20px -4px hsl(var(--primary) / 0.55)",
-                      }
-                    : undefined
-                }
               >
                 <Icon
                   className={cn(
