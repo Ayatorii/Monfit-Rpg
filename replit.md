@@ -1,15 +1,15 @@
-# [Project name]
+# MONFIT RPG
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A fitness-themed RPG web app, imported from GitHub (`Ayatorii/Monfit-Rpg`). Currently shows only a branded loading screen — no gameplay/backend features are wired up yet.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- The app runs via two Replit-managed workflows: `artifacts/monfit-rpg: web` (frontend, React + Vite) and `artifacts/api-server: API Server` (Express backend). Use the `WorkflowsRestart` tool to (re)start them — do not run `pnpm dev` manually at the repo root.
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string (already provisioned)
 
 ## Stack
 
