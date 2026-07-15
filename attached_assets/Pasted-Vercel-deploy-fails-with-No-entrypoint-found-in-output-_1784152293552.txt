@@ -1,0 +1,17 @@
+Vercel deploy fails with: "No entrypoint found in output directory: 'artifacts/monfit-rpg/dist'. Searched for: app.{js,cjs,mjs,ts,cts,mts}, index.{...}, server.{...}, src/app.{...}, src/index.{...}, src/server.{...}"
+
+The build itself succeeds (both `@workspace/api-server` via esbuild → `artifacts/api-server/dist/index.mjs`, and `@workspace/monfit-rpg` via `vite build` → `artifacts/monfit-rpg/dist/`, complete without fatal errors — the sourcemap/comment messages in the log are non-fatal warnings, not the actual failure). The actual problem is that Vercel's project configuration doesn't understand this pnpm workspace/monorepo layout and is trying to treat the frontend's static output directory as if it should contain a Node.js serverless function entrypoint.
+
+Fix this by adding an explicit `vercel.json` at the repository root (or fixing the existing one if present) that correctly tells Vercel:
+1. The frontend is a static build — output directory should point to wherever `artifacts/monfit-rpg/dist` actually ends up (confirm the exact real path first, don't assume).
+2. The backend (`artifacts/api-server/dist/index.mjs`, an Express app built via esbuild) needs to be exposed as a Vercel serverless function reachable at `/api/*` — this likely needs either:
+   a. A `functions` entry in vercel.json pointing at the built api-server output with an appropriate rewrite rule (`/api/(.*)` → the function), or
+   b. Restructuring so there's an actual `/api/index.ts` (or `.js`) file at the project structure location Vercel auto-detects for serverless functions, which internally imports/wraps the built Express app (e.g. via `serverless-http`) — check whether this was ever actually implemented per the original deployment spec, or whether the api-server was only ever built as a traditional long-running server bundle (which would explain this exact error, since Vercel doesn't run long-lived servers).
+3. Also check and correct the Vercel Dashboard project settings (Root Directory, Build Command, Output Directory) to match whatever vercel.json specifies — these can conflict with each other if not aligned.
+
+Before writing the fix, first inspect and report:
+- The actual real path of the built frontend output (confirm artifacts/monfit-rpg/dist contains index.html + assets after a local build).
+- Whether a `/api` serverless-function-compatible entrypoint exists anywhere in the repo, or whether api-server was only ever built as a standalone long-running Express server (dist/index.mjs run via `node dist/index.mjs`, which does NOT work on Vercel's serverless model).
+- The current vercel.json content if one exists, or confirm none exists yet.
+
+Then implement the correct vercel.json + serverless entrypoint, redeploy, and confirm: the frontend loads at the root URL, AND a request to /api/auth/session (or any existing API route) returns a real JSON response, not a 404 or the frontend's HTML.

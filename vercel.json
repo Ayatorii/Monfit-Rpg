@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "BASE_PATH=/ pnpm --filter @workspace/monfit-rpg run build",
+  "outputDirectory": "artifacts/monfit-rpg/dist/public",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}
