@@ -1,0 +1,36 @@
+Project: MONFIT RPG — Step 9: Leaderboard screen
+
+Continuing the piece-by-piece build. Loading Screen (wallet gate), Train, Shop, Character, and Arena are all done and approved, with real persistence via wallet-keyed Postgres (players, matches tables). This step builds the Leaderboard tab — the last of the 5 core-loop screens — and unlocks it in the nav (remove any "locked/coming soon" state on this tab if one was added).
+
+Goal of this step
+Show a real, queried ranking of players based on actual data in the database — not mock/hard-coded data. This screen should read directly from the `matches` and `players` tables built in Step 7.
+
+Ranking logic
+- Compute an Arena rating per player from their match history in the `matches` table. Keep it simple: `wins - losses` as a base score is fine for a hackathon (don't build ELO/MMR unless there's spare time later).
+- Players with zero matches should not appear on the ranked list (nothing to rank), OR appear at the bottom in a separate "unranked" section — pick whichever is simpler to implement cleanly.
+- Rank by score descending; tie-break by total XP or Level (pick one, be consistent).
+
+Backend
+- Add a new API route (e.g. `GET /api/leaderboard`) that queries and aggregates `matches` grouped by `walletAddress`, joins with `players` for display info (level, current gold — whatever's relevant to show), and returns a sorted list. Do this aggregation in the SQL query (Drizzle) rather than pulling all rows and sorting in JavaScript, so it scales reasonably.
+- Cache is not necessary at this scale — a direct query per page load is fine for a hackathon.
+
+Leaderboard screen UI
+1. **Header**: title, short description ("Top fighters this season" or similar), and the current player's own rank highlighted if they appear on the list (e.g. "You're ranked #4" as a small callout, even if their row is further down the visible list).
+2. **Ranked list**: rows showing rank number, player identity (since there's no username system, show a shortened wallet address, e.g. `0x1234...abcd`, plus their Level), win/loss record, and the computed score. Top 3 get a subtle visual distinction (e.g. a rank-colored accent — reuse the existing rarity-color token convention: gold for #1, silver-ish/cyan for #2, bronze-ish/amber for #3 — don't invent a new unrelated color system).
+3. **Empty state**: if there's no match data yet at all (fresh database), show a clear empty state ("No battles fought yet — be the first to enter the Arena" with a link/button to Arena) instead of a blank screen or a broken table.
+4. **Loading state**: while the leaderboard query is in flight, show a skeleton/placeholder matching the row layout — not a layout-shifting blank flash.
+
+Apply all standing anti-slop + accessibility rules (see attached rules file) from the start:
+- transform-based animations only, no width/layout animations
+- focus-visible ring on any interactive elements (e.g. if rows link anywhere, or there's a refresh button)
+- zero hard-coded hex/rgba — everything through CSS variable tokens, reuse the existing rarity/rank color convention rather than inventing new colors
+- proper semantic table markup or ARIA if using a `<table>` (or `role="table"`/`role="row"`/`role="cell"` if building it with divs) so screen readers can navigate it correctly
+- full row is not necessarily a click target here (no per-player detail page exists) — that's fine, this screen can be read-only
+
+Self-check before calling this done (use the verification template — write this out as an actual test, not just "check it")
+1. Fight at least 2 different NPC opponents in Arena from the same wallet, confirm the leaderboard reflects an updated win/loss record and score after refreshing the Leaderboard tab.
+2. Confirm "You're ranked #X" callout shows correctly for the currently-connected wallet.
+3. Test the empty state by checking what a wallet with zero matches sees (either querying a fresh test wallet or temporarily clearing test data) — confirm it shows the empty-state message, not a broken/blank table.
+4. Run `$impeccable audit` on the Leaderboard screen and report the score/findings.
+
+Deliverable for this step: working Leaderboard screen querying real match data from Postgres, ranked list with the current player's position highlighted, and proper empty/loading states.

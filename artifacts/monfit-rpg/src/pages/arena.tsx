@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Swords, Shield, Zap, Heart, ChevronLeft, Trophy, SkullIcon } from "lucide-react";
 import { useGame } from "@/lib/game-context";
 import { calcPlayerStats } from "@/lib/playerStats";
+import { useAuth, API_BASE } from "@/lib/auth-context";
 import {
   NPC_OPPONENTS,
   DIFFICULTY_TEXT_CLASS,
@@ -427,6 +428,7 @@ type ArenaView = "roster" | "battle" | "result";
 
 export default function ArenaPage() {
   const { gold, xp, equippedItems, addGold, addXp, addMatchResult } = useGame();
+  const { walletAddress } = useAuth();
   const [view, setView] = useState<ArenaView>("roster");
   const [selectedNpc, setSelectedNpc] = useState<NpcOpponent | null>(null);
   const [battleLog, setBattleLog] = useState<BattleLog | null>(null);
@@ -448,9 +450,12 @@ export default function ArenaPage() {
     setView("result");
     // Apply rewards + record history when result is shown
     if (battleLog && selectedNpc) {
+      const xpEarned = battleLog.result === "win" ? battleLog.rewards.xp : 0;
+      const goldEarned = battleLog.result === "win" ? battleLog.rewards.gold : 0;
+
       if (battleLog.result === "win") {
-        addGold(battleLog.rewards.gold);
-        addXp(battleLog.rewards.xp);
+        addGold(goldEarned);
+        addXp(xpEarned);
       }
       addMatchResult({
         opponentId: selectedNpc.id,
@@ -458,6 +463,23 @@ export default function ArenaPage() {
         result: battleLog.result,
         date: Date.now(),
       });
+
+      // Persist to the database (fire-and-forget; failures are non-critical).
+      if (walletAddress) {
+        fetch(`${API_BASE}/api/arena/match`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            opponentId: selectedNpc.id,
+            opponentName: selectedNpc.name,
+            result: battleLog.result,
+            xpEarned,
+            goldEarned,
+          }),
+        }).catch(() => {
+          // Non-critical — local state is already updated.
+        });
+      }
     }
   }
 
