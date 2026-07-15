@@ -1,0 +1,11 @@
+Getting: HTTP 401 "No pending nonce for this session — request a new one" when verifying a real wallet sign-in through Rabby. This reached the real backend (progress from before), but the session that hits /verify has no nonce stored. Debug with actual evidence:
+
+1. Check whether RainbowKit's built-in authentication adapter is being used (`createAuthenticationAdapter({ getNonce, createMessage, verify })` passed to `RainbowKitAuthenticationProvider`), as opposed to fully custom fetch calls. If the adapter pattern is used, its internal `getNonce()`/`verify()` functions are a SEPARATE code path from any manually-added `credentials: "include"` fetch calls elsewhere in the app — check specifically whether THESE adapter functions include `credentials: "include"`. Paste the actual adapter code.
+
+2. Add temporary server-side logging to the nonce route: log the session ID (req.sessionID) and the nonce value being stored, every time GET /api/auth/nonce is called. Add the same logging to the verify route: log req.sessionID and whatever nonce (if any) is found in that session. Reproduce the real Rabby flow once, then paste the raw log lines from both routes in order with timestamps.
+
+3. Check the Network tab for the real Rabby flow: is GET /api/auth/nonce called more than once before the sign happens (e.g. once on modal open, once on connect click)? If so, each call may be creating a distinct session, and the signed message might correspond to an earlier nonce/session than the one whose cookie is actually active when /verify fires. Report how many times nonce was actually called and with what session cookie each time (check Set-Cookie on each response).
+
+4. Confirm session store TTL/expiry isn't the issue — report how much time elapsed between the nonce call and the verify call in this real test (RainbowKit's modal + wallet popup interaction takes longer than a script, so if nonce/session has a very short expiry it could lapse during normal human interaction speed).
+
+Paste raw logs/code for all 4 points before applying any fix.
