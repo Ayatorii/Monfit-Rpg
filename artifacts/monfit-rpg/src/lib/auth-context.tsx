@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check for an existing valid server session on mount (State 4 — returning user).
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/session`)
+    fetch(`${API_BASE}/api/auth/session`, { credentials: "include" })
       .then((r) => r.json())
       .then((data: { authenticated: boolean; address?: string }) => {
         if (data.authenticated && data.address) {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, { method: "POST" });
+      await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
     } catch {
       // Best-effort logout
     }

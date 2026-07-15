@@ -64,7 +64,7 @@ export default function LoadingScreen() {
 
     try {
       // 1. Fetch a one-time nonce from the server.
-      const nonceRes = await fetch(`${API_BASE}/api/auth/nonce`);
+      const nonceRes = await fetch(`${API_BASE}/api/auth/nonce`, { credentials: "include" });
       if (!nonceRes.ok) throw new Error("Could not fetch nonce");
       const { nonce } = (await nonceRes.json()) as { nonce: string };
 
@@ -91,6 +91,7 @@ export default function LoadingScreen() {
       const verifyRes = await fetch(`${API_BASE}/api/auth/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ message, signature, address: addr }),
       });
       const result = (await verifyRes.json()) as { ok?: boolean; error?: string };

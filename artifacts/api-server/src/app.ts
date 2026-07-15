@@ -57,10 +57,11 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      // Replit dev proxies HTTPS → HTTP; secure: false works for both envs.
-      // Flip to true in production behind a proper TLS terminator.
-      secure: false,
-      sameSite: "lax",
+      // Replit proxies all traffic over HTTPS; trust proxy is set above so
+      // req.secure is true. SameSite=none is required because the preview
+      // runs inside the replit.com iframe (cross-site context).
+      secure: true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   }),

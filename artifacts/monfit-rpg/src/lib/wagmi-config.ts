@@ -1,5 +1,5 @@
 import { createConfig, http } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { monadTestnet } from "wagmi/chains";
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
   injectedWallet,
@@ -32,9 +32,9 @@ const connectors = connectorsForWallets(wallets, {
 });
 
 export const wagmiConfig = createConfig({
-  chains: [mainnet],
+  chains: [monadTestnet],
   connectors,
   transports: {
-    [mainnet.id]: http(),
+    [monadTestnet.id]: http("https://testnet-rpc.monad.xyz"),
   },
 });

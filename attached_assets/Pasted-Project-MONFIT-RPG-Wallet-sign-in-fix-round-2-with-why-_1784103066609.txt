@@ -1,0 +1,15 @@
+Project: MONFIT RPG — Wallet sign-in fix, round 2 (with why-monad skill)
+
+Before touching any code, consult the installed `why-monad` skill for the correct Monad Testnet configuration (chainId, RPC URL, any wagmi/viem-specific setup nuances it documents) and compare it against what's currently configured in this project's wagmi config. Report any mismatches found before proceeding.
+
+Context: the API_BASE routing bug (frontend hitting "/api-server" instead of "/api", causing nonce requests to hit Vite's SPA HTML instead of the Express backend) was identified and a fix was applied, but sign-in still fails end-to-end. Do not assume the API_BASE fix was sufficient — verify it actually landed correctly, then continue debugging from there using the why-monad skill's guidance as a reference for anything Monad-specific that might also be wrong (chain config mismatch, wrong RPC causing a hang that surfaces as a generic failure, etc.).
+
+Steps
+1. Confirm the API_BASE fix is actually in place: grep the codebase for any remaining "/api-server" references in frontend fetch calls and fix any that were missed.
+2. Cross-check the wagmi chain config against why-monad's documented Monad Testnet setup — chainId 10143, correct RPC URL, correct block explorer config if specified. Report side-by-side what the skill recommends vs what's currently in the code.
+3. Re-run the GET /api/auth/nonce check — confirm JSON response + Set-Cookie header (paste actual response).
+4. Complete the full flow: Connect Wallet → select MetaMask → confirm the wallet prompts an actual "Sign-In With Ethereum" message (not just account-connection approval) → sign it → confirm POST /api/auth/verify returns 200 (paste actual response).
+5. Confirm navigation to /train after success, with Gold/XP/Level matching the players table for that wallet.
+6. Refresh while signed in — confirm the session persists instead of bouncing back to the Loading Screen.
+
+If it still fails after steps 1-2, report the exact new error/status/body at whichever step breaks — don't apply another blind fix. Paste raw values for every check, not summaries.
