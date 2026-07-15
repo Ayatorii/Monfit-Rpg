@@ -25,7 +25,8 @@ router.post("/match", async (req, res) => {
     !walletAddress ||
     !opponentId ||
     !opponentName ||
-    !["win", "loss", "draw"].includes(result ?? "")
+    !result ||
+    !["win", "loss", "draw"].includes(result)
   ) {
     res.status(400).json({ error: "Missing or invalid fields" });
     return;
