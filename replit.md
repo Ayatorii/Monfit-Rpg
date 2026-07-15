@@ -1,6 +1,6 @@
 # MONFIT RPG
 
-A fitness-themed RPG web app, imported from GitHub (`Ayatorii/Monfit-Rpg`). Currently shows only a branded loading screen — no gameplay/backend features are wired up yet.
+A fitness-themed RPG web app, imported from GitHub (`Ayatorii/Monfit-Rpg`). Frontend has working screens (Train, Character, Shop, Arena, Leaderboard); verify which are backed by real data vs. static/mock content before building on them.
 
 ## Run & Operate
 

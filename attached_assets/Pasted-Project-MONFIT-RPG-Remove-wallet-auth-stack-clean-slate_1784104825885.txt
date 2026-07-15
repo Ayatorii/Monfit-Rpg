@@ -1,0 +1,29 @@
+Project: MONFIT RPG — Remove wallet auth stack (clean slate for a redo later)
+
+We're rolling back all wallet/SIWE authentication work due to repeated unresolved sign-in failures. Remove it cleanly so the app returns to a fully working state without wallet auth, and so a future re-implementation starts from a clean baseline instead of patching over the current broken state.
+
+Remove entirely
+- Frontend packages: wagmi, @rainbow-me/rainbowkit, viem's SIWE-related usage, the `siwe` package if installed standalone.
+- `src/lib/wagmi-config.ts` and any WagmiProvider wrapping in App.tsx.
+- `src/lib/auth-context.tsx` (AuthContext) and any usage of it across the app.
+- The "Connect Wallet" button, RainbowKit modal, and all connecting/error UI states on the Loading Screen — revert LoadingScreen to its pre-wallet version: just the logo, title, and a direct way into the app (see routing note below).
+- Backend: `siwe`, `express-session`, `connect-pg-simple` packages if they were added solely for this. Remove the auth routes (nonce/verify/session/logout) and any session middleware in api-server/src/app.ts.
+- The `sessions` table (drop it or leave it unused — your call on whichever is cleaner given how it was created).
+- The `RequireAuth` wrapper component — remove it from the router; all 5 tab routes (Train/Character/Shop/Arena/Leaderboard) should be directly accessible again, no auth gate.
+
+Keep / do not touch
+- The `users` and `players` and `matches` table schemas in Drizzle — leave them defined even though nothing writes to them right now. We'll reconnect them when wallet auth is redone properly. Do not delete this schema work.
+- All 5 screens' UI and local-state logic (Train quests, Shop chests, Character equip, Arena battles, Leaderboard query) — these should continue working exactly as they did before wallet auth was introduced, using local/shared React state (Context/Zustand), not the database, for now.
+- The Impeccable skill, design tokens, fonts, and everything unrelated to auth.
+
+Routing after removal
+- App entry point ("/") goes straight to the app (e.g. redirect "/" to "/train", or make Train the index route) — no sign-in gate of any kind for now. Restore whatever the pre-wallet navigation flow was (nav shell with 5 tabs, directly accessible).
+
+Verify after removal (report actual results, not just "done")
+1. App loads directly into Train with no errors in the console.
+2. All 5 tabs are reachable and function as they did before wallet auth was added (quests complete, shop purchases work, equip works, arena fights work, leaderboard renders its empty state since there's no persisted match data now).
+3. No leftover references to wagmi/RainbowKit/AuthContext/RequireAuth anywhere in the codebase — grep to confirm.
+4. `npm run build` (or the project's build command) completes without errors related to removed packages.
+5. Run `$impeccable audit` on the Loading Screen since it was reverted, confirm it's still clean.
+
+Deliverable: a working app with zero wallet/auth code, all 5 screens functioning on local state as they did before Step 7, and the players/matches/users DB schema left intact (unused) for a future clean re-implementation.
