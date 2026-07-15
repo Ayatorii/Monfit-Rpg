@@ -1,0 +1,28 @@
+Project: MONFIT RPG — Unify into ONE Vercel project (correct approach, not a split)
+
+Disregard the two-project-split and Replit-Deployments ideas — staying on Vercel as a SINGLE project. Root Directory in the current Vercel project settings must be changed to the REPOSITORY ROOT (empty / not scoped to any artifacts/* subfolder) — this is the actual root cause of all three prior failures: a Root Directory scoped to one subfolder can never see the other half of the app.
+
+The standard, reliable Vercel pattern for this kind of monorepo (separate frontend + backend workspace packages) is:
+
+1. **Frontend (static)**: configure `vercel.json` at the REPO ROOT with `"outputDirectory": "artifacts/monfit-rpg/dist/public"` and a `"buildCommand"` that builds the frontend (and the backend, see below) — paths in this vercel.json are now relative to the repo root since Root Directory is no longer scoped.
+
+2. **Backend (serverless function)**: create a real file at `/api/index.ts` (or `.js`) AT THE REPO ROOT — not nested inside `artifacts/api-server`. Vercel auto-detects anything under a root-level `/api` directory as a serverless function, regardless of monorepo structure, and this is the most reliable way to expose it. This file should import the already-built/existing Express app from `artifacts/api-server` (via a relative import or by importing its build output) and wrap it with `serverless-http`, e.g.:
+   ```
+   import serverless from 'serverless-http';
+   import app from '../artifacts/api-server/dist/index.mjs'; // adjust actual export shape as needed
+   export default serverless(app);
+   ```
+   Confirm how `artifacts/api-server`'s Express app is actually exported (default export vs named) and adjust the import accordingly — report what you find.
+
+3. **Build command**: the root `vercel.json`'s `buildCommand` needs to build BOTH the frontend (`vite build` in artifacts/monfit-rpg) AND ensure the api-server's dist output that `/api/index.ts` imports from actually exists before the function is bundled — likely something like `pnpm --filter @workspace/monfit-rpg build && pnpm --filter @workspace/api-server build`, adjust to match the actual workspace package names/scripts already in use.
+
+4. **Routing**: with a root-level `/api` directory, Vercel should automatically route `/api/*` requests to the function and everything else to the static output — confirm no conflicting custom rewrites are needed, or add a rewrite only if something doesn't route correctly by default.
+
+Steps
+1. First, in the Vercel Dashboard, change Root Directory back to blank/repo-root for this project (or confirm this needs to be done via vercel.json's absence of a "root" restriction — whichever is the actual mechanism, verify against Vercel's current docs if unsure rather than guessing).
+2. Create the root-level `/api/index.ts` serverless entrypoint as described.
+3. Write/update the root-level `vercel.json` with the correct `outputDirectory` and `buildCommand`.
+4. Redeploy and report the FULL build log — confirm both the frontend build AND the api-server build run, confirm the deployment succeeds with no "missing entrypoint" or "missing output directory" errors.
+5. Test the live URL: frontend loads at "/", and a request to e.g. `/api/auth/session` returns real JSON from the actual Express app (not a 404, not the frontend's HTML).
+
+This is one unified project, one URL, no CORS/cross-domain complexity needed — same-origin like the original Replit dev setup. Report actual evidence (build log, response bodies) at each step, not just "done".
