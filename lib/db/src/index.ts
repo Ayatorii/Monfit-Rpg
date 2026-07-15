@@ -10,7 +10,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// On Vercel serverless each function instance has a short lifetime;
+// cap the pool at 1 to avoid exhausting Neon's connection limit across cold starts.
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: process.env.VERCEL ? 1 : 10,
+});
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

@@ -8,18 +8,19 @@ if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET must be set.");
 }
 
-/**
- * Cross-origin cookie config: the Replit preview iframe serves the frontend
- * and this API from different origins, so the session cookie must be
- * SameSite=None + Secure, and every client fetch must send
- * `credentials: "include"` (see lib/api-client-react/src/custom-fetch.ts).
- */
+// On Vercel the frontend and API share the same origin, so SameSite=Lax is
+// correct and simpler.  On Replit the preview iframe is cross-origin, so
+// SameSite=None (+ Secure) is required.  In local dev (no VERCEL flag, not
+// production) we drop Secure so plain HTTP works.
+const isVercel = Boolean(process.env.VERCEL);
+const isProduction = process.env.NODE_ENV === "production";
+
 export const sessionMiddleware = session({
   store: new PgSession({
     pool,
     tableName: "session",
-    // The `session` table is created by a Drizzle schema/push (see
-    // @workspace/db's `sessions` schema), not by connect-pg-simple itself.
+    // The `session` table is created by a Drizzle migration (see
+    // @workspace/db's sessions schema), not by connect-pg-simple itself.
     createTableIfMissing: false,
   }),
   secret: process.env.SESSION_SECRET,
@@ -28,8 +29,10 @@ export const sessionMiddleware = session({
   name: "monfit.sid",
   cookie: {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    // Secure only in production; allows local HTTP dev without extra config.
+    secure: isProduction,
+    // Vercel: same-origin → lax.  Replit / other cross-origin envs → none.
+    sameSite: isVercel ? "lax" : "none",
     maxAge: 1000 * 60 * 60 * 24 * 30,
   },
 });

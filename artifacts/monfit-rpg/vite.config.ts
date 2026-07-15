@@ -5,27 +5,25 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
-const rawPort = process.env.PORT;
+// PORT and BASE_PATH are required when running the dev server (Replit).
+// During a production build (Vercel / CI) neither is needed — Vite's build
+// command never starts the dev server, so we fall back to safe defaults.
+const isProductionBuild = process.env.NODE_ENV === "production";
 
-if (!rawPort) {
+const rawPort = process.env.PORT;
+if (!rawPort && !isProductionBuild) {
   throw new Error(
     'PORT environment variable is required but was not provided.',
   );
 }
-
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
+const port = rawPort ? Number(rawPort) : 3000;
+if (!isProductionBuild && (Number.isNaN(port) || port <= 0)) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    'BASE_PATH environment variable is required but was not provided.',
-  );
-}
+// Default to "/" for Vercel (app lives at root).  Replit sets BASE_PATH to
+// the artifact's preview path (e.g. "/monfit-rpg").
+const basePath = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base: basePath,

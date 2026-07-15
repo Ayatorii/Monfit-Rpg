@@ -1,0 +1,34 @@
+Project: MONFIT RPG — Step 11: Deploy to Vercel + migrate database to Neon
+
+Core loop, wallet auth, and Leaderboard are all working on Replit. This step migrates the database to Neon and deploys the app to Vercel, per the original target stack.
+
+Part 1 — Neon database setup
+1. Create a new Neon Postgres project (neon.tech), get the connection string.
+2. Run the existing Drizzle schema against this fresh Neon database via proper migration files (`drizzle-kit generate` + `drizzle-kit migrate`, or whatever migration command this project uses) — do NOT recreate tables via manual SQL. This is also the moment to finally fix the `sessions` table issue for good: confirm it's created via an actual migration file this time, not a one-off manual command, since that's caused problems twice already on different environments.
+3. Verify all tables exist on Neon after migration: `users`, `players`, `matches`, `sessions` (and any others) — list them out and confirm.
+4. Switch the app's `DATABASE_URL` to the Neon connection string and confirm the app can connect and read/write to it locally (or in the Replit dev environment) before deploying, as a sanity check.
+
+Part 2 — Vercel deployment prep
+1. Wrap the existing Express app for Vercel serverless: use `serverless-http` to export the Express app as a single catch-all function (e.g. `/api/index.ts`), OR convert routes to individual Vercel serverless functions under `/api/*.ts` if that's cleaner given the current route structure — pick whichever requires less rework, report which approach was used.
+2. Confirm `vercel dev` runs this locally without errors before deploying for real.
+3. Re-evaluate the cookie/session config for this new setup: on Vercel, the frontend and API routes will typically be served from the SAME origin/domain (unlike Replit's iframe-based preview, which was cross-site). If frontend and backend end up same-origin on Vercel, `sameSite: "lax"` should work correctly and is simpler/more secure than `sameSite: "none"` — confirm the actual deployed origin setup once live and adjust accordingly, don't just copy the Replit cross-origin config blindly.
+4. Update the SIWE `domain`/`uri` values to work correctly against the actual Vercel production domain (not a hardcoded Replit preview URL) — confirm this reads from `window.location` dynamically, as it did before, so it doesn't need a code change per environment.
+
+Part 3 — Environment variables / secrets on Vercel
+Set these in the Vercel project's environment variables (not committed to code):
+- `DATABASE_URL` (Neon connection string)
+- Session secret
+- `VITE_WALLETCONNECT_PROJECT_ID`
+- `DEPLOYER_PRIVATE_KEY` (the burner testnet wallet used for minting SeasonTrophy — same security note as before: this must remain a secret env var, never in code or logs)
+- Any other secrets currently in Replit Secrets — list everything currently configured on Replit so nothing gets missed in the migration.
+
+Part 4 — Deploy and full smoke test
+Deploy to Vercel, then test the ENTIRE app on the live Vercel URL (not Replit) end-to-end, reporting actual results for each:
+1. App loads, Loading Screen renders correctly (logo, fonts, no console errors).
+2. Connect Wallet → real signature flow → lands on Train — confirm this works on the new domain (this is the step most likely to break if the cookie/domain config wasn't adjusted correctly for Vercel's setup).
+3. Complete a Train quest, buy/open a Shop chest, equip on Character, fight in Arena — confirm all four write to the Neon database correctly.
+4. Leaderboard shows real data reflecting the test above.
+5. Refresh the page mid-session — confirm the session persists on Vercel the same way it did on Replit.
+6. Confirm `$impeccable audit` command is still usable in this environment if you want to re-check anything, otherwise note if it's Replit-specific and unavailable post-deploy.
+
+Deliverable: live Vercel URL with the full MONFIT RPG app running against Neon Postgres, all core-loop screens and wallet auth verified working in production — this URL is what goes in the "Project URL" field of the hackathon submission.
