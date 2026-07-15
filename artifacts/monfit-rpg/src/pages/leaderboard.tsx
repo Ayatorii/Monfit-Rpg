@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Swords } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAuth, API_BASE } from "@/lib/auth-context";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,23 +144,11 @@ function RankedRow({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
-  const { walletAddress } = useAuth();
-  const [data, setData] = useState<LeaderboardResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    setError(null);
-    fetch(`${API_BASE}/api/leaderboard`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json() as Promise<LeaderboardResponse>;
-      })
-      .then((d) => setData(d))
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setIsLoading(false));
-  }, []);
+  // No wallet auth yet — leaderboard shows empty state until a future
+  // re-implementation wires up the database and auth.
+  const data: LeaderboardResponse = { ranked: [], callerRank: null };
+  const isLoading = false;
+  const error: string | null = null;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 md:py-8 flex flex-col gap-6">
@@ -261,10 +248,7 @@ export default function LeaderboardPage() {
               <RankedRow
                 key={player.walletAddress}
                 player={player}
-                isCurrentPlayer={
-                  !!walletAddress &&
-                  player.walletAddress === walletAddress.toLowerCase()
-                }
+                isCurrentPlayer={false}
               />
             ))}
           </motion.div>

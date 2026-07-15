@@ -74,9 +74,5 @@
     "wouter": "^3.3.5",
     "zod": "catalog:"
   },
-  "dependencies": {
-    "@rainbow-me/rainbowkit": "^2.2.11",
-    "viem": "^2.55.1",
-    "wagmi": "^2.19.5"
-  }
+  "dependencies": {}
 }

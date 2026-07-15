@@ -1,52 +1,53 @@
 import { Router } from "express";
 import { db, matchesTable, playersTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 const router = Router();
 
 /**
  * POST /api/arena/match
- * Record a completed arena match for the authenticated wallet.
- * Also upserts the player row with cumulative XP + gold totals.
+ * Record a completed arena match and upsert the player's cumulative XP + gold.
+ * walletAddress must be supplied in the request body.
+ * (Auth is not enforced yet — will be re-added with the wallet auth redo.)
  */
 router.post("/match", async (req, res) => {
-  if (!req.session.walletAddress) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
+  const { walletAddress, opponentId, opponentName, result, xpEarned, goldEarned } =
+    req.body as {
+      walletAddress?: string;
+      opponentId?: string;
+      opponentName?: string;
+      result?: string;
+      xpEarned?: number;
+      goldEarned?: number;
+    };
 
-  const { opponentId, opponentName, result, xpEarned, goldEarned } = req.body as {
-    opponentId?: string;
-    opponentName?: string;
-    result?: string;
-    xpEarned?: number;
-    goldEarned?: number;
-  };
-
-  if (!opponentId || !opponentName || !["win", "loss", "draw"].includes(result ?? "")) {
+  if (
+    !walletAddress ||
+    !opponentId ||
+    !opponentName ||
+    !["win", "loss", "draw"].includes(result ?? "")
+  ) {
     res.status(400).json({ error: "Missing or invalid fields" });
     return;
   }
 
-  const walletAddress = req.session.walletAddress;
   const xp = typeof xpEarned === "number" ? Math.max(0, xpEarned) : 0;
   const gold = typeof goldEarned === "number" ? Math.max(0, goldEarned) : 0;
+  const addr = walletAddress.toLowerCase();
 
   try {
-    // Insert the match record.
     await db.insert(matchesTable).values({
-      walletAddress,
-      opponentId: opponentId!,
-      opponentName: opponentName!,
-      result: result!,
+      walletAddress: addr,
+      opponentId,
+      opponentName,
+      result,
       xpEarned: xp,
       goldEarned: gold,
     });
 
-    // Upsert the player row, accumulating XP and gold.
     await db
       .insert(playersTable)
-      .values({ walletAddress, xp, gold })
+      .values({ walletAddress: addr, xp, gold })
       .onConflictDoUpdate({
         target: playersTable.walletAddress,
         set: {

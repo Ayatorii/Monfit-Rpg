@@ -32,8 +32,8 @@ router.get("/", async (req, res) => {
         desc(sql`COALESCE(MAX(${playersTable.xp}), 0)`),
       );
 
-    // Attach rank numbers and find the caller's position.
-    const callerWallet = req.session.walletAddress?.toLowerCase() ?? null;
+    // Attach rank numbers. Caller identification requires auth (not yet re-implemented).
+    const callerWallet: string | null = null;
 
     const ranked = rows.map((row, i) => ({
       rank: i + 1,
