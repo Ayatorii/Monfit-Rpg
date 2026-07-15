@@ -48,7 +48,7 @@ app.use(
     store: new PgSession({
       pool,
       tableName: "sessions",
-      createTableIfMissing: false, // Table pre-created via migration.
+      createTableIfMissing: true, // Create the table automatically if it doesn't exist.
       errorLog: (...args: unknown[]) => console.error("[PgSession]", ...args),
     }),
     name: "monfit.sid",

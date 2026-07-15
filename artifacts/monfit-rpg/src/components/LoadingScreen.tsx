@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, MotionConfig, useReducedMotion } from "framer-motion";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount, useSignMessage, useChainId } from "wagmi";
 import { Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ export default function LoadingScreen() {
   const [, navigate] = useLocation();
 
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
   const { openConnectModal } = useConnectModal();
 
@@ -77,7 +78,7 @@ export default function LoadingScreen() {
         `Sign in to MONFIT RPG\n\n` +
         `URI: ${uri}\n` +
         `Version: 1\n` +
-        `Chain ID: 1\n` +
+        `Chain ID: ${chainId ?? 1}\n` +
         `Nonce: ${nonce}\n` +
         `Issued At: ${issuedAt}`;
 
