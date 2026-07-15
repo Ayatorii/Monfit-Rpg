@@ -46,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const attemptedForAddress = useRef<string | null>(null);
+  // Guards the SIWE effect from firing between signOut() clearing React state
+  // and wagmi propagating isConnected=false.  Without this, setUser(null)
+  // triggers the effect while the wallet is still technically "connected" in
+  // wagmi's view, causing signMessageAsync to throw "Connector not connected".
+  const signingOut = useRef(false);
 
   const refreshUser = useCallback(async () => {
     const session = await getAuthSession();
@@ -76,7 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Run the SIWE flow whenever a wallet connects and we don't have a
   // matching session yet.
   useEffect(() => {
-    if (!isConnected || !address) return;
+    if (!isConnected || !address) {
+      // Wagmi confirmed disconnect — safe to allow the next sign-in attempt.
+      signingOut.current = false;
+      return;
+    }
+    // signOut() sets this before clearing React state so the effect doesn't
+    // fire between "user cleared" and "wagmi isConnected=false".
+    if (signingOut.current) return;
     if (user?.walletAddress.toLowerCase() === address.toLowerCase()) return;
     if (attemptedForAddress.current === address) return;
 
@@ -116,6 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Set before any state changes so the SIWE effect is suppressed during the
+    // window between setUser(null) re-rendering and wagmi propagating
+    // isConnected=false.  Cleared inside the SIWE effect when disconnect lands.
+    signingOut.current = true;
     await logoutAuth();
     setUser(null);
     setStatus("signed-out");
