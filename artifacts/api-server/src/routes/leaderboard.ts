@@ -1,8 +1,8 @@
-import { Router } from "express";
+import { Router, type IRouter } from "express";
 import { db, matchesTable, playersTable } from "@workspace/db";
 import { eq, sql, desc } from "drizzle-orm";
 
-const router = Router();
+const router: IRouter = Router();
 
 /**
  * GET /api/leaderboard
@@ -32,8 +32,8 @@ router.get("/", async (req, res) => {
         desc(sql`COALESCE(MAX(${playersTable.xp}), 0)`),
       );
 
-    // Attach rank numbers. Caller identification requires auth (not yet re-implemented).
-    const callerWallet: string | null = null;
+    // Attach rank numbers, and the signed-in caller's own rank if any.
+    const callerWallet: string | null = req.session.walletAddress ?? null;
 
     const ranked = rows.map((row, i) => ({
       rank: i + 1,
@@ -52,7 +52,7 @@ router.get("/", async (req, res) => {
 
     res.json({ ranked, callerRank });
   } catch (err) {
-    console.error("[leaderboard]", err);
+    req.log.error({ err }, "Failed to load leaderboard");
     res.status(500).json({ error: "Internal server error" });
   }
 });

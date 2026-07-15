@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { MotionConfig } from "framer-motion";
 import { NAV_ITEMS } from "@/lib/nav-items";
 import { cn } from "@/lib/utils";
+import AccountMenu from "@/components/nav/AccountMenu";
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -14,7 +15,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <nav
           role="navigation"
           aria-label="Main navigation"
-          className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-60 md:border-r md:border-surface-border md:bg-surface md:py-6 md:px-3 md:gap-1"
+          className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-60 md:border-r md:border-surface-border md:bg-surface md:py-6 md:px-3 md:gap-1 md:pb-4"
         >
           <div className="px-3 mb-6">
             <span className="font-display font-black text-xl tracking-tight text-white">
@@ -42,7 +43,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          <div className="mt-auto pt-2">
+            <AccountMenu />
+          </div>
         </nav>
+
+        {/* Mobile account strip */}
+        <div className="md:hidden sticky top-0 z-10 px-4 pt-3">
+          <AccountMenu />
+        </div>
 
         {/* Main content */}
         <main className="md:pl-60 pb-24 md:pb-0 min-h-[100dvh]">

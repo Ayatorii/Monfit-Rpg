@@ -1,44 +1,36 @@
-import { Router } from "express";
-import { db, matchesTable, playersTable } from "@workspace/db";
-import { sql } from "drizzle-orm";
+import { Router, type IRouter } from "express";
+import { db, matchesTable } from "@workspace/db";
+import { RecordArenaMatchBody } from "@workspace/api-zod";
 
-const router = Router();
+const router: IRouter = Router();
 
 /**
  * POST /api/arena/match
- * Record a completed arena match and upsert the player's cumulative XP + gold.
- * walletAddress must be supplied in the request body.
- * (Auth is not enforced yet — will be re-added with the wallet auth redo.)
+ * Records a completed arena match for the signed-in wallet. Insert-only —
+ * currency rewards are applied separately via POST /players/me/adjust so
+ * gold/xp are never double-credited.
  */
-router.post("/match", async (req, res) => {
-  const { walletAddress, opponentId, opponentName, result, xpEarned, goldEarned } =
-    req.body as {
-      walletAddress?: string;
-      opponentId?: string;
-      opponentName?: string;
-      result?: string;
-      xpEarned?: number;
-      goldEarned?: number;
-    };
+router.post("/match", async (req, res): Promise<void> => {
+  const sessionWallet = req.session.walletAddress;
 
-  if (
-    !walletAddress ||
-    !opponentId ||
-    !opponentName ||
-    !result ||
-    !["win", "loss", "draw"].includes(result)
-  ) {
+  if (!sessionWallet) {
+    res.status(400).json({ error: "Not signed in" });
+    return;
+  }
+
+  const parsed = RecordArenaMatchBody.safeParse(req.body);
+  if (!parsed.success) {
     res.status(400).json({ error: "Missing or invalid fields" });
     return;
   }
 
-  const xp = typeof xpEarned === "number" ? Math.max(0, xpEarned) : 0;
-  const gold = typeof goldEarned === "number" ? Math.max(0, goldEarned) : 0;
-  const addr = walletAddress.toLowerCase();
+  const { opponentId, opponentName, result, xpEarned, goldEarned } = parsed.data;
+  const xp = Math.max(0, xpEarned ?? 0);
+  const gold = Math.max(0, goldEarned ?? 0);
 
   try {
     await db.insert(matchesTable).values({
-      walletAddress: addr,
+      walletAddress: sessionWallet,
       opponentId,
       opponentName,
       result,
@@ -46,21 +38,9 @@ router.post("/match", async (req, res) => {
       goldEarned: gold,
     });
 
-    await db
-      .insert(playersTable)
-      .values({ walletAddress: addr, xp, gold })
-      .onConflictDoUpdate({
-        target: playersTable.walletAddress,
-        set: {
-          xp: sql`${playersTable.xp} + ${xp}`,
-          gold: sql`${playersTable.gold} + ${gold}`,
-          updatedAt: sql`now()`,
-        },
-      });
-
     res.json({ ok: true });
   } catch (err) {
-    console.error("[arena/match]", err);
+    req.log.error({ err }, "Failed to record arena match");
     res.status(500).json({ error: "Internal server error" });
   }
 });

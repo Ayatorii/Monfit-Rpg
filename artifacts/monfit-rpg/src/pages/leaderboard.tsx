@@ -1,26 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Swords } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { getLeaderboard } from "@workspace/api-client-react";
+import type { Leaderboard } from "@workspace/api-client-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type RankedPlayer = {
-  rank: number;
-  walletAddress: string;
-  wins: number;
-  losses: number;
-  draws: number;
-  score: number;
-  xp: number;
-  level: number;
-};
-
-type LeaderboardResponse = {
-  ranked: RankedPlayer[];
-  callerRank: number | null;
-};
+type RankedPlayer = Leaderboard["ranked"][number];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -144,11 +132,28 @@ function RankedRow({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
-  // No wallet auth yet — leaderboard shows empty state until a future
-  // re-implementation wires up the database and auth.
-  const data: LeaderboardResponse = { ranked: [], callerRank: null };
-  const isLoading = false;
-  const error: string | null = null;
+  const [data, setData] = useState<Leaderboard | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    getLeaderboard()
+      .then((res) => {
+        if (!cancelled) setData(res);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Failed to load leaderboard");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 md:py-8 flex flex-col gap-6">
@@ -248,7 +253,7 @@ export default function LeaderboardPage() {
               <RankedRow
                 key={player.walletAddress}
                 player={player}
-                isCurrentPlayer={false}
+                isCurrentPlayer={player.rank === data.callerRank}
               />
             ))}
           </motion.div>

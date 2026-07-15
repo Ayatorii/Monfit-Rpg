@@ -460,6 +460,8 @@ export default function ArenaPage() {
         opponentName: selectedNpc.name,
         result: battleLog.result,
         date: Date.now(),
+        xpEarned,
+        goldEarned,
       });
 
     }
