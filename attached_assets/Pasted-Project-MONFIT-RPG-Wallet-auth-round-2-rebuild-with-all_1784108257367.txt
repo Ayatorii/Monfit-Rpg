@@ -1,0 +1,35 @@
+Project: MONFIT RPG — Wallet auth, round 2 (rebuild with all known bugs pre-fixed)
+
+We removed the wallet auth stack after repeated sign-in failures. This is a clean re-implementation. The players/users/matches Drizzle schema was intentionally left intact during the removal — reuse it, don't recreate it from scratch (verify it's still there and matches what's needed before writing new schema).
+
+Known bugs from the failed first attempt — build these fixes in from the START this time, don't wait to discover them again:
+
+1. **API routing prefix**: before writing any frontend fetch calls, confirm the actual `previewPath` the api-server artifact is served under (check `artifacts/api-server/.replit-artifact/artifact.toml` or equivalent) and use that exact prefix consistently. Do not assume or hardcode a prefix — verify it against the actual config file first and report what you found.
+
+2. **Monad Testnet chain config**: import `monadTestnet` directly from `viem/chains` (it's also re-exported via `wagmi/chains`) — do not hand-write a `defineChain` config, do not default to Ethereum mainnet. chainId must be 10143. Verify this is what's actually active by logging `useChainId()` during a real connect and confirming it reads 10143, not 1.
+
+3. **Cross-origin cookies**: Replit's preview pane runs the app inside an iframe on a different origin (replit.com), making all API calls cross-site. The session cookie MUST be set with `sameSite: "none", secure: true` (not `"lax"`), and EVERY fetch call to the backend (nonce, verify, session, logout) MUST include `credentials: "include"`. Missing this causes the nonce cookie to never reach the verify request, producing a false "invalid nonce" failure. Apply this from the first line of code, not as a later fix.
+
+4. **Sessions table via proper migration**: create the `sessions` table (for connect-pg-simple or whatever session store is used) through an actual Drizzle migration file, not a manual one-off SQL command — this needs to survive a fresh database/future Neon migration.
+
+5. **WalletConnect Project ID**: a Reown/WalletConnect Cloud project ID has already been created. Add it as an environment variable (e.g. `VITE_WALLETCONNECT_PROJECT_ID`) in Replit Secrets, and wire it into the wagmi/RainbowKit config so WalletConnect (QR-code / mobile wallet) connections work, not just injected browser wallets. Keep injected wallets (MetaMask, Rabby) as an option too — both should work.
+
+Auth flow (same design as before, rebuild cleanly)
+1. "Connect Wallet" button on the Loading Screen, opens RainbowKit modal (both injected wallets and WalletConnect QR available).
+2. On connect: GET nonce → construct SIWE message (domain/uri must match the actual current origin — log both and confirm they match before signing) → wallet signs → POST verify → session established.
+3. New wallet address → create `users`/`players` row with defaults. Returning wallet → load existing state.
+4. Keep the "Continue as Guest" option — no forced wallet wall.
+5. Reconnect Train/Shop/Character/Arena to write through to the database via the wallet-keyed player row (same wiring plan as the original Step 7 spec) instead of pure local state.
+6. Leaderboard should now show real data once matches exist for a signed-in wallet.
+
+Verification — REAL browser test required, not a script
+Do not use a hardcoded test wallet (e.g. Hardhat's default test account) to "prove" this works. I need an actual click-through in a real browser with a real wallet extension. Report, with actual pasted output/screenshots at each step:
+1. Click Connect Wallet → RainbowKit modal opens with wallet options visible.
+2. Select MetaMask → extension prompts for account connection → approve.
+3. A SECOND prompt appears asking to sign a "Sign-In With Ethereum" message — paste the exact message text MetaMask displays (domain, URI, chain ID, nonce should all be visible in it).
+4. After signing, confirm POST /api/auth/verify returns 200 (paste actual response) and the app navigates to /train.
+5. Confirm Gold/XP/Level shown match a fresh players row in the database for that wallet.
+6. Hard-refresh the page — confirm the session persists (stays on /train, doesn't bounce to the Loading Screen).
+7. Run `$impeccable audit` on the Loading Screen and report the score.
+
+Do not report this as done until you've completed the real click-through in points 1-6 yourself and can show actual evidence, not assumed success.
