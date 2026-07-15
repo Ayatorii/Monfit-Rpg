@@ -1,0 +1,12 @@
+New Vercel build log shows progress but still fails: "No entrypoint found in output directory: 'artifacts/monfit-rpg/dist/public'". Two things to fix, confirmed from the actual log:
+
+1. **Wrong output path**: the real static build output is at `artifacts/monfit-rpg/dist/public/` (confirmed — this exact log shows `dist/public/index.html`, `dist/public/assets/*.js` etc. being generated), not `artifacts/monfit-rpg/dist/` as previously assumed. Update vercel.json's `outputDirectory` (or the Vercel Dashboard Output Directory setting, whichever is the actual source of truth in this project) to the correct full path INCLUDING `/public`. Also check the Vite config (`vite.config.ts`) — this `/public` subfolder inside `dist` is likely explicitly configured there (e.g. `build.outDir: "dist/public"`) rather than Vite's default `dist`; confirm this so the path used in vercel.json is verified against the actual vite.config.ts, not just inferred from the log.
+
+2. **api-server build step is missing entirely** from this log — compare against the previous build log, which built BOTH `@workspace/api-server` (via esbuild → dist/index.mjs) AND `@workspace/monfit-rpg` (via vite build). This log only shows the `@workspace/monfit-rpg` build running. This strongly suggests the Vercel Project's Root Directory setting was narrowed to `artifacts/monfit-rpg` only (or vercel.json's build configuration now only targets the frontend), which would mean the API is not being built/deployed at all anymore. Check the current Vercel Dashboard "Root Directory" setting and the current vercel.json — report exactly what changed between the previous attempt and this one that caused api-server to stop being built. Fix so BOTH the frontend static output AND the api-server serverless function are built and deployed together.
+
+After fixing both, before reporting done:
+- Confirm the build log shows both `@workspace/api-server` and `@workspace/monfit-rpg` build steps completing.
+- Confirm the deployment succeeds (no "No entrypoint found" error).
+- Confirm the live URL serves the frontend at "/" AND a real API route (e.g. /api/auth/session) returns actual JSON, not a 404 or the frontend HTML.
+
+Paste the actual vercel.json content and actual vite.config.ts build.outDir setting as part of your report, don't just say "fixed".
