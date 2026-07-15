@@ -360,15 +360,7 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  // Always send cookies, even cross-origin — the session cookie (SameSite=None;
-  // Secure) is how wallet-auth sessions are recognized, and Vite/browser fetch
-  // defaults to "same-origin" otherwise.
-  const response = await fetch(input, {
-    credentials: "include",
-    ...init,
-    method,
-    headers,
-  });
+  const response = await fetch(input, { ...init, method, headers });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);
