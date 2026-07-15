@@ -1,0 +1,504 @@
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Trophy, Swords, Medal } from "lucide-react";
+import { Link } from "wouter";
+import { cn } from "@/lib/utils";
+import { getLeaderboard } from "@workspace/api-client-react";
+import type { Leaderboard } from "@workspace/api-client-react";
+import { useAccount, usePublicClient } from "wagmi";
+import { parseAbi } from "viem";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type RankedPlayer = Leaderboard["ranked"][number];
+
+interface OwnedTrophy {
+  tokenId: bigint;
+  season: bigint;
+  rank: number;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const TROPHY_CONTRACT_ADDRESS = import.meta.env
+  .VITE_TROPHY_CONTRACT_ADDRESS as `0x${string}` | undefined;
+
+const TROPHY_ABI = parseAbi([
+  "function balanceOf(address owner) view returns (uint256)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function getTrophyData(uint256 tokenId) view returns (uint256 season, uint8 rank)",
+]);
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function shortenAddress(addr: string): string {
+  if (addr.length < 12) return addr;
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function rankLabel(rank: number): string {
+  if (rank === 1) return "1st";
+  if (rank === 2) return "2nd";
+  if (rank === 3) return "3rd";
+  return `${rank}th`;
+}
+
+/** CSS variable colors reusing existing rarity/resource token convention. */
+const RANK_STYLES: Record<
+  number,
+  { labelClass: string; accentStyle: React.CSSProperties; badgeClass: string }
+> = {
+  1: {
+    labelClass: "text-gold",
+    accentStyle: {
+      borderColor: "hsl(var(--gold) / 0.5)",
+      backgroundColor: "hsl(var(--gold) / 0.06)",
+    },
+    badgeClass: "text-gold border-gold/40",
+  },
+  2: {
+    labelClass: "text-rarity-rare",
+    accentStyle: {
+      borderColor: "hsl(var(--rarity-rare) / 0.5)",
+      backgroundColor: "hsl(var(--rarity-rare) / 0.06)",
+    },
+    badgeClass: "text-rarity-rare border-rarity-rare/40",
+  },
+  3: {
+    labelClass: "text-rarity-epic",
+    accentStyle: {
+      borderColor: "hsl(var(--rarity-epic) / 0.5)",
+      backgroundColor: "hsl(var(--rarity-epic) / 0.06)",
+    },
+    badgeClass: "text-rarity-epic border-rarity-epic/40",
+  },
+};
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function RowSkeleton() {
+  return (
+    <div
+      className="flex items-center gap-4 px-4 py-3.5 rounded-lg border border-card-border bg-card"
+      aria-hidden="true"
+    >
+      <div className="w-7 h-4 rounded bg-muted animate-pulse shrink-0" />
+      <div className="flex-1 flex flex-col gap-1.5">
+        <div className="w-36 h-3.5 rounded bg-muted animate-pulse" />
+        <div className="w-20 h-3 rounded bg-muted animate-pulse" />
+      </div>
+      <div className="w-16 h-3.5 rounded bg-muted animate-pulse" />
+    </div>
+  );
+}
+
+// ─── Ranked Row ───────────────────────────────────────────────────────────────
+
+function RankedRow({
+  player,
+  isCurrentPlayer,
+}: {
+  player: RankedPlayer;
+  isCurrentPlayer: boolean;
+}) {
+  const rankStyle = RANK_STYLES[player.rank];
+  const isTop3 = player.rank <= 3;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-4 px-4 py-3.5 rounded-lg border transition-colors",
+        isCurrentPlayer
+          ? "border-primary/40 bg-primary/8"
+          : isTop3
+            ? "border-card-border bg-card"
+            : "border-card-border bg-card",
+      )}
+      style={isTop3 && !isCurrentPlayer ? rankStyle?.accentStyle : undefined}
+      role="row"
+      aria-label={`Rank ${player.rank}: ${shortenAddress(player.walletAddress)}, Level ${player.level}, ${player.wins} wins, ${player.losses} losses, score ${player.score}`}
+    >
+      {/* Rank number */}
+      <span
+        className={cn(
+          "font-display font-black text-lg w-7 shrink-0 tabular-nums leading-none",
+          isTop3 ? rankStyle?.labelClass : "text-muted-foreground",
+        )}
+        aria-hidden="true"
+      >
+        {player.rank}
+      </span>
+
+      {/* Identity */}
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm text-foreground truncate">
+            {shortenAddress(player.walletAddress)}
+          </span>
+          {isCurrentPlayer && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-text bg-primary/15 border border-primary/30 rounded px-1.5 py-0.5 shrink-0">
+              You
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          Lv.{player.level} · {player.wins}W / {player.losses}L
+          {player.draws > 0 ? ` / ${player.draws}D` : ""}
+        </span>
+      </div>
+
+      {/* Score */}
+      <div className="flex flex-col items-end shrink-0">
+        <span
+          className={cn(
+            "font-display font-bold text-base tabular-nums",
+            player.score > 0
+              ? "text-foreground"
+              : player.score < 0
+                ? "text-muted-foreground"
+                : "text-muted-foreground",
+          )}
+        >
+          {player.score > 0 ? `+${player.score}` : player.score}
+        </span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+          score
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Trophy Card ──────────────────────────────────────────────────────────────
+
+function TrophyCard({ trophy }: { trophy: OwnedTrophy }) {
+  const rankStyle = RANK_STYLES[trophy.rank] ?? RANK_STYLES[3];
+  const isTop3 = trophy.rank <= 3;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 px-4 py-3 rounded-lg border",
+        isTop3 ? "" : "border-card-border bg-card",
+      )}
+      style={isTop3 ? rankStyle.accentStyle : undefined}
+      aria-label={`Season ${trophy.season} trophy, rank ${rankLabel(trophy.rank)}`}
+    >
+      <Medal
+        className={cn(
+          "h-5 w-5 shrink-0",
+          isTop3 ? rankStyle.labelClass : "text-muted-foreground",
+        )}
+        aria-hidden="true"
+      />
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <span className="text-sm font-semibold text-foreground">
+          Season {trophy.season.toString()} Trophy
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {rankLabel(trophy.rank)} place · Token #{trophy.tokenId.toString()}
+        </span>
+      </div>
+      <span
+        className={cn(
+          "text-sm font-display font-black tabular-nums",
+          isTop3 ? rankStyle.labelClass : "text-muted-foreground",
+        )}
+        aria-hidden="true"
+      >
+        #{rankLabel(trophy.rank)}
+      </span>
+    </div>
+  );
+}
+
+// ─── My Trophies Section ──────────────────────────────────────────────────────
+
+function MyTrophies() {
+  const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
+  const [trophies, setTrophies] = useState<OwnedTrophy[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isConnected || !address || !TROPHY_CONTRACT_ADDRESS || !publicClient) {
+      setTrophies([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const balance = await publicClient.readContract({
+          address: TROPHY_CONTRACT_ADDRESS,
+          abi: TROPHY_ABI,
+          functionName: "balanceOf",
+          args: [address],
+        });
+
+        if (balance === 0n) {
+          if (!cancelled) {
+            setTrophies([]);
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        const tokenIds = await Promise.all(
+          Array.from({ length: Number(balance) }, (_, i) =>
+            publicClient.readContract({
+              address: TROPHY_CONTRACT_ADDRESS!,
+              abi: TROPHY_ABI,
+              functionName: "tokenOfOwnerByIndex",
+              args: [address, BigInt(i)],
+            }),
+          ),
+        );
+
+        const results = await Promise.all(
+          tokenIds.map((tokenId) =>
+            publicClient
+              .readContract({
+                address: TROPHY_CONTRACT_ADDRESS!,
+                abi: TROPHY_ABI,
+                functionName: "getTrophyData",
+                args: [tokenId],
+              })
+              .then(([season, rank]) => ({
+                tokenId,
+                season,
+                rank: Number(rank),
+              })),
+          ),
+        );
+
+        if (!cancelled) {
+          setTrophies(results);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError("Failed to load trophies from chain");
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [address, isConnected, publicClient]);
+
+  // Contract not deployed yet
+  if (!TROPHY_CONTRACT_ADDRESS) return null;
+
+  // Not connected
+  if (!isConnected) {
+    return (
+      <section aria-label="My Trophies" className="flex flex-col gap-3">
+        <h2 className="font-display font-black text-xl text-foreground uppercase tracking-tight">
+          My Trophies
+        </h2>
+        <div className="rounded-lg border border-card-border bg-card px-4 py-5 text-center">
+          <p className="text-sm text-muted-foreground">
+            Connect your wallet to see your Season Trophies.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="My Trophies" className="flex flex-col gap-3">
+      <h2 className="font-display font-black text-xl text-foreground uppercase tracking-tight flex items-center gap-2">
+        <Trophy className="h-5 w-5 text-gold" aria-hidden="true" />
+        My Trophies
+      </h2>
+
+      {isLoading && (
+        <div
+          role="status"
+          aria-label="Loading trophies"
+          className="flex flex-col gap-2"
+        >
+          <RowSkeleton />
+          <RowSkeleton />
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-4">
+          <p className="text-sm text-destructive font-medium">{error}</p>
+        </div>
+      )}
+
+      {!isLoading && !error && trophies.length === 0 && (
+        <div className="rounded-lg border border-card-border bg-card px-4 py-5 text-center">
+          <p className="text-sm text-muted-foreground">
+            No trophies yet — climb the Arena leaderboard to earn one.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !error && trophies.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className="flex flex-col gap-2"
+          role="list"
+          aria-label="Owned season trophies"
+        >
+          {trophies.map((trophy) => (
+            <TrophyCard key={trophy.tokenId.toString()} trophy={trophy} />
+          ))}
+        </motion.div>
+      )}
+    </section>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function LeaderboardPage() {
+  const [data, setData] = useState<Leaderboard | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    getLeaderboard()
+      .then((res) => {
+        if (!cancelled) setData(res);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Failed to load leaderboard");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6 md:py-8 flex flex-col gap-8">
+      {/* Leaderboard header */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="flex flex-col gap-1"
+      >
+        <h1 className="font-display font-black text-3xl text-white uppercase tracking-tight">
+          Leaderboard
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Top fighters this season — ranked by Arena score
+        </p>
+
+        {/* Current player callout */}
+        {!isLoading && data && data.callerRank !== null && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2, delay: 0.1, ease: "easeOut" }}
+            className="mt-2 inline-flex items-center gap-2 self-start rounded-lg border border-primary/30 bg-primary/10 px-3 py-2"
+          >
+            <Trophy
+              className="h-4 w-4 text-primary-text shrink-0"
+              aria-hidden="true"
+            />
+            <span className="text-sm font-semibold text-primary-text">
+              You&rsquo;re ranked{" "}
+              <span className="font-black">#{data.callerRank}</span>
+            </span>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Ranked list */}
+      <section aria-label="Ranked players" aria-busy={isLoading}>
+        {isLoading && (
+          <div
+            role="status"
+            aria-label="Loading leaderboard"
+            className="flex flex-col gap-2"
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <RowSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-5 text-center">
+            <p className="text-sm text-destructive font-medium">
+              Failed to load leaderboard — please try refreshing the page.
+            </p>
+          </div>
+        )}
+
+        {!isLoading && !error && data && data.ranked.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-center gap-4 rounded-lg border border-card-border bg-card px-6 py-10 text-center"
+          >
+            <Swords className="h-10 w-10 text-muted-foreground" aria-hidden="true" />
+            <div className="flex flex-col gap-1">
+              <p className="font-display font-bold text-lg text-foreground">
+                No battles fought yet
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Be the first to enter the Arena and claim a spot on the board.
+              </p>
+            </div>
+            <Link
+              href="/arena"
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-5 py-2.5",
+                "font-display font-bold text-base text-primary-text uppercase tracking-wide",
+                "transition-colors hover:bg-primary/15",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              )}
+            >
+              <Swords className="h-4 w-4" aria-hidden="true" />
+              Go to Arena
+            </Link>
+          </motion.div>
+        )}
+
+        {!isLoading && !error && data && data.ranked.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            role="table"
+            aria-label="Arena leaderboard"
+            className="flex flex-col gap-2"
+          >
+            {data.ranked.map((player) => (
+              <RankedRow
+                key={player.walletAddress}
+                player={player}
+                isCurrentPlayer={player.rank === data.callerRank}
+              />
+            ))}
+          </motion.div>
+        )}
+      </section>
+
+      {/* My Trophies — on-chain read via viem */}
+      <MyTrophies />
+    </div>
+  );
+}
