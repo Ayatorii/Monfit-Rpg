@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
-export const API_BASE = "/api-server";
+export const API_BASE = "";
 
 export type AuthMode = "wallet" | "guest" | null;
 
