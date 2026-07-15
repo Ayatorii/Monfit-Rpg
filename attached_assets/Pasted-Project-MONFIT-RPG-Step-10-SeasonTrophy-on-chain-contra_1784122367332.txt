@@ -1,0 +1,51 @@
+Project: MONFIT RPG — Step 10: SeasonTrophy on-chain contract
+
+Core loop with wallet auth is fully working end-to-end (Train/Shop/Character/Arena/Leaderboard all writing to Postgres, keyed by wallet address). This step adds the required on-chain component for the hackathon submission.
+
+Goal
+An ERC-721 contract that mints a "Season Trophy" NFT to top-ranked players (from the real Leaderboard data), deployed and verified on Monad Testnet. This must be a real, working mint — not a UI mockup.
+
+Contract: SeasonTrophy.sol
+- ERC-721 (use OpenZeppelin's implementation via Foundry's `forge install OpenZeppelin/openzeppelin-contracts`).
+- `owner`-gated mint function: `mintTrophy(address player, uint256 season, uint8 rank) external onlyOwner returns (uint256 tokenId)`.
+- Store `season` and `rank` for each minted token (e.g. a mapping `tokenId => TrophyData { uint256 season; uint8 rank; }`), so a token's metadata can reflect what it actually represents.
+- `tokenURI` can return a simple on-chain-generated string/JSON for now (doesn't need IPFS-hosted art for a hackathon) — e.g. a data URI with the season/rank encoded, or a placeholder metadata JSON hosted from the app's own backend if that's simpler. Keep this minimal; the mechanic mattering more than the art here.
+- Owner of the contract = a dedicated backend wallet (not the deployer's personal wallet necessarily, but can be for simplicity — your call, note which in the report).
+
+Foundry setup
+```
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+evm_version = "prague"
+solc_version = "0.8.28"
+
+[rpc_endpoints]
+monad_testnet = "https://testnet-rpc.monad.xyz"
+```
+- Write a deploy script (`script/Deploy.s.sol`).
+- Fund the deployer wallet via the Monad testnet faucet (https://faucet.monad.xyz) before deploying — confirm balance first.
+- Deploy: `forge script script/Deploy.s.sol:DeployScript --rpc-url https://testnet-rpc.monad.xyz --private-key $PRIVATE_KEY --broadcast`
+- Verify the deployed contract using the devnads verification API (covers MonadVision, Socialscan, Monadscan in one call) rather than manual `forge verify-contract` — if the why-monad or a Monad-specific skill documents this endpoint, use that; otherwise look up the current devnads verification API endpoint.
+- Report the final deployed contract address clearly — this goes directly into the hackathon submission form.
+
+Backend integration
+- New API route (e.g. `POST /api/admin/mint-season-trophies`) — a demo-trigger endpoint (doesn't need real auth hardening for a hackathon, but shouldn't be trivially public either; a simple shared-secret header check is fine) that:
+  1. Queries the current Leaderboard ranking (reuse the existing leaderboard aggregation logic from Step 9).
+  2. Takes the top N (e.g. top 3) wallet addresses.
+  3. Calls `mintTrophy` on-chain for each, using the backend's private key (stored in Replit Secrets, never in code).
+  4. Returns the transaction hashes.
+
+Frontend
+- Add a small "My Trophies" section (could live on the Character or Leaderboard screen — pick whichever fits better, your call) that reads the connected wallet's owned trophies directly via `viem`'s `readContract`, no backend proxy needed for this read. Show season + rank for each owned trophy. Empty state if none owned yet.
+
+Apply standing anti-slop + accessibility rules to any new UI (see attached rules file).
+
+Verify (real evidence, not "done")
+1. Confirm the contract is deployed — paste the actual contract address and a link to it on the Monad testnet explorer.
+2. Confirm verification succeeded — paste confirmation from the devnads API response or the explorer showing verified source code.
+3. Trigger the mint endpoint for real (with actual leaderboard data from real wallet matches played earlier) — paste the actual transaction hash(es) and confirm they're visible on the explorer.
+4. Load "My Trophies" for a wallet that received one — confirm it actually displays the real on-chain data, not a cached/local guess.
+
+Deliverable: deployed + verified SeasonTrophy contract on Monad Testnet, a working mint flow driven by real Leaderboard data, and a frontend view of owned trophies read directly from the chain.
