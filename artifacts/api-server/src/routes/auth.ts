@@ -27,7 +27,19 @@ function toAuthUser(walletAddress: string, player: { xp: number; gold: number })
 router.get("/nonce", (req, res): void => {
   const nonce = generateSiweNonce();
   req.session.nonce = nonce;
-  res.json({ nonce });
+  // Explicitly save before responding so the nonce is durably written to the
+  // PostgreSQL session store before the client receives it.  Without this,
+  // res.json() triggers express-session's async save in the background — the
+  // browser can receive the nonce and immediately POST /verify before the DB
+  // write has landed, causing "No pending nonce for this session".
+  req.session.save((err) => {
+    if (err) {
+      req.log.error({ err }, "Failed to save nonce to session");
+      res.status(500).json({ error: "Failed to create nonce" });
+      return;
+    }
+    res.json({ nonce });
+  });
 });
 
 /**
