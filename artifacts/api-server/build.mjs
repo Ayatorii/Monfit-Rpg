@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -121,6 +121,20 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  // Emit a TypeScript declaration sidecar for the serverless bundle so that
+  // api/index.ts (which imports dist/serverless.mjs) satisfies noImplicitAny.
+  // TypeScript's moduleResolution:bundler looks for dist/serverless.d.mts
+  // right next to the .mjs file — this is more reliable than ambient declarations.
+  await writeFile(
+    path.resolve(distDir, "serverless.d.mts"),
+    [
+      "type Handler = (event: object, context: object) => Promise<object>;",
+      "declare const handler: Handler;",
+      "export default handler;",
+      "",
+    ].join("\n"),
+  );
 }
 
 buildAll().catch((err) => {
