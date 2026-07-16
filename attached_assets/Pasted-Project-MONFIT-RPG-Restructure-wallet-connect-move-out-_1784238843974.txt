@@ -1,0 +1,33 @@
+Project: MONFIT RPG — Restructure wallet connect: move out of Loading Screen, into the app itself
+
+Two changes combined:
+
+## 1. Loading Screen becomes simple — no wallet logic here at all
+- Remove ALL wallet connect UI, RainbowKit modal triggers, sign-in flow, and auto-reconnect logic from the Loading Screen entirely.
+- Loading Screen now shows: logo, title, tagline, and a single "Start" button.
+- Clicking "Start" navigates directly into the app (Train tab) in guest/local mode — no wallet involved at this point at all. This removes the fragile "wallet auto-reconnect fires immediately on page load" race condition entirely, since nothing wallet-related runs until the user is already deep in the app and explicitly asks for it.
+
+## 2. Wallet Connect moves into the app's persistent header
+- Add a "Connect Wallet" element to the persistent header/top bar that's visible across all 5 tabs (Train/Character/Shop/Arena/Leaderboard) — same header area that already shows Gold/XP.
+- When not connected: show a compact "Connect Wallet" button in the header.
+- When connected: show a shortened wallet address (e.g. `0x1234...abcd`) with a way to disconnect (dropdown or click-to-disconnect).
+- Clicking "Connect Wallet" here opens the RainbowKit modal and runs the exact same SIWE flow as before (nonce → sign → verify → session), just triggered from this new location instead of the Loading Screen.
+- On successful connect: fetch the wallet's saved Gold/XP/Level/inventory from the database and merge it into the current session (replacing local guest state) — same behavior as before, just triggered later in the user's session rather than at app launch.
+- If the user was playing as guest and connects a wallet mid-session with existing local guest progress, keep the existing migration behavior (migrate local guest progress into the new database row) if that was already implemented — confirm and preserve this.
+
+## 3. Clean reinstall of RainbowKit + wagmi (same as requested before, do this fresh regardless)
+- Reinstall `@rainbow-me/rainbowkit`, `wagmi`, `viem` at current compatible versions.
+- Rebuild the wagmi config from RainbowKit's current standard `getDefaultConfig` pattern, monadTestnet from viem/chains, WalletConnect project ID from env.
+- CRITICAL: audit the actual sign-message call and confirm it uses wagmi's `useSignMessage`/`signMessageAsync` hook (connector-aware), NOT a direct `window.ethereum.request(...)` call. A direct window.ethereum call is why multiple installed wallet extensions caused conflicts before — the wagmi hook approach does not have this problem regardless of how many wallet extensions are installed. Report which one the previous code was actually doing.
+- Keep the hard timeout + clear error/retry state around the sign request (don't silently hang, same as before).
+- Since sign-in is now user-initiated only (no more auto-reconnect-triggered signing on page load), the earlier guard-against-auto-reconnect logic can likely be simplified or removed — confirm what's actually still needed given the new flow and clean up dead logic rather than leaving unused guards in place.
+
+Verify (real evidence)
+1. Fresh page load → Loading Screen shows only logo/title/Start button, no wallet UI, no console errors.
+2. Click Start → lands on Train in guest mode immediately, no wallet prompt.
+3. From within Train (or any tab), click "Connect Wallet" in the header → modal opens → select a wallet → signature popup actually appears → sign → header updates to show the connected address → Gold/XP/Level update to reflect saved DB data.
+4. Test with BOTH Rabby and Phantom enabled simultaneously (do not ask the user to disable anything) — confirm connecting with Rabby specifically works correctly and the signature request isn't affected by Phantom also being installed.
+5. Disconnect from the header, confirm it cleanly returns to guest state without errors.
+6. Refresh mid-session while connected — confirm session persists correctly (still connected, correct data) without any stuck states.
+
+Report actual results for each point — this needs to actually work with multiple wallets installed, not "works if you disable X".

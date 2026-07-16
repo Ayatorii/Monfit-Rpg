@@ -3,23 +3,17 @@ import { useAuth } from "@/lib/auth-context";
 import LoadingScreen from "@/components/LoadingScreen";
 
 /**
- * Gates the rest of the app behind wallet sign-in or an explicit "continue
- * as guest" choice. Guests keep playing with client-only state (see
- * game-context.tsx); signed-in wallets get server-persisted progress.
+ * Shows the splash screen while the session is loading or when no session
+ * exists. Passes through to the app for signed-in users, guests, and while
+ * a mid-session wallet sign-in is in progress (header shows the signing state).
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { status, error, signIn, continueAsGuest } = useAuth();
+  const { status, continueAsGuest } = useAuth();
 
-  if (status === "signed-in" || status === "guest") {
-    return <>{children}</>;
+  if (status === "loading" || status === "signed-out") {
+    return <LoadingScreen onStart={continueAsGuest} />;
   }
 
-  return (
-    <LoadingScreen
-      isSigningIn={status === "signing-in"}
-      errorMessage={error}
-      onSignIn={signIn}
-      onContinueAsGuest={continueAsGuest}
-    />
-  );
+  // signed-in | guest | signing-in — all render the app
+  return <>{children}</>;
 }
