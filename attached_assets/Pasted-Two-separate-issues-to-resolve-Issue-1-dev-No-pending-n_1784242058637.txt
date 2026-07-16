@@ -1,0 +1,16 @@
+Two separate issues to resolve:
+
+## Issue 1 (dev): "No pending nonce for this session" persists with current/correct code
+The code logic is correct (nonce → message → sign → verify, in order), so this is a cookie/session transport issue, not a logic bug. Hypothesis: the "Migrate API from serverless to traditional server architecture" commit may have reset the cross-origin cookie settings (`sameSite: "none"`, `secure: true` on the session cookie, and `credentials: "include"` on the frontend fetch calls) that were specifically needed because Replit's dev preview serves the frontend and backend on different origins (cross-site), assuming instead that a "traditional server" always serves both from the same origin.
+
+Check and report:
+1. The actual current session cookie config in the Express app (`app.ts` or wherever `express-session` is configured) — paste it. Confirm whether `sameSite`/`secure` are still set for cross-origin use, or were reset to defaults during the architecture migration.
+2. The actual current `custom-fetch.ts` (the Orval-generated API client's fetch wrapper) — paste it. Confirm `credentials: "include"` is still present on every request. Orval codegen can sometimes regenerate this file and silently drop manual patches if they weren't added via a proper Orval customization/mutator — check if that's what happened.
+3. If either was reset: restore the cross-origin-safe settings (sameSite: "none", secure: true, credentials: "include" everywhere) for the Replit dev environment specifically. If this needs to differ between Replit (cross-origin) and Vercel (same-origin, once properly configured), make it environment-aware rather than hardcoding one or the other.
+
+## Issue 2 (Vercel): clicking "Connect Wallet" does nothing at all — no modal, no error
+1. Check the browser console for ANY error at the moment of clicking (even if none appeared visually) — report exactly what's there, or confirm it's completely silent.
+2. Confirm `VITE_WALLETCONNECT_PROJECT_ID` is actually set in Vercel's Production environment variables (not just Preview/Development) — the current `wagmi-config.ts` throws an Error at module load if this is missing (`throw new Error("VITE_WALLETCONNECT_PROJECT_ID is not set...")`), which could silently break the whole wallet UI initialization on Vercel if the env var isn't correctly scoped to Production there.
+3. Confirm the "move wallet connect to header" restructuring was actually included in the commit that got pushed and deployed to Vercel — check that the button in the header is actually wired to trigger the RainbowKit modal (not a leftover/disconnected UI element from an incomplete merge).
+
+Report actual findings for both issues with real evidence (pasted config/code, actual console output) before applying fixes.

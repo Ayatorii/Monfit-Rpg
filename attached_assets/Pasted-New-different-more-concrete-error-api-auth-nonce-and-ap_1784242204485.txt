@@ -1,0 +1,18 @@
+New, different, more concrete error: /api/auth/nonce and /api/auth/session now return 504 FUNCTION_INVOCATION_TIMEOUT on Vercel. This is NOT a wallet/frontend bug — it's the serverless function hanging until Vercel's execution timeout, almost certainly on a database/session-store operation that never completes in time.
+
+Strong hypothesis: the "migrate to traditional server architecture" commit likely reverted the database connection to a traditional long-lived pool (e.g. `pg`'s `Pool`, or connect-pg-simple configured with a standard pg pool) instead of a serverless-appropriate connection method. A traditional connection pool works fine on Replit (long-running process) but hangs/times out on Vercel, where every function invocation is a fresh, short-lived process — attempting to establish or reuse pooled connections in that model commonly causes exactly this kind of timeout.
+
+Check and report
+1. What does the current database connection code actually use — `pg.Pool`, `@neondatabase/serverless`, or something else? Paste the actual connection setup code (wherever Drizzle's client is initialized).
+2. What does `connect-pg-simple` (the session store) use for its own database connection — does it share the same pool/client as the main DB connection, or open its own? Paste that config too.
+3. Confirm the actual Neon connection string being used in Vercel's Production env — does it use the pooled endpoint (`-pooler` in the hostname, as seen in the earlier confirmed working connection string `ep-solitary-lab-asa3arcz-pooler...`) or the direct (non-pooled) endpoint? Using the non-pooled endpoint in a serverless environment where many concurrent short-lived connections might occur is a common cause of exactly this kind of hang.
+4. If a traditional `pg.Pool` is in use: this needs to change to `@neondatabase/serverless`'s HTTP-based driver (or at minimum ensure the pool is configured with a very short idle/connection timeout appropriate for serverless, not a default long-lived pool) for anything running on Vercel. This may mean the DB client setup needs to be environment-aware (different client/pool config for Vercel/serverless vs a traditional persistent server on Replit), OR fully standardized on the serverless-safe driver everywhere since it also works fine in traditional environments.
+
+Fix the actual root cause (don't just increase the function timeout as a band-aid — Vercel's max timeout is limited and this needs to actually resolve quickly, not just be given more time to hang).
+
+Verify
+1. GET /api/auth/nonce on the live Vercel URL returns fast (under 1-2s) with a 200 and real JSON, not a 504.
+2. Complete the full wallet sign-in flow on Vercel end to end.
+3. Confirm Replit dev still works correctly after this change (don't break the working environment while fixing Vercel).
+
+Report the actual current DB/session connection code before making changes.
