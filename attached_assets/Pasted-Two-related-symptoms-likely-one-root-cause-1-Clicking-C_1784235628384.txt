@@ -1,0 +1,18 @@
+Two related symptoms, likely one root cause:
+1. Clicking "Connect Wallet" and selecting a wallet shows "Confirm the signature in your wallet..." but the actual wallet extension popup never appears.
+2. After a page refresh (with a wallet previously connected), the app immediately re-enters this same "Confirm the signature..." stuck state without any user action.
+
+Hypothesis: wagmi persists connection state to localStorage and auto-reconnects on page load by default. If the app's logic triggers the SIWE sign request automatically whenever a wallet connection is detected (including wagmi's silent auto-reconnect on refresh), and the actual `signMessage` call isn't successfully reaching the injected wallet provider (possibly due to the "Cannot redefine property: ethereum" conflict seen in the console, from multiple wallet extensions competing for `window.ethereum`), the app gets stuck waiting on a promise that never resolves or rejects — with no timeout and no error surfaced to the UI.
+
+Debug and fix
+1. Add explicit console logging immediately before and after the `signMessage` call (or wagmi's `useSignMessage`/`signMessageAsync`) so we can see in the console whether it's actually being invoked, and whether it ever resolves, rejects, or just hangs silently. Reproduce and paste the actual console output.
+
+2. Check whether `window.ethereum` is actually defined and points to a working provider at the moment `signMessage` is called — log `window.ethereum` right before the call. If multiple wallet extensions are fighting over `window.ethereum` (confirmed conflict in the console: "Cannot redefine property: ethereum" from evmAsk.js, likely from a different extension like Auro Wallet), the provider wagmi is trying to call may not be the one the user actually has focused/selected, or may be broken entirely. Check which specific connector/provider is active when this hangs.
+
+3. Add a timeout + error handling around the sign request: if signing doesn't resolve within a reasonable window (e.g. 30-60s), surface a clear error to the user ("Signature request timed out or was not received by your wallet — try again") instead of hanging on "Confirm the signature..." indefinitely. This turns a silent hang into a recoverable, visible failure.
+
+4. Fix the refresh behavior specifically: confirm what triggers the sign flow to auto-fire on page load. If it's wagmi's auto-reconnect combined with an effect that immediately calls signMessage whenever a connection exists, add a guard so it doesn't automatically retry a sign that already failed/hung before — e.g. don't re-trigger signing on mere reconnect if there's no valid session yet; instead show the idle "Connect Wallet" state and let the user explicitly retry, rather than silently getting stuck again.
+
+5. Once fixed, test disabling all other wallet browser extensions except the one being tested (to rule out the window.ethereum conflict as a contributing factor) and report whether that changes anything, alongside the code-level fix from points 1-4.
+
+Report actual console output and the specific root cause found, not just "fixed".

@@ -8,7 +8,7 @@ import LoadingScreen from "@/components/LoadingScreen";
  * game-context.tsx); signed-in wallets get server-persisted progress.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { status, error, continueAsGuest } = useAuth();
+  const { status, error, signIn, continueAsGuest } = useAuth();
 
   if (status === "signed-in" || status === "guest") {
     return <>{children}</>;
@@ -18,6 +18,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     <LoadingScreen
       isSigningIn={status === "signing-in"}
       errorMessage={error}
+      onSignIn={signIn}
       onContinueAsGuest={continueAsGuest}
     />
   );

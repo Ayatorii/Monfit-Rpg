@@ -8,6 +8,13 @@ type Props = {
   /** true while the SIWE sign-in flow is in progress. */
   isSigningIn: boolean;
   errorMessage: string | null;
+  /**
+   * Called when the user clicks "Connect Wallet" — arms the userInitiatedSignIn
+   * flag in AuthContext so the SIWE effect is allowed to run once a wallet
+   * connects. Must be called before openConnectModal so the flag is set before
+   * wagmi reports isConnected=true.
+   */
+  onSignIn: () => void;
   onContinueAsGuest: () => void;
 };
 
@@ -15,7 +22,7 @@ type Props = {
  * Entry gate. Shown until the player either finishes wallet sign-in or
  * chooses to continue as a guest.
  */
-export default function LoadingScreen({ isSigningIn, errorMessage, onContinueAsGuest }: Props) {
+export default function LoadingScreen({ isSigningIn, errorMessage, onSignIn, onContinueAsGuest }: Props) {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background overflow-hidden relative select-none">
@@ -95,7 +102,13 @@ export default function LoadingScreen({ isSigningIn, errorMessage, onContinueAsG
                 {({ openConnectModal }) => (
                   <button
                     type="button"
-                    onClick={openConnectModal}
+                    onClick={() => {
+                      // Arm the userInitiatedSignIn flag BEFORE opening the
+                      // modal — wagmi may report isConnected=true synchronously
+                      // if the wallet was already authorized.
+                      onSignIn();
+                      openConnectModal();
+                    }}
                     className={cn(
                       "w-full min-h-11 rounded-lg px-5 py-3",
                       "bg-primary text-primary-foreground font-semibold text-sm",
@@ -110,19 +123,19 @@ export default function LoadingScreen({ isSigningIn, errorMessage, onContinueAsG
               </ConnectButton.Custom>
             )}
 
+            {/* Always enabled — lets the user escape a stuck signing state. */}
             <button
               type="button"
               onClick={onContinueAsGuest}
-              disabled={isSigningIn}
               className={cn(
                 "w-full min-h-11 rounded-lg border border-card-border bg-card px-5 py-3",
                 "text-foreground font-semibold text-sm transition-colors",
-                "hover:border-muted-foreground/40 disabled:opacity-50 disabled:pointer-events-none",
+                "hover:border-muted-foreground/40",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >
-              Continue as Guest
+              {isSigningIn ? "Cancel — Continue as Guest" : "Continue as Guest"}
             </button>
 
             {errorMessage && (

@@ -37,6 +37,21 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const SIGN_TIMEOUT_MS = 30_000;
+
+/** Races signMessageAsync against a timeout so a hung wallet doesn't freeze the UI. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`${label} timed out after ${ms / 1000}s — open your wallet and try again`)),
+        ms,
+      ),
+    ),
+  ]);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
@@ -45,12 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const attemptedForAddress = useRef<string | null>(null);
+
   // Guards the SIWE effect from firing between signOut() clearing React state
-  // and wagmi propagating isConnected=false.  Without this, setUser(null)
-  // triggers the effect while the wallet is still technically "connected" in
-  // wagmi's view, causing signMessageAsync to throw "Connector not connected".
+  // and wagmi propagating isConnected=false.
   const signingOut = useRef(false);
+
+  // Only run SIWE after the user explicitly clicked "Connect Wallet".
+  // Prevents wagmi's silent auto-reconnect on page refresh from triggering
+  // an automatic sign request that the user never asked for.
+  const userInitiatedSignIn = useRef(false);
+
+  // Set by continueAsGuest() while a SIWE is in-flight so the async callback
+  // doesn't overwrite the "guest" status when it eventually resolves/rejects.
+  const signingAborted = useRef(false);
 
   const refreshUser = useCallback(async () => {
     const session = await getAuthSession();
@@ -79,26 +103,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Run the SIWE flow whenever a wallet connects and we don't have a
-  // matching session yet.
+  // matching session yet — BUT only if the user explicitly initiated it.
   useEffect(() => {
     if (!isConnected || !address) {
       // Wagmi confirmed disconnect — safe to allow the next sign-in attempt.
       signingOut.current = false;
       return;
     }
-    // signOut() sets this before clearing React state so the effect doesn't
-    // fire between "user cleared" and "wagmi isConnected=false".
     if (signingOut.current) return;
     if (user?.walletAddress.toLowerCase() === address.toLowerCase()) return;
     if (attemptedForAddress.current === address) return;
 
+    // ── Guard: don't auto-fire on wagmi's silent reconnect on page refresh ──
+    // The user must have clicked "Connect Wallet" (which sets this flag) to
+    // trigger the sign request. Without this, every page load that finds a
+    // previously-connected wallet immediately pops a signature request that
+    // the user never asked for and that the wallet extension may silently drop.
+    if (!userInitiatedSignIn.current) {
+      console.log("[auth] wallet auto-reconnected but sign-in not user-initiated — staying on connect screen");
+      return;
+    }
+
     attemptedForAddress.current = address;
+    signingAborted.current = false;
     setStatus("signing-in");
     setError(null);
 
     (async () => {
       try {
+        console.log("[auth] fetching nonce for", address);
         const { nonce } = await getAuthNonce();
+
+        if (signingAborted.current) {
+          console.log("[auth] sign aborted before signMessage — stopping");
+          return;
+        }
+
         const message = createSiweMessage({
           domain: window.location.host,
           address,
@@ -108,13 +148,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           chainId: 10143,
           nonce,
         });
-        const signature = await signMessageAsync({ message });
+
+        console.log("[auth] calling signMessageAsync — wallet popup should appear now");
+        console.log("[auth] window.ethereum:", (window as any).ethereum);
+
+        const signature = await withTimeout(
+          signMessageAsync({ message }),
+          SIGN_TIMEOUT_MS,
+          "Wallet signature",
+        );
+
+        console.log("[auth] signature received, verifying with server");
+
+        if (signingAborted.current) {
+          console.log("[auth] sign aborted after signMessage — stopping");
+          return;
+        }
+
         const session = await verifyAuth({ message, signature });
+        userInitiatedSignIn.current = false;
+
+        if (signingAborted.current) return;
+
         setUser(session.user);
         setStatus(session.user ? "signed-in" : "signed-out");
+        console.log("[auth] signed in as", session.user?.walletAddress);
       } catch (err) {
+        userInitiatedSignIn.current = false;
         attemptedForAddress.current = null;
-        setError(err instanceof Error ? err.message : "Failed to sign in with wallet");
+        const message = err instanceof Error ? err.message : "Failed to sign in with wallet";
+        console.error("[auth] SIWE error:", message);
+
+        if (signingAborted.current) {
+          console.log("[auth] already in guest mode — ignoring sign error");
+          return;
+        }
+
+        setError(message);
         setStatus("signed-out");
         disconnect();
       }
@@ -122,16 +192,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, user, signMessageAsync, disconnect]);
 
   const signIn = useCallback(() => {
+    // Mark as user-initiated so the SIWE effect is allowed to run.
     // Wallet connection is triggered by RainbowKit's <ConnectButton /> in the
-    // UI; this just clears any previous error so the retry is visible.
+    // UI; this just arms the flag and clears any previous error.
+    userInitiatedSignIn.current = true;
     setError(null);
   }, []);
 
   const signOut = useCallback(async () => {
-    // Set before any state changes so the SIWE effect is suppressed during the
-    // window between setUser(null) re-rendering and wagmi propagating
-    // isConnected=false.  Cleared inside the SIWE effect when disconnect lands.
     signingOut.current = true;
+    userInitiatedSignIn.current = false;
     await logoutAuth();
     setUser(null);
     setStatus("signed-out");
@@ -140,8 +210,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [disconnect]);
 
   const continueAsGuest = useCallback(() => {
+    // Abort any in-flight SIWE so it doesn't overwrite status when it lands.
+    signingAborted.current = true;
+    userInitiatedSignIn.current = false;
+    attemptedForAddress.current = address ?? null;
     setStatus("guest");
-  }, []);
+    setError(null);
+  }, [address]);
 
   return (
     <AuthContext.Provider
