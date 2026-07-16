@@ -1,0 +1,27 @@
+Found the real runtime error:
+
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/artifacts/api-server/dist/serverless.mjs from /var/task/api/index.js not supported.
+Instead change the require of /var/task/artifacts/api-server/dist/serverless.mjs to a dynamic import() which is available in all CommonJS modules.
+
+Root cause: `api/index.ts` is being compiled to CommonJS (Vercel's default for Node.js functions unless configured otherwise), which turns the static `import serverless from '../artifacts/api-server/dist/serverless.mjs'` into a `require()` call under the hood. But `serverless.mjs` is a genuine ES Module (esbuild output), and CommonJS can't `require()` an ESM file — this is a Node.js platform restriction, not a bug in the code's logic.
+
+Fix: use a dynamic `import()` inside the handler instead of a static top-level import, e.g.:
+
+```ts
+export default async function handler(req: any, res: any) {
+  const { default: app } = await import("../artifacts/api-server/dist/serverless.mjs");
+  return app(req, res);
+}
+```
+
+Adjust the actual export shape to match what `serverless.mjs` really exports (check first — confirm whether it's a default export or named export before writing this, don't assume).
+
+Note: dynamic `import()` returns a Promise, so every invocation will do this import — Node.js caches ES module loads internally after the first import in a given process, so this isn't as wasteful as it might look, but if there's a cleaner pattern already used elsewhere in the codebase for this exact CJS/ESM interop problem, prefer consistency with that.
+
+After fixing
+1. Redeploy.
+2. Confirm GET /api/auth/nonce now returns 200 with real JSON (not another 500) — paste the actual response.
+3. Complete the full wallet sign-in flow on the live URL: Connect Wallet → sign SIWE message → land on Train with correct data.
+4. Run through Train/Shop/Character/Arena/Leaderboard on the live deployment, confirm all persist to the Neon database correctly.
+
+Report actual results, not just "fixed".
