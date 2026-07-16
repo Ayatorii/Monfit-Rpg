@@ -1,0 +1,28 @@
+Project: MONFIT RPG — Clean reinstall of RainbowKit + wagmi (frontend wallet layer only)
+
+We're doing a clean reinstall of the wallet connection stack from scratch, since patching the existing config hasn't resolved the signing hang. Do NOT touch the backend (SIWE nonce/verify/session routes are confirmed working — the issue is isolated to the frontend wallet connection layer).
+
+Remove completely
+- Uninstall `@rainbow-me/rainbowkit`, `wagmi`, `viem` (frontend only — check if `viem` is also used server-side and don't remove it there if so).
+- Delete the current `wagmi-config.ts` (or equivalent) entirely.
+- Remove any WagmiProvider/RainbowKitProvider wrapping in App.tsx — we'll rebuild this fresh.
+- Keep AuthContext and the actual SIWE message construction / nonce / verify fetch calls — only the wallet CONNECTION layer (wagmi config + RainbowKit setup) gets rebuilt, not the auth logic that consumes it.
+
+Reinstall fresh
+1. Install the latest compatible versions of `@rainbow-me/rainbowkit`, `wagmi`, and `viem` together (check RainbowKit's current docs for which wagmi/viem versions it currently requires as peer dependencies — don't assume the previous versions, get current compatible versions).
+2. Rebuild `wagmi-config.ts` using RainbowKit's current recommended setup (`getDefaultConfig` from `@rainbow-me/rainbowkit`) with:
+   - `monadTestnet` imported from `viem/chains` (chainId 10143) as the only/primary chain.
+   - The Reown/WalletConnect project ID (already in env as `VITE_WALLETCONNECT_PROJECT_ID`).
+   - Let RainbowKit's default wallet list handle injected wallet detection (MetaMask, Rabby, etc.) via its built-in EIP-6963 support — don't hand-roll a custom wallet list unless there's a specific reason to.
+3. Rewrap `App.tsx` with fresh `WagmiProvider` + `QueryClientProvider` (wagmi v2 requires @tanstack/react-query) + `RainbowKitProvider`, following the current standard pattern from RainbowKit's docs exactly — don't carry over any customization from the old broken setup unless it's specifically needed.
+4. Re-wire the "Connect Wallet" button to RainbowKit's `<ConnectButton />` or the custom connect trigger already used in the Loading Screen UI (keep the existing visual design — just make sure it correctly opens the RainbowKit modal and returns a connected account via wagmi hooks).
+5. Re-confirm the existing SIWE flow (nonce → sign → verify) still wires up correctly to this fresh wagmi/RainbowKit setup — the signing call should now go through cleanly configured connectors.
+
+Also keep from the earlier fix attempt
+- The hard timeout + error UI around the sign request (if it was already added, keep it; if not, add it now: ~30s timeout, clear "try again" error state instead of hanging).
+
+Verify (real evidence)
+1. Fresh deploy, fresh browser session: click Connect Wallet → modal opens → select a wallet → wallet extension popup actually appears asking to sign → sign → lands on Train with correct data.
+2. Disconnect and reconnect — repeat the same flow, confirm it works again (not just once).
+3. Refresh mid-flow — confirm no stuck "Confirm the signature..." state.
+4. Report actual console output and screenshots/confirmation at each step, not just "reinstalled, should work now".
