@@ -1,0 +1,13 @@
+Fix the signing hang at the code level — don't rely on further manual testing to diagnose. Two changes to make now:
+
+1. **Switch to explicit EIP-6963 provider discovery instead of relying on the global `window.ethereum`.**
+   The console has shown "Cannot redefine property: ethereum" and "Auro Wallet initialized" — meaning multiple browser extensions are competing to define `window.ethereum`, and whichever one wins that race is what wagmi ends up calling, which may not be the wallet the user actually selected in the RainbowKit modal. This is a well-documented class of bug (confirmed via a GitHub issue: RainbowKit + Rabby has known reconnect/signing issues specifically in production builds on Vercel, not reproducing in dev, and not occurring with MetaMask — strongly suggesting a provider-resolution race condition rather than app logic).
+
+   Fix: ensure the wagmi config uses `injected()` connectors with EIP-6963 discovery (wagmi v2 supports this by default via `injected()` from `wagmi/connectors`, which listens for `eip6963:announceProvider` events rather than reading `window.ethereum` directly). Audit the current wagmi config (`wagmi-config.ts` or wherever `createConfig`/`getDefaultConfig` is set up) and confirm:
+   - It's using wagmi's built-in `injected()` connector (EIP-6963 aware), not a hand-rolled reference to `window.ethereum`.
+   - Each injected wallet option in the RainbowKit wallet list has its correct `rdns` populated (RainbowKit's default wallet list already sets this for known wallets like MetaMask and Rabby — confirm it's not being overridden incorrectly by custom wallet list config).
+   - Report the actual current config before changing it.
+
+2. **Add a hard timeout + error UI around the sign request regardless of the root cause above** (this was requested before but treat it as required now, not optional): if `signMessage`/`signMessageAsync` doesn't resolve within ~30 seconds, abort the wait, show a clear "Signature request failed or timed out — please try again" message, and return the UI to the idle Connect Wallet state (not stuck on "Confirm the signature..."). This guarantees the app never hangs indefinitely again, independent of which wallet or provider conflict is at play.
+
+Implement both now. After implementing, do NOT ask for another manual test round — instead, add temporary console logging around connector selection and the signMessage call, deploy, and if it still fails, report the actual new console output directly (this replaces needing me to re-diagnose from scratch).

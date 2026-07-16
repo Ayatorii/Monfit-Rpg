@@ -53,7 +53,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, connector } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { disconnect } = useDisconnect();
 
@@ -149,8 +149,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nonce,
         });
 
-        console.log("[auth] calling signMessageAsync — wallet popup should appear now");
-        console.log("[auth] window.ethereum:", (window as any).ethereum);
+        console.log(
+          "[auth] calling signMessageAsync — wallet popup should appear now\n" +
+          `  connector id:   ${connector?.id ?? "none"}\n` +
+          `  connector name: ${connector?.name ?? "none"}\n` +
+          `  connector type: ${connector?.type ?? "none"}\n` +
+          `  window.ethereum: ${(window as any).ethereum?.constructor?.name ?? typeof (window as any).ethereum}`,
+        );
 
         const signature = await withTimeout(
           signMessageAsync({ message }),
