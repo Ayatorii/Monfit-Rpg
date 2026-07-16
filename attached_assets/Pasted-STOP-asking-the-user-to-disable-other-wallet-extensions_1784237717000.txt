@@ -1,0 +1,13 @@
+STOP asking the user to disable other wallet extensions — that is not a real fix and will never be acceptable for real users. Find and fix the actual code-level bug.
+
+Hypothesis (test this directly, not by further manual browser testing): somewhere in the sign-in flow, the code calls `window.ethereum.request(...)` directly (e.g. `window.ethereum.request({ method: 'personal_sign', params: [...] })`) instead of using wagmi's connector-aware hook (`useSignMessage` / `signMessageAsync` from wagmi). A direct `window.ethereum` call is blind to which specific wallet the user actually selected in the RainbowKit modal — it just grabs whatever last defined the global `window.ethereum`, which is exactly why installing/removing other extensions changes behavior. A proper wagmi hook call is bound to the specific connected connector and is completely unaffected by how many other wallet extensions are installed.
+
+Do this
+1. Search the entire codebase for any direct usage of `window.ethereum` (grep for `window.ethereum`). Report every occurrence and what each one does.
+2. For the actual SIWE sign-message call specifically: confirm whether it uses wagmi's `useSignMessage`/`signMessageAsync` hook, or a direct `window.ethereum.request(...)` / raw provider call. Paste the actual current code for this specific call.
+3. If it's a direct `window.ethereum` call: replace it with wagmi's `signMessageAsync` (from `useSignMessage()` or `getAccount`/`signMessage` from `@wagmi/core` if this is outside a React component) so it correctly targets the specific connector the user connected with, regardless of how many other injected wallets exist in the browser.
+4. If it's already using the correct wagmi hook and NOT a direct window.ethereum call: report this clearly, because then the root cause is something else entirely (e.g. a wagmi connector configuration bug) and needs different investigation — don't just declare it fixed without confirming which case this is.
+
+This must work correctly with multiple wallet extensions installed simultaneously (Rabby AND Phantom AND anything else) with zero requirement for the user to disable anything. Test this specifically: with both Rabby and Phantom enabled, connect with Rabby specifically and confirm the signature request goes to Rabby, not Phantom, and doesn't hang.
+
+Report the actual code found in step 1-2 before making any change.
