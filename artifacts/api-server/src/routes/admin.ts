@@ -13,10 +13,17 @@ const TROPHY_ABI = parseAbi([
 
 /**
  * POST /api/admin/mint-season-trophies
+ *
  * Awards a Season Trophy NFT to the top-N leaderboard players on Monad Testnet.
- * Protected by X-Admin-Secret header.
+ * Protected by a shared-secret header (X-Admin-Secret).
+ *
+ * Body (JSON):
+ *   { "topN": 3, "season": 1 }   (both optional, default shown)
+ *
+ * Returns: { minted: [{ walletAddress, rank, txHash }] }
  */
 router.post("/mint-season-trophies", async (req, res) => {
+  // ── Auth ──────────────────────────────────────────────────────────────────
   const adminSecret = process.env.MINT_ADMIN_SECRET;
   if (!adminSecret) {
     res.status(503).json({ error: "MINT_ADMIN_SECRET not configured" });
@@ -27,7 +34,10 @@ router.post("/mint-season-trophies", async (req, res) => {
     return;
   }
 
-  const contractAddress = process.env.SEASON_TROPHY_ADDRESS as `0x${string}` | undefined;
+  // ── Config ────────────────────────────────────────────────────────────────
+  const contractAddress = process.env.SEASON_TROPHY_ADDRESS as
+    | `0x${string}`
+    | undefined;
   if (!contractAddress) {
     res.status(503).json({ error: "SEASON_TROPHY_ADDRESS not configured" });
     return;
@@ -38,24 +48,34 @@ router.post("/mint-season-trophies", async (req, res) => {
     res.status(503).json({ error: "DEPLOYER_PRIVATE_KEY not configured" });
     return;
   }
-  const privateKey = (rawKey.startsWith("0x") ? rawKey : `0x${rawKey}`) as `0x${string}`;
+  const privateKey = (
+    rawKey.startsWith("0x") ? rawKey : `0x${rawKey}`
+  ) as `0x${string}`;
 
   const topN = Math.min(Number(req.body?.topN ?? 3), 10);
   const season = BigInt(req.body?.season ?? process.env.CURRENT_SEASON ?? 1);
 
+  // ── Leaderboard query ─────────────────────────────────────────────────────
   let rows: { walletAddress: string }[];
   try {
     rows = await db
       .select({
         walletAddress: matchesTable.walletAddress,
-        score: sql<number>`(COUNT(*) FILTER (WHERE ${matchesTable.result} = 'win'))::int - (COUNT(*) FILTER (WHERE ${matchesTable.result} = 'loss'))::int`.as("score"),
+        score: sql<number>`(COUNT(*) FILTER (WHERE ${matchesTable.result} = 'win'))::int - (COUNT(*) FILTER (WHERE ${matchesTable.result} = 'loss'))::int`.as(
+          "score",
+        ),
         xp: sql<number>`COALESCE(MAX(${playersTable.xp}), 0)`.as("xp"),
       })
       .from(matchesTable)
-      .leftJoin(playersTable, eq(matchesTable.walletAddress, playersTable.walletAddress))
+      .leftJoin(
+        playersTable,
+        eq(matchesTable.walletAddress, playersTable.walletAddress),
+      )
       .groupBy(matchesTable.walletAddress)
       .orderBy(
-        desc(sql`(COUNT(*) FILTER (WHERE ${matchesTable.result} = 'win'))::int - (COUNT(*) FILTER (WHERE ${matchesTable.result} = 'loss'))::int`),
+        desc(
+          sql`(COUNT(*) FILTER (WHERE ${matchesTable.result} = 'win'))::int - (COUNT(*) FILTER (WHERE ${matchesTable.result} = 'loss'))::int`,
+        ),
         desc(sql`COALESCE(MAX(${playersTable.xp}), 0)`),
       )
       .limit(topN);
@@ -70,6 +90,7 @@ router.post("/mint-season-trophies", async (req, res) => {
     return;
   }
 
+  // ── Mint on-chain ─────────────────────────────────────────────────────────
   const account = privateKeyToAccount(privateKey);
   const walletClient = createWalletClient({
     account,
@@ -82,6 +103,7 @@ router.post("/mint-season-trophies", async (req, res) => {
   for (let i = 0; i < rows.length; i++) {
     const { walletAddress } = rows[i];
     const rank = (i + 1) as number;
+
     try {
       const txHash = await walletClient.writeContract({
         address: contractAddress,
@@ -89,9 +111,16 @@ router.post("/mint-season-trophies", async (req, res) => {
         functionName: "mintTrophy",
         args: [walletAddress as `0x${string}`, season, rank],
       });
+      req.log.info({ walletAddress, rank, txHash }, "Trophy minted");
       minted.push({ walletAddress, rank, txHash });
     } catch (err) {
-      minted.push({ walletAddress, rank, txHash: `ERROR: ${(err as Error).message}` });
+      req.log.error({ err, walletAddress, rank }, "Mint failed");
+      // Continue minting for the others; surface partial results.
+      minted.push({
+        walletAddress,
+        rank,
+        txHash: `ERROR: ${(err as Error).message}`,
+      });
     }
   }
 

@@ -4,8 +4,16 @@ import { eq, sql, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+/**
+ * GET /api/leaderboard
+ * Returns players ranked by (wins - losses) desc, tie-broken by XP desc.
+ * Players with zero matches are excluded.
+ * Optionally includes the caller's rank if authenticated.
+ */
 router.get("/", async (req, res) => {
   try {
+    // Aggregate match stats per wallet from the matches table.
+    // wins - losses = score; tie-break by total XP stored in players table.
     const rows = await db
       .select({
         walletAddress: matchesTable.walletAddress,
@@ -14,6 +22,7 @@ router.get("/", async (req, res) => {
         draws: sql<number>`COUNT(*) FILTER (WHERE ${matchesTable.result} = 'draw')`.as("draws"),
         score: sql<number>`(COUNT(*) FILTER (WHERE ${matchesTable.result} = 'win'))::int - (COUNT(*) FILTER (WHERE ${matchesTable.result} = 'loss'))::int`.as("score"),
         xp: sql<number>`COALESCE(MAX(${playersTable.xp}), 0)`.as("xp"),
+        gold: sql<number>`COALESCE(MAX(${playersTable.gold}), 0)`.as("gold"),
       })
       .from(matchesTable)
       .leftJoin(playersTable, eq(matchesTable.walletAddress, playersTable.walletAddress))
@@ -23,6 +32,7 @@ router.get("/", async (req, res) => {
         desc(sql`COALESCE(MAX(${playersTable.xp}), 0)`),
       );
 
+    // Attach rank numbers, and the signed-in caller's own rank if any.
     const callerWallet: string | null = req.session.walletAddress ?? null;
 
     const ranked = rows.map((row, i) => ({

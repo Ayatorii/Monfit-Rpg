@@ -360,11 +360,15 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  // credentials:'include' is required so the browser sends the session cookie
-  // on every request (nonce → verify → session checks). Without it the server
-  // sees a fresh session on each call and the nonce stored during /auth/nonce
-  // is not visible when /auth/verify runs.
-  const response = await fetch(input, { ...init, method, headers, credentials: "include" });
+  // Always send cookies, even cross-origin — the session cookie (SameSite=None;
+  // Secure) is how wallet-auth sessions are recognized, and Vite/browser fetch
+  // defaults to "same-origin" otherwise.
+  const response = await fetch(input, {
+    credentials: "include",
+    ...init,
+    method,
+    headers,
+  });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

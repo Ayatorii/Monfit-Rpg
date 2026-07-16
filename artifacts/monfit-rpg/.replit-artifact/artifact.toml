@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "MONFIT RPG"
+title = "Monfit RPG"
 version = "1.0.0"
 id = "artifacts/monfit-rpg"
 router = "path"

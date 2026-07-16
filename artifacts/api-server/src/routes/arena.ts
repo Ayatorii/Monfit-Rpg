@@ -6,7 +6,9 @@ const router: IRouter = Router();
 
 /**
  * POST /api/arena/match
- * Records a completed arena match for the signed-in wallet.
+ * Records a completed arena match for the signed-in wallet. Insert-only —
+ * currency rewards are applied separately via POST /players/me/adjust so
+ * gold/xp are never double-credited.
  */
 router.post("/match", async (req, res): Promise<void> => {
   const sessionWallet = req.session.walletAddress;

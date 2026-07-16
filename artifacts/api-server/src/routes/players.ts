@@ -133,6 +133,20 @@ router.patch("/me/items/:instanceId", async (req, res): Promise<void> => {
     return;
   }
 
+  // Equipping an item unequips any other item in the same slot (one
+  // equipped item per slot).
+  if (equipped) {
+    await db
+      .update(playerItemsTable)
+      .set({ equipped: false })
+      .where(
+        and(
+          eq(playerItemsTable.walletAddress, walletAddress),
+          eq(playerItemsTable.slot, target.slot),
+        ),
+      );
+  }
+
   const [updated] = await db
     .update(playerItemsTable)
     .set({ equipped })
