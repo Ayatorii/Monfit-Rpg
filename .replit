@@ -1,7 +1,6 @@
 modules = ["nodejs-24", "postgresql-16"]
 
 [deployment]
-router = "application"
 deploymentTarget = "autoscale"
 
 [deployment.postBuild]
