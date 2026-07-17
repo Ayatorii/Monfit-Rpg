@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, RefreshCw, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGame } from "@/lib/game-context";
 import { cn } from "@/lib/utils";
@@ -12,13 +12,15 @@ export default function TrainPage() {
   const { gold, xp, addGold, addXp } = useGame();
   const [tentativeGoal, setTentativeGoal] = useState<Goal | null>(null);
   const [goal, setGoal] = useState<Goal | null>(null);
-
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [swapOpen, setSwapOpen] = useState(false);
+  const [swapTentative, setSwapTentative] = useState<Goal | null>(null);
   const isReduced = useReducedMotion() ?? false;
 
   const programs = useMemo(() => (goal ? PROGRAMS[goal] : []), [goal]);
-  const quests   = useMemo(() => (goal ? DAILY_QUESTS[goal] : []), [goal]);
+  const quests = useMemo(() => (goal ? DAILY_QUESTS[goal] : []), [goal]);
   const selectedGoalData = GOALS.find((g) => g.id === goal);
+  const swapGoals = useMemo(() => GOALS.filter((g) => g.id !== goal), [goal]);
 
   const handleGoalClick = (id: Goal) => {
     setTentativeGoal(id);
@@ -30,6 +32,19 @@ export default function TrainPage() {
     }
     setGoal(id);
     setTentativeGoal(id);
+  };
+
+  const handleSwapPick = (id: Goal) => {
+    setCompleted(new Set());
+    setGoal(id);
+    setTentativeGoal(id);
+    setSwapOpen(false);
+    setSwapTentative(null);
+  };
+
+  const handleSwapClose = () => {
+    setSwapOpen(false);
+    setSwapTentative(null);
   };
 
   const toggleQuest = (id: string, questGold: number, questXp: number, label: string) => {
@@ -52,12 +67,11 @@ export default function TrainPage() {
     });
   };
 
-  const dur   = (base: number) => (isReduced ? 0 : base);
+  const dur = (base: number) => (isReduced ? 0 : base);
   const delay = (base: number) => (isReduced ? 0 : base);
 
-  const pageTitle = goal && selectedGoalData
-    ? `${selectedGoalData.label} TRAININGS`
-    : "TRAININGS";
+  const pageTitle =
+    goal && selectedGoalData ? `${selectedGoalData.label} TRAININGS` : "TRAININGS";
 
   return (
     <div className="relative min-h-screen">
@@ -113,6 +127,29 @@ export default function TrainPage() {
                 </motion.p>
               )}
             </AnimatePresence>
+
+            {/* SWAP GOAL button — appears after goal is picked */}
+            <AnimatePresence>
+              {goal && (
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: dur(0.2) }}
+                  onClick={() => setSwapOpen(true)}
+                  className={cn(
+                    "mt-2 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors",
+                    "text-xs font-semibold uppercase tracking-wider text-primary-text",
+                    "border border-primary/30 bg-primary/10 hover:bg-primary/20",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  )}
+                >
+                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
+                  Swap Goal
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
           <ResourceBadges gold={gold} xp={xp} />
         </header>
@@ -134,10 +171,9 @@ export default function TrainPage() {
               >
                 Pick Your Goal
               </h2>
-              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {GOALS.map((g, idx) => {
                   const isTentative = tentativeGoal === g.id;
-
                   return (
                     <motion.div
                       key={g.id}
@@ -173,7 +209,7 @@ export default function TrainPage() {
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
                               transition={{ duration: dur(0.15) }}
-                              className="absolute inset-0 flex items-center justify-center bg-black/30"
+                              className="absolute inset-0 flex items-center justify-center bg-background/60"
                             >
                               <motion.button
                                 type="button"
@@ -224,7 +260,7 @@ export default function TrainPage() {
           )}
         </AnimatePresence>
 
-        {/* Suggested Programs — always visible, placeholder before goal is picked */}
+        {/* Suggested Programs */}
         <section aria-labelledby="programs-heading" className="mb-8">
           <h2
             id="programs-heading"
@@ -235,7 +271,6 @@ export default function TrainPage() {
 
           <AnimatePresence mode="wait">
             {!goal ? (
-              /* Placeholder before goal is picked */
               <motion.p
                 key="programs-placeholder"
                 initial={{ opacity: 0 }}
@@ -247,7 +282,6 @@ export default function TrainPage() {
                 Pick a goal above to see suggested training programs.
               </motion.p>
             ) : (
-              /* Actual programs */
               <motion.div
                 key={`programs-${goal}`}
                 initial={{ opacity: 0, y: isReduced ? 0 : 12 }}
@@ -280,7 +314,7 @@ export default function TrainPage() {
           </AnimatePresence>
         </section>
 
-        {/* Daily Quests — always visible, placeholder before goal is picked */}
+        {/* Daily Quests */}
         <section aria-labelledby="quests-heading">
           <h2
             id="quests-heading"
@@ -291,7 +325,6 @@ export default function TrainPage() {
 
           <AnimatePresence mode="wait">
             {!goal ? (
-              /* Placeholder before goal is picked */
               <motion.p
                 key="quests-placeholder"
                 initial={{ opacity: 0 }}
@@ -303,7 +336,6 @@ export default function TrainPage() {
                 Pick a goal above to unlock your daily quests.
               </motion.p>
             ) : (
-              /* Actual quests */
               <motion.div
                 key={`quests-${goal}`}
                 initial={{ opacity: 0, y: isReduced ? 0 : 12 }}
@@ -373,6 +405,149 @@ export default function TrainPage() {
           </AnimatePresence>
         </section>
       </div>
+
+      {/* ── SWAP GOAL bottom sheet ── */}
+      <AnimatePresence>
+        {swapOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="swap-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: dur(0.22) }}
+              className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
+              onClick={handleSwapClose}
+              aria-hidden="true"
+            />
+
+            {/* Panel */}
+            <motion.div
+              key="swap-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="swap-heading"
+              initial={{ y: isReduced ? 0 : "100%", opacity: isReduced ? 0 : 1 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: isReduced ? 0 : "100%", opacity: isReduced ? 0 : 1 }}
+              transition={{ duration: dur(0.38), ease: [0.16, 1, 0.3, 1] }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t border-card-border bg-surface px-4 pt-4 pb-10 md:pb-8 max-h-[85dvh] overflow-y-auto"
+            >
+              {/* Drag handle */}
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-card-border" />
+
+              {/* Sheet header */}
+              <div className="mb-5 flex items-center justify-between">
+                <h2
+                  id="swap-heading"
+                  className="font-display font-black text-2xl text-white leading-none"
+                >
+                  SWAP GOAL
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Close swap goal"
+                  onClick={handleSwapClose}
+                  className={cn(
+                    "rounded-lg p-2 text-muted-foreground transition-colors",
+                    "hover:bg-foreground/10 hover:text-foreground",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  )}
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Goal grid — 3 remaining goals */}
+              <div className="grid grid-cols-3 gap-3">
+                {swapGoals.map((g) => {
+                  const isTentative = swapTentative === g.id;
+                  return (
+                    <motion.div
+                      key={g.id}
+                      animate={{ scale: isTentative && !isReduced ? 1.04 : 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                      className={cn(
+                        "relative flex flex-col overflow-hidden rounded-xl border-2 cursor-pointer transition-colors",
+                        isTentative
+                          ? "border-primary shadow-[0_0_18px_2px_var(--primary-glow)]"
+                          : "border-card-border hover:border-primary/40",
+                      )}
+                      onClick={() => setSwapTentative(g.id)}
+                    >
+                      {/* Image */}
+                      <div className="relative w-full aspect-square overflow-hidden bg-card">
+                        <motion.img
+                          src={g.image}
+                          alt={g.label}
+                          loading="lazy"
+                          animate={{ scale: isTentative && !isReduced ? 1.08 : 1 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
+
+                        {/* PICK overlay */}
+                        <AnimatePresence>
+                          {isTentative && (
+                            <motion.div
+                              key="swap-pick-overlay"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: dur(0.15) }}
+                              className="absolute inset-0 flex items-center justify-center bg-background/60"
+                            >
+                              <motion.button
+                                type="button"
+                                initial={{ scale: isReduced ? 1 : 0.75, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: isReduced ? 1 : 0.75, opacity: 0 }}
+                                transition={{ duration: dur(0.2), ease: [0.16, 1, 0.3, 1] }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSwapPick(g.id);
+                                }}
+                                className={cn(
+                                  "rounded-full px-4 py-2.5",
+                                  "font-bold text-base uppercase tracking-widest",
+                                  "bg-primary text-white",
+                                  "hover:bg-primary/90 active:scale-95 transition-all",
+                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                                )}
+                              >
+                                PICK
+                              </motion.button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Label bar */}
+                      <div
+                        className={cn(
+                          "w-full px-2 py-2 transition-colors",
+                          isTentative ? "bg-primary/15" : "bg-card",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "block font-semibold text-xs text-center",
+                            isTentative ? "text-white" : "text-foreground",
+                          )}
+                        >
+                          {g.label}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
