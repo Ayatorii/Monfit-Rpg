@@ -1,0 +1,39 @@
+Project: MONFIT RPG — Remove all Vercel-specific code, restore split frontend/backend architecture for Replit
+
+We're abandoning Vercel as a deployment target. Final deployment target is Replit Deployments (Autoscale), published once at the very end when the project is fully done — do NOT publish yet, just prepare the codebase and keep testing in the dev workspace.
+
+## 1. Remove everything Vercel-specific
+- Delete `vercel.json` if it exists anywhere in the repo.
+- Delete the `/api/index.ts` (or `.js`) serverless entrypoint file created for Vercel.
+- Remove the `serverless-http` package dependency (it's no longer needed — Replit runs a persistent server, not serverless functions).
+- Remove any Vercel-specific build/output directory configuration, Vercel env var references, or comments referencing Vercel deployment steps.
+- Revert the "migrate to traditional server architecture" changes if they broke anything Vercel-specific was compensating for — but keep whatever from that migration is actually correct for a normal persistent Express server (see below).
+
+## 2. Restore/confirm the split frontend + backend structure (as it worked before Vercel)
+- `artifacts/monfit-rpg`: Vite + React frontend, built via `vite build`.
+- `artifacts/api-server`: Express + Drizzle backend, running as a normal persistent Node process (NOT wrapped for serverless).
+- Confirm the dev workflow serves both correctly together (frontend dev server + backend API, proxied as it was working before, e.g. via the `/api-server` or `/api` prefix pattern already proven to work in this Replit workspace).
+- For the eventual Replit Deployment: confirm there's a production build+run path where the Express server serves both the API routes AND the built frontend static files as a single process on a single port, binding to `0.0.0.0` (required for Replit Deployments to detect the open port) — set this up now even though we're not publishing yet, so it's ready.
+
+## 3. Keep all of these working fixes/changes (do not lose them in the revert)
+- **Loading Screen**: simple splash with logo/title/tagline + a "Start" button only — no wallet UI here. Clicking Start goes straight into the app (Train tab) in guest/local mode.
+- **Wallet Connect in the header**: a persistent header element (visible across all 5 tabs) showing "Connect Wallet" when disconnected, or the shortened wallet address when connected, with disconnect option. This triggers the RainbowKit modal + SIWE flow.
+- **Clean RainbowKit + wagmi setup**: `getDefaultConfig` from RainbowKit, `monadTestnet` from `viem/chains` (chainId 10143), WalletConnect project ID from env (`VITE_WALLETCONNECT_PROJECT_ID`).
+- **Sign-message call uses wagmi's `signMessageAsync` hook** (connector-aware) — confirmed NOT a direct `window.ethereum.request(...)` call. Keep it this way; this is correct and should not regress.
+- **Hard timeout on the sign request** (~30s) with a clear "Signature request failed or timed out — try again" fallback UI instead of hanging indefinitely, plus a way to cancel/continue as guest from the stuck state.
+- **Guard against auto-reconnect silently re-triggering signing**: only start the SIWE flow on explicit user-initiated connect, not on wagmi's silent reconnect on page load.
+- **Nonce route explicitly calls `req.session.save()` before responding** (prevents the nonce/session race condition where verify arrives before the nonce is durably written).
+- **Sessions table created via a proper Drizzle migration file**, not manual SQL (this needs to actually be reproducible — confirm this is true now, since it's been a recurring issue).
+- **Cross-origin-safe session cookie config**: `sameSite: "none"`, `secure: true` on the session cookie, and `credentials: "include"` on every frontend fetch call to the API — this was needed because Replit's dev preview serves frontend and backend on different origins (iframe-based). Confirm this is intact and wasn't reset by the architecture migration — check `custom-fetch.ts` (Orval-generated client) specifically, since codegen can silently drop manual patches.
+- **Database connection**: whatever connection method (pg Pool or otherwise) is currently used is fine for Replit's persistent-server model — no need for `@neondatabase/serverless`'s HTTP driver anymore since we're not in a serverless environment. Just confirm the connection is stable and doesn't hang or leak connections over time in a long-running process.
+
+## 4. Verify (real evidence, in the Replit dev workspace — this is now the only environment that matters)
+1. Fresh page load → Loading Screen shows only logo/title/Start button, no console errors.
+2. Click Start → lands on Train in guest mode.
+3. Click "Connect Wallet" in the header → RainbowKit modal opens → select wallet → real signature popup appears → sign → header updates with the connected address → Gold/XP/Level reflect saved DB data.
+4. Refresh mid-session while connected — session persists correctly.
+5. Disconnect — cleanly returns to guest state.
+6. Full core loop (Train/Shop/Character/Arena/Leaderboard) still works and persists to the database for the connected wallet.
+7. Run `$impeccable audit` on the header wallet-connect UI and the Loading Screen, report scores.
+
+Report actual results for each point. This is the final architecture — no more Vercel-related changes after this.

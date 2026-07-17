@@ -17,8 +17,6 @@ async function buildAll() {
   await esbuild({
     entryPoints: [
       path.resolve(artifactDir, "src/index.ts"),
-      // Vercel serverless entrypoint — imported by api/index.ts
-      path.resolve(artifactDir, "src/handler.ts"),
     ],
     platform: "node",
     bundle: true,

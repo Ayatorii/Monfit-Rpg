@@ -1,44 +1,52 @@
-# [Project name]
+# MONFIT RPG
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A fitness-meets-crypto RPG on Monad Testnet. Players train, fight arena battles, and earn XP and gold — with progress stored on-chain. Built with Vite + React (frontend), Express (API), PostgreSQL + Drizzle ORM (database), and RainbowKit / wagmi for wallet integration.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- Workflows are managed by Replit — use the workflow panel or `WorkflowsRestart` to start/stop services.
+- `pnpm --filter @workspace/api-server run dev` — run the API server locally (port 8080)
+- `pnpm --filter @workspace/monfit-rpg run dev` — run the frontend locally (port 26223)
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env vars: `DATABASE_URL`, `SESSION_SECRET`, `VITE_WALLETCONNECT_PROJECT_ID`, `DEPLOYER_PRIVATE_KEY`
+- Optional env vars: `VITE_TROPHY_CONTRACT_ADDRESS`, `SEASON_TROPHY_ADDRESS`, `MINT_ADMIN_SECRET`, `CURRENT_SEASON`
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- Frontend: Vite + React 19, Tailwind CSS v4, shadcn/ui, wouter, RainbowKit, wagmi, viem
+- API: Express 5, pino logging
+- DB: PostgreSQL + Drizzle ORM (node-postgres pool)
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Build: esbuild
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/monfit-rpg/src/` — React frontend (pages, components, game/auth context)
+- `artifacts/monfit-rpg/src/App.tsx` — router (wouter) with all game routes
+- `artifacts/api-server/src/routes/` — Express route handlers (auth, arena, players, leaderboard, shop, admin)
+- `lib/db/src/schema/` — Drizzle schema (players, matches, player_items, sessions)
+- `lib/api-spec/openapi.yaml` — OpenAPI contract (source of truth for API shape)
+- `lib/api-client-react/` — generated React Query hooks consumed by the frontend
+- `attached_assets/` — logo and brand images
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Vite + React (not Next.js) — Replit runs a persistent server, not serverless; client-side routing via wouter
+- Plain `pg` pool in `lib/db` — long-running server benefits from persistent TCP connections over Neon WebSocket transport
+- Wallet-keyed players — no traditional auth; wallet address is the primary key for all game state
+- Guest mode — players can play with local state before connecting a wallet (see `auth-context.tsx`)
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+MONFIT RPG is a gamified fitness tracker on Monad Testnet. Players connect a wallet, train to earn XP/gold, battle in the arena, equip items from the shop, and compete on the leaderboard. Season trophy NFTs are minted on-chain for top performers.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `VITE_WALLETCONNECT_PROJECT_ID` must be set or the wagmi config throws on startup
+- WalletConnect will log a 403 until the deployed domain is registered at cloud.reown.com
+- Admin mint endpoint (`/api/admin/mint`) requires `MINT_ADMIN_SECRET` + `SEASON_TROPHY_ADDRESS`
 
 ## Pointers
 

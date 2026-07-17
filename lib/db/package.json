@@ -9,18 +9,19 @@
   },
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
+    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config ./drizzle.config.ts"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.4",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "^0.8.3",
-    "ws": "^8.18.3",
+    "pg": "^8.22.0",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@types/ws": "^8.5.14",
+    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10"
   }
 }
