@@ -14,10 +14,12 @@ A fitness-meets-crypto RPG on Monad Testnet. Players train, fight arena battles,
 ## Getting started after import
 
 1. The Replit-managed PostgreSQL database is provisioned automatically — no setup needed.
-2. Add the following secrets in **Tools → Secrets**:
+2. Ensure the following secrets are set in **Tools → Secrets**:
    - `SESSION_SECRET` — any random string (e.g. `openssl rand -hex 32`)
    - `VITE_WALLETCONNECT_PROJECT_ID` — from [cloud.walletconnect.com](https://cloud.walletconnect.com)
-3. Click **Run**. The "Project" workflow starts both services in parallel.
+3. Click **Run**. The "Project" workflow starts both services in parallel:
+   - `API Server` — Express backend on port 8080
+   - `artifacts/monfit-rpg: web` — Vite frontend on port 26223 (proxies /api → 8080)
 4. The Preview pane will show the MONFIT RPG loading screen. Connect a wallet to play.
 
 Optional secrets (leave unset to disable those features):

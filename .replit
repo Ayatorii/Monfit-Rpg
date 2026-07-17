@@ -18,9 +18,10 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
-# "Project" starts both managed artifact services in parallel.
-# Do NOT add manual shell.exec tasks for api-server or monfit-rpg here —
-# the artifact-managed workflows already inject PORT, BASE_PATH, and proxy routing.
+# "Project" starts both services in parallel.
+# - "API Server" is a manually configured workflow (Express on port 8080)
+# - "artifacts/monfit-rpg: web" is the artifact-managed Vite frontend (port 26223)
+#   The Vite dev server proxies /api -> localhost:8080 in development.
 [[workflows.workflow]]
 name = "Project"
 mode = "parallel"
@@ -28,11 +29,23 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "artifacts/api-server: API Server"
+args = "API Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "artifacts/monfit-rpg: web"
+
+[[workflows.workflow]]
+name = "API Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8080 pnpm --filter @workspace/api-server run dev"
+waitForPort = 8080
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "PNPM_WORKSPACE"

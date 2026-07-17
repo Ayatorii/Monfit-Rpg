@@ -1,5 +1,5 @@
 kind = "api"
-previewPath = "/api" # TODO - should be excluded from preview in the first place
+previewPath = "/api"
 title = "API Server"
 version = "1.0.0"
 id = "3B4_FFSkEVBkAeYMFRJ2e"
@@ -14,9 +14,6 @@ run = "pnpm --filter @workspace/api-server run dev"
 
 [services.production]
 
-# Production: build the Vite frontend first, then the Express server.
-# In Replit Deployments (Autoscale) the Express process serves BOTH the
-# /api routes AND the compiled Vite SPA — single process, single port.
 [services.production.build]
 args = [
   "sh", "-c",
@@ -27,7 +24,6 @@ args = [
 NODE_ENV = "production"
 
 [services.production.run]
-# Launch from workspace root so relative static-file paths resolve correctly.
 args = ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
 
 [services.production.run.env]
