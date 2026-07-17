@@ -115,10 +115,6 @@ export default function TrainPage() {
                   </span>
                 </div>
 
-                {/* Selected indicator dot */}
-                {isSelected && (
-                  <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_6px_2px_rgba(124,58,237,0.6)]" />
-                )}
               </motion.button>
             );
           })}
