@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Trophy, Swords, Medal } from "lucide-react";
 import { Link } from "wouter";
@@ -136,7 +137,7 @@ function RankedRow({
             {shortenAddress(player.walletAddress)}
           </span>
           {isCurrentPlayer && (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-text bg-primary/15 border border-primary/30 rounded px-1.5 py-0.5 shrink-0">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-primary-text bg-primary/15 border border-primary/30 rounded px-1.5 py-0.5 shrink-0">
               You
             </span>
           )}
@@ -161,7 +162,7 @@ function RankedRow({
         >
           {player.score > 0 ? `+${player.score}` : player.score}
         </span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+        <span className="text-[11px] text-muted-foreground uppercase tracking-wide">
           score
         </span>
       </div>
@@ -365,28 +366,11 @@ function MyTrophies() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderboardPage() {
-  const [data, setData] = useState<Leaderboard | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-    getLeaderboard()
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
-      .catch(() => {
-        if (!cancelled) setError("Failed to load leaderboard");
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data, isLoading, isError } = useQuery<Leaderboard>({
+    queryKey: ["leaderboard"],
+    queryFn: getLeaderboard,
+    refetchInterval: 30_000,
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 md:py-8 flex flex-col gap-8">
@@ -397,8 +381,8 @@ export default function LeaderboardPage() {
         transition={{ duration: 0.2, ease: "easeOut" }}
         className="flex flex-col gap-1"
       >
-        <h1 className="font-display font-black text-3xl text-white uppercase tracking-tight">
-          Leaderboard
+        <h1 className="font-display font-black text-3xl text-white tracking-tight">
+          LEADERBOARD
         </h1>
         <p className="text-sm text-muted-foreground">
           Top fighters this season — ranked by Arena score
@@ -438,7 +422,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {!isLoading && error && (
+        {!isLoading && isError && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-5 text-center">
             <p className="text-sm text-destructive font-medium">
               Failed to load leaderboard — please try refreshing the page.
@@ -446,7 +430,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {!isLoading && !error && data && data.ranked.length === 0 && (
+        {!isLoading && !isError && data && data.ranked.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -477,7 +461,7 @@ export default function LeaderboardPage() {
           </motion.div>
         )}
 
-        {!isLoading && !error && data && data.ranked.length > 0 && (
+        {!isLoading && !isError && data && data.ranked.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -486,7 +470,7 @@ export default function LeaderboardPage() {
             aria-label="Arena leaderboard"
             className="flex flex-col gap-2"
           >
-            {data.ranked.map((player) => (
+            {data.ranked.map((player: RankedPlayer) => (
               <RankedRow
                 key={player.walletAddress}
                 player={player}

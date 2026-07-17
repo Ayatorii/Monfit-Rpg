@@ -353,7 +353,7 @@ function ResultView({
 
       {/* Final HP */}
       <div className="rounded-lg border border-card-border bg-card px-4 py-4 flex flex-col gap-3">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Final HP</span>
+        <span className="text-xs text-muted-foreground">Final HP</span>
         <HpBar current={playerHpFinal} max={playerHpMax} label="You" colorClass="bg-xp" />
         <HpBar current={npcHpFinal} max={npcHpMax} label={npc.name} colorClass="bg-destructive" />
       </div>
@@ -361,7 +361,7 @@ function ResultView({
       {/* Rewards */}
       {result === "win" && (
         <div className="rounded-lg border border-card-border bg-card px-4 py-4 flex items-center gap-6">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rewards</span>
+          <span className="text-xs text-muted-foreground">Rewards</span>
           <div className="flex items-center gap-4 ml-auto">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-gold tabular-nums">+{rewards.gold}</span>
@@ -411,7 +411,7 @@ function ResultView({
 function PlayerStatsBar({ STR, AGI, VIT }: { STR: number; AGI: number; VIT: number }) {
   return (
     <div className="rounded-lg border border-card-border bg-card px-4 py-3 flex items-center gap-6">
-      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Your Stats</span>
+      <span className="text-xs text-muted-foreground shrink-0">Your Stats</span>
       <div className="flex items-center gap-4 ml-auto">
         <StatChip icon={Swords} label="STR" value={STR} />
         <StatChip icon={Zap} label="AGI" value={AGI} />
@@ -487,10 +487,10 @@ export default function ArenaPage() {
 
   const pageTitle =
     view === "roster"
-      ? "Arena"
+      ? "ARENA"
       : view === "battle"
         ? `vs. ${selectedNpc?.name ?? ""}`
-        : selectedNpc?.name ?? "Result";
+        : selectedNpc?.name ?? "RESULT";
 
   const pageSubtitle =
     view === "roster"

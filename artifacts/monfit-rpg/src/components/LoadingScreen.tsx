@@ -17,7 +17,7 @@ export default function LoadingScreen({ onStart }: Props) {
       <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background overflow-hidden relative select-none">
         {/* Version stamp */}
         <p
-          className="absolute bottom-5 left-0 right-0 text-center font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase"
+          className="absolute bottom-5 left-0 right-0 text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase"
           aria-hidden="true"
         >
           v&thinsp;0.1&thinsp;ALPHA

@@ -22,7 +22,7 @@ const rainbowKitTheme = darkTheme({
   accentColor: "hsl(249 100% 66%)",
   accentColorForeground: "hsl(0 0% 100%)",
   borderRadius: "medium",
-  fontStack: "system",
+  fontStack: undefined,
 });
 
 function Router() {

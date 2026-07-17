@@ -54,7 +54,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* Main content */}
-        <main className="md:pl-60 pb-24 md:pb-0 min-h-[100dvh]">
+        <main id="main-content" className="md:pl-60 pb-24 md:pb-0 min-h-[100dvh]">
           {children}
         </main>
 

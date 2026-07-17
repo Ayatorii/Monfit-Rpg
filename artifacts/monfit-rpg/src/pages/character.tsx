@@ -247,7 +247,7 @@ function StatPanel({
       {/* Level + XP */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="font-sans font-semibold text-sm text-white uppercase tracking-wider">
+          <span className="font-display font-semibold text-sm text-white uppercase tracking-wider">
             Level {level}
           </span>
           <span className="text-xs font-mono text-muted-foreground">
@@ -271,7 +271,7 @@ function StatPanel({
 
       {/* Gold */}
       <div className="flex items-center justify-between border-t border-card-border pt-3">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs text-muted-foreground">
           Gold
         </span>
         <span className="text-sm font-bold text-gold tabular-nums">{gold}</span>
@@ -279,7 +279,7 @@ function StatPanel({
 
       {/* Stats */}
       <div className="border-t border-card-border pt-3 flex flex-col gap-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-0.5">
+        <span className="text-xs text-muted-foreground mb-0.5">
           Attributes
         </span>
         {stats.map(({ stat, base, bonus, total }) => (
@@ -553,7 +553,7 @@ export default function CharacterPage() {
         <header className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display font-black text-3xl md:text-4xl text-white leading-none">
-              Character
+              CHARACTER
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               Equip gear to boost your attributes.

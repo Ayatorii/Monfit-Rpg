@@ -1,4 +1,4 @@
-import { Wallet2, LogOut, Loader2 } from "lucide-react";
+import { Wallet2, LogOut, Loader2, X } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/lib/auth-context";
@@ -64,7 +64,7 @@ export default function AccountMenu({ className }: { className?: string }) {
             "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
           )}
         >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
+          <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     );
