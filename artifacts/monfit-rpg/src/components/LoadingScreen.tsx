@@ -20,7 +20,7 @@ export default function LoadingScreen({ onStart }: Props) {
           className="absolute bottom-5 left-0 right-0 text-center font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase"
           aria-hidden="true"
         >
-          v&thinsp;0.1&thinsp;ALPHA
+          v&thinsp;0.1.0&thinsp;ALPHA
         </p>
 
         {/* Main column */}
