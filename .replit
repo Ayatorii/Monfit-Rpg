@@ -1,5 +1,15 @@
 modules = ["nodejs-24", "postgresql-16"]
 
+# Frontend (Vite) → port 80 so the Preview pane shows the app
+[[ports]]
+localPort = 26223
+externalPort = 80
+
+# API server
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
 [deployment]
 deploymentTarget = "autoscale"
 
@@ -10,6 +20,9 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+# "Project" starts both managed artifact services in parallel.
+# Do NOT add manual shell.exec tasks for api-server or monfit-rpg here —
+# the artifact-managed workflows already inject PORT, BASE_PATH, and proxy routing.
 [[workflows.workflow]]
 name = "Project"
 mode = "parallel"
@@ -17,35 +30,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "API Server"
+args = "artifacts/api-server: API Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Monfit RPG"
-
-[[workflows.workflow]]
-name = "API Server"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=8080 pnpm --filter @workspace/api-server run dev"
-waitForPort = 8080
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow]]
-name = "Monfit RPG"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/monfit-rpg run dev"
-waitForPort = 3000
-
-[workflows.workflow.metadata]
-outputType = "webview"
+args = "artifacts/monfit-rpg: web"
 
 [agent]
 stack = "PNPM_WORKSPACE"
@@ -53,15 +42,7 @@ expertMode = true
 
 [postMerge]
 path = "scripts/post-merge.sh"
-timeoutMs = 20000
+timeoutMs = 60000
 
 [nix]
 channel = "stable-25_05"
-
-[[ports]]
-localPort = 8080
-externalPort = 80
-
-[[ports]]
-localPort = 26223
-externalPort = 3000
