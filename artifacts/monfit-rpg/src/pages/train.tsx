@@ -104,106 +104,133 @@ export default function TrainPage() {
                 {pageTitle}
               </motion.h1>
             </AnimatePresence>
-            <p className="text-muted-foreground text-sm mt-1">
-              Pick a goal to see your program and daily quests.
-            </p>
+
+            {/* Subtitle — only before a goal is picked */}
+            <AnimatePresence>
+              {!goal && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: dur(0.2) }}
+                  className="text-muted-foreground text-sm mt-1"
+                >
+                  Pick a goal to see your program and daily quests.
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
           <ResourceBadges gold={gold} xp={xp} />
         </header>
 
-        {/* Goal selection */}
-        <section aria-labelledby="goal-heading" className="mb-8">
-          <h2
-            id="goal-heading"
-            className="font-display font-bold text-lg text-white mb-4 uppercase tracking-wide"
-          >
-            Pick Your Goal
-          </h2>
-          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
-            {GOALS.map((g, idx) => {
-              const isActive = goal === g.id;
-              const isTentative = tentativeGoal === g.id;
-              const showPick = isTentative;
+        {/* Goal selection — hidden once a goal is picked */}
+        <AnimatePresence>
+          {!goal && (
+            <motion.section
+              key="goal-section"
+              aria-labelledby="goal-heading"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, y: isReduced ? 0 : -16 }}
+              transition={{ duration: dur(0.3), ease: [0.16, 1, 0.3, 1] }}
+              className="mb-8"
+            >
+              <h2
+                id="goal-heading"
+                className="font-display font-bold text-lg text-white mb-4 uppercase tracking-wide"
+              >
+                Pick Your Goal
+              </h2>
+              <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
+                {GOALS.map((g, idx) => {
+                  const isTentative = tentativeGoal === g.id;
 
-              return (
-                <motion.div
-                  key={g.id}
-                  animate={{ scale: isActive && !isReduced ? 1.04 : 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                  className={cn(
-                    "relative flex flex-col overflow-hidden rounded-xl border-2 transition-colors cursor-pointer",
-                    isActive
-                      ? "border-primary shadow-[0_0_18px_2px_var(--primary-glow)]"
-                      : isTentative
-                      ? "border-primary/60"
-                      : "border-card-border hover:border-primary/40",
-                  )}
-                  onClick={() => handleGoalClick(g.id)}
-                >
-                  {/* Image */}
-                  <div className="w-full aspect-square overflow-hidden bg-card">
-                    <motion.img
-                      src={g.image}
-                      alt={g.label}
-                      loading="lazy"
-                      fetchPriority={idx < 2 ? "high" : "low"}
-                      animate={{ scale: isActive && !isReduced ? 1.08 : 1 }}
+                  return (
+                    <motion.div
+                      key={g.id}
+                      animate={{ scale: isTentative && !isReduced ? 1.04 : 1 }}
                       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                      className="w-full h-full object-cover"
-                      draggable={false}
-                    />
-                  </div>
-
-                  {/* Label bar */}
-                  <div
-                    className={cn(
-                      "w-full px-3 py-2.5 transition-colors",
-                      isActive ? "bg-primary/15" : "bg-card",
-                    )}
-                  >
-                    <span
                       className={cn(
-                        "block font-semibold text-sm text-center",
-                        isActive ? "text-white" : "text-foreground",
+                        "relative flex flex-col overflow-hidden rounded-xl border-2 transition-colors cursor-pointer",
+                        isTentative
+                          ? "border-primary shadow-[0_0_18px_2px_var(--primary-glow)]"
+                          : "border-card-border hover:border-primary/40",
                       )}
+                      onClick={() => handleGoalClick(g.id)}
                     >
-                      {g.label}
-                    </span>
-                  </div>
+                      {/* Image + PICK overlay — PICK is centered inside the image area */}
+                      <div className="relative w-full aspect-square overflow-hidden bg-card">
+                        <motion.img
+                          src={g.image}
+                          alt={g.label}
+                          loading="lazy"
+                          fetchPriority={idx < 2 ? "high" : "low"}
+                          animate={{ scale: isTentative && !isReduced ? 1.08 : 1 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
 
-                  {/* PICK button overlay */}
-                  <AnimatePresence>
-                    {showPick && (
-                      <motion.button
-                        key="pick-btn"
-                        type="button"
-                        initial={{ opacity: 0, scale: isReduced ? 1 : 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: isReduced ? 1 : 0.8 }}
-                        transition={{ duration: dur(0.18), ease: [0.16, 1, 0.3, 1] }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePick(g.id);
-                        }}
+                        {/* PICK button — absolutely centered within the image */}
+                        <AnimatePresence>
+                          {isTentative && (
+                            <motion.div
+                              key="pick-overlay"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: dur(0.15) }}
+                              className="absolute inset-0 flex items-center justify-center bg-black/30"
+                            >
+                              <motion.button
+                                type="button"
+                                initial={{ scale: isReduced ? 1 : 0.75, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: isReduced ? 1 : 0.75, opacity: 0 }}
+                                transition={{ duration: dur(0.2), ease: [0.16, 1, 0.3, 1] }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePick(g.id);
+                                }}
+                                className={cn(
+                                  "px-10 py-4 rounded-full",
+                                  "font-bold text-2xl uppercase tracking-widest",
+                                  "bg-primary text-white",
+                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                                  "hover:bg-primary/90 active:scale-95 transition-all",
+                                )}
+                              >
+                                PICK
+                              </motion.button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Label bar */}
+                      <div
                         className={cn(
-                          "absolute bottom-12 left-1/2 -translate-x-1/2",
-                          "px-5 py-1.5 rounded-full font-bold text-sm uppercase tracking-widest",
-                          "bg-primary text-white shadow-lg",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
-                          "hover:bg-primary/90 active:scale-95 transition-all",
+                          "w-full px-3 py-2.5 transition-colors",
+                          isTentative ? "bg-primary/15" : "bg-card",
                         )}
                       >
-                        PICK
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
+                        <span
+                          className={cn(
+                            "block font-semibold text-sm text-center",
+                            isTentative ? "text-white" : "text-foreground",
+                          )}
+                        >
+                          {g.label}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
-        {/* Programs + Quests — only visible after a goal is chosen */}
+        {/* Programs + Quests — only visible after PICK is clicked */}
         <AnimatePresence>
           {goal && (
             <motion.div
@@ -242,7 +269,8 @@ export default function TrainPage() {
                         )}
                       >
                         <div className="flex items-center justify-between gap-3 mb-1.5">
-                          <h3 className={cn("font-semibold text-base", isPicked ? "text-primary" : "text-white")}>
+                          {/* Program name: uppercase + ~10% larger (text-lg = 18px vs text-base = 16px) */}
+                          <h3 className={cn("font-semibold text-lg uppercase tracking-wide", isPicked ? "text-primary" : "text-white")}>
                             {p.name}
                           </h3>
                           <span className="font-mono text-sm text-primary shrink-0 whitespace-nowrap">
