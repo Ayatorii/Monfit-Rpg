@@ -8,11 +8,10 @@ if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET must be set.");
 }
 
-// Frontend and API are served through the same reverse proxy (same origin)
-// on both Replit and Vercel, so SameSite=Lax is correct everywhere.
-// Secure is only required in production (HTTPS); dev runs over plain HTTP.
-const isProduction = process.env.NODE_ENV === "production";
-
+// Replit dev preview serves frontend and API on different origins (iframe-based),
+// so SameSite=None is required for the session cookie to be sent cross-origin.
+// Secure=true is safe here because Replit always serves over HTTPS — both in the
+// dev workspace preview and in production deployments.
 export const sessionMiddleware = session({
   store: new PgSession({
     pool,
@@ -27,8 +26,11 @@ export const sessionMiddleware = session({
   name: "monfit.sid",
   cookie: {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    // Must be true for SameSite=None to work, and Replit is always HTTPS.
+    secure: true,
+    // Required for cross-origin cookies in Replit's iframe-based dev preview
+    // and for Replit Deployments where frontend and API have different origins.
+    sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 30,
   },
 });

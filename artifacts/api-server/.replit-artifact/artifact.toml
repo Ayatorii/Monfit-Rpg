@@ -14,18 +14,23 @@ run = "pnpm --filter @workspace/api-server run dev"
 
 [services.production]
 
+# Production: build the Vite frontend first, then the Express server.
+# In Replit Deployments (Autoscale) the Express process serves BOTH the
+# /api routes AND the compiled Vite SPA — single process, single port.
 [services.production.build]
-args = ["pnpm", "--filter", "@workspace/api-server", "run", "build"]
+args = [
+  "sh", "-c",
+  "BASE_PATH=/ pnpm --filter @workspace/monfit-rpg run build && pnpm --filter @workspace/api-server run build"
+]
 
 [services.production.build.env]
 NODE_ENV = "production"
 
 [services.production.run]
-# we don't run through pnpm to make startup faster in production
+# Launch from workspace root so relative static-file paths resolve correctly.
 args = ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
 
 [services.production.run.env]
-PORT = "8080"
 NODE_ENV = "production"
 
 [services.production.health.startup]

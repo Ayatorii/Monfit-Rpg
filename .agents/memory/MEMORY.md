@@ -1,0 +1,2 @@
+- [Session cookie config](session-cookie.md) — SameSite=None + Secure=true always required for Replit cross-origin iframe preview and deployments.
+- [Production single-process](production-serving.md) — Express serves both /api routes and built Vite SPA static files in production; dev uses two separate artifact workflows.
