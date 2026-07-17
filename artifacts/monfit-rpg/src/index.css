@@ -1,4 +1,23 @@
 @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Onest:wght@300;400;500;600;700;800;900&display=swap");
+
+/* Metric-matched fallback faces — eliminate layout shift during font swap */
+@font-face {
+  font-family: "Onest Fallback";
+  src: local("Arial");
+  size-adjust: 98%;
+  ascent-override: 96%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Barlow Condensed Fallback";
+  src: local("Arial Narrow"), local("Impact");
+  size-adjust: 91%;
+  ascent-override: 100%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -95,6 +114,7 @@
   --border: 258 30% 20%;
   --input: 258 30% 20%;
   --ring: 249 100% 66%;
+  --primary-glow: hsl(var(--primary) / 0.35);
 
   /* Chrome (nav bar / sidebar) — distinct elevation from cards */
   --surface: 258 45% 11%;
@@ -110,10 +130,10 @@
   --rarity-epic: 38 92% 58%; /* gold/amber */
 
   --radius: 0.5rem;
-  --app-font-sans: "Onest", sans-serif;
+  --app-font-sans: "Onest", "Onest Fallback", sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --app-font-display: "Barlow Condensed", sans-serif;
+  --app-font-display: "Barlow Condensed", "Barlow Condensed Fallback", sans-serif;
 }
 
 @layer base {

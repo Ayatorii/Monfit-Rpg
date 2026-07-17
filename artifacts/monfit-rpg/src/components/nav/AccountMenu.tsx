@@ -23,7 +23,7 @@ export default function AccountMenu({ className }: { className?: string }) {
   // ── Signed in ──────────────────────────────────────────────────────────────
   if (status === "signed-in" && walletAddress) {
     return (
-      <div className={cn("flex items-center gap-2 rounded-md px-3 py-2.5 bg-white/5", className)}>
+      <div className={cn("flex items-center gap-2 rounded-md px-3 py-2.5 bg-foreground/5", className)}>
         <Wallet2 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
         <span className="flex-1 min-w-0 font-mono text-xs text-foreground truncate">
           {shortenAddress(walletAddress)}
@@ -34,7 +34,7 @@ export default function AccountMenu({ className }: { className?: string }) {
           aria-label="Disconnect wallet"
           className={cn(
             "shrink-0 rounded p-1.5 text-muted-foreground transition-colors",
-            "hover:text-foreground hover:bg-white/10",
+            "hover:text-foreground hover:bg-foreground/10",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
           )}
@@ -48,7 +48,7 @@ export default function AccountMenu({ className }: { className?: string }) {
   // ── SIWE in progress ───────────────────────────────────────────────────────
   if (status === "signing-in") {
     return (
-      <div className={cn("flex items-center gap-2 rounded-md px-3 py-2.5 bg-white/5", className)}>
+      <div className={cn("flex items-center gap-2 rounded-md px-3 py-2.5 bg-foreground/5", className)}>
         <Loader2 className="h-4 w-4 text-primary shrink-0 animate-spin" aria-hidden="true" />
         <span className="flex-1 min-w-0 text-xs text-muted-foreground truncate">
           Confirm in wallet…
@@ -59,7 +59,7 @@ export default function AccountMenu({ className }: { className?: string }) {
           aria-label="Cancel sign-in"
           className={cn(
             "shrink-0 rounded p-1.5 text-muted-foreground transition-colors",
-            "hover:text-foreground hover:bg-white/10",
+            "hover:text-foreground hover:bg-foreground/10",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
           )}

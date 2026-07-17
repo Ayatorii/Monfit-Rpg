@@ -430,6 +430,7 @@ export default function ArenaPage() {
   const [view, setView] = useState<ArenaView>("roster");
   const [selectedNpc, setSelectedNpc] = useState<NpcOpponent | null>(null);
   const [battleLog, setBattleLog] = useState<BattleLog | null>(null);
+  const isReduced = useReducedMotion() ?? false;
 
   const playerStats = calcPlayerStats(equippedItems);
 
@@ -534,7 +535,7 @@ export default function ArenaPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            transition={{ duration: isReduced ? 0 : 0.15, ease: "easeOut" }}
             className="flex flex-col gap-4"
           >
             {/* Player stats for comparison */}
@@ -563,7 +564,7 @@ export default function ArenaPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            transition={{ duration: isReduced ? 0 : 0.15, ease: "easeOut" }}
           >
             <BattleView npc={selectedNpc} log={battleLog} onDone={handleBattleDone} />
           </motion.div>
@@ -575,7 +576,7 @@ export default function ArenaPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            transition={{ duration: isReduced ? 0 : 0.15, ease: "easeOut" }}
           >
             <ResultView
               npc={selectedNpc}

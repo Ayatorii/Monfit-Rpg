@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGame } from "@/lib/game-context";
@@ -12,15 +12,13 @@ export default function TrainPage() {
   const { gold, xp, addGold, addXp } = useGame();
   const [goal, setGoal] = useState<Goal | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const isReduced = useReducedMotion() ?? false;
 
   const programs = useMemo(() => (goal ? PROGRAMS[goal] : []), [goal]);
   const quests   = useMemo(() => (goal ? DAILY_QUESTS[goal] : []), [goal]);
 
   const handleGoal = (id: Goal) => {
-    if (goal !== id) {
-      // Clear completed quests when switching goals
-      setCompleted(new Set());
-    }
+    if (goal !== id) setCompleted(new Set());
     setGoal(id);
   };
 
@@ -43,6 +41,9 @@ export default function TrainPage() {
       return next;
     });
   };
+
+  const dur  = (base: number) => (isReduced ? 0 : base);
+  const delay = (base: number) => (isReduced ? 0 : base);
 
   return (
     <div className="px-4 md:px-8 pt-6 md:pt-10 pb-10 max-w-3xl mx-auto">
@@ -67,8 +68,9 @@ export default function TrainPage() {
         >
           Your Goal
         </h2>
-        <div className="grid grid-cols-2 gap-3">
-          {GOALS.map((g) => {
+        {/* Single column below 360 px, two columns above */}
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
+          {GOALS.map((g, idx) => {
             const isSelected = goal === g.id;
             return (
               <motion.button
@@ -76,13 +78,13 @@ export default function TrainPage() {
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => handleGoal(g.id)}
-                animate={{ scale: isSelected ? 1.04 : 1 }}
+                animate={{ scale: isSelected && !isReduced ? 1.04 : 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 22 }}
                 className={cn(
                   "relative flex flex-col overflow-hidden rounded-xl border-2 text-left transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isSelected
-                    ? "border-primary shadow-[0_0_18px_2px_rgba(124,58,237,0.35)]"
+                    ? "border-primary shadow-[0_0_18px_2px_var(--primary-glow)]"
                     : "border-card-border hover:border-primary/40",
                 )}
               >
@@ -91,7 +93,9 @@ export default function TrainPage() {
                   <motion.img
                     src={g.image}
                     alt={g.label}
-                    animate={{ scale: isSelected ? 1.08 : 1 }}
+                    loading="lazy"
+                    fetchPriority={idx < 2 ? "high" : "low"}
+                    animate={{ scale: isSelected && !isReduced ? 1.08 : 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 22 }}
                     className="w-full h-full object-cover"
                     draggable={false}
@@ -114,7 +118,6 @@ export default function TrainPage() {
                     {g.label}
                   </span>
                 </div>
-
               </motion.button>
             );
           })}
@@ -126,10 +129,10 @@ export default function TrainPage() {
         {goal && (
           <motion.div
             key={goal}
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: isReduced ? 0 : 24 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, y: isReduced ? 0 : 16 }}
+            transition={{ duration: dur(0.35), ease: [0.16, 1, 0.3, 1] }}
           >
             {/* Suggested Programs */}
             <section aria-labelledby="programs-heading" className="mb-8">
@@ -143,14 +146,14 @@ export default function TrainPage() {
                 {programs.map((p, i) => (
                   <motion.div
                     key={p.name}
-                    initial={{ opacity: 0, x: -12 }}
+                    initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.28, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: dur(0.28), delay: delay(i * 0.05), ease: [0.16, 1, 0.3, 1] }}
                     className="rounded-lg border border-card-border bg-card px-4 py-4"
                   >
                     <div className="flex items-center justify-between gap-3 mb-1">
                       <h3 className="font-semibold text-white text-sm">{p.name}</h3>
-                      <span className="font-mono text-xs text-primary shrink-0 whitespace-nowrap">
+                      <span className="font-mono text-xs text-primary-text shrink-0 whitespace-nowrap">
                         {p.meta}
                       </span>
                     </div>
@@ -179,9 +182,9 @@ export default function TrainPage() {
                       aria-checked={isDone}
                       aria-label={`${q.label} — ${isDone ? "completed" : `mark complete for +${q.gold} Gold, +${q.xp} XP`}`}
                       onClick={() => toggleQuest(q.id, q.gold, q.xp, q.label)}
-                      initial={{ opacity: 0, x: -12 }}
+                      initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.28, delay: 0.1 + i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: dur(0.28), delay: delay(0.1 + i * 0.05), ease: [0.16, 1, 0.3, 1] }}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg border px-4 py-3.5 min-h-11 text-left transition-colors",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -209,9 +212,9 @@ export default function TrainPage() {
                       </span>
                       {isDone ? (
                         <motion.span
-                          initial={{ opacity: 0, scale: 0.7 }}
+                          initial={{ opacity: 0, scale: isReduced ? 1 : 0.7 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                          transition={{ duration: dur(0.25), ease: [0.16, 1, 0.3, 1] }}
                           className="flex items-center gap-1 text-primary shrink-0"
                         >
                           <Check className="h-4 w-4" aria-hidden="true" />
