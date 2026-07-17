@@ -6,10 +6,10 @@ import generalFitnessImg from "../assets/goals/general-fitness.png";
 export type Goal = "muscle" | "weight-loss" | "endurance" | "general";
 
 export const GOALS: { id: Goal; label: string; image: string }[] = [
-  { id: "muscle",      label: "Build Muscle",    image: buildMuscleImg },
-  { id: "weight-loss", label: "Lose Weight",      image: loseWeightImg },
-  { id: "endurance",   label: "Endurance",        image: enduranceImg },
-  { id: "general",     label: "General Fitness",  image: generalFitnessImg },
+  { id: "muscle",      label: "BUILD MUSCLE",    image: buildMuscleImg },
+  { id: "weight-loss", label: "LOSE WEIGHT",      image: loseWeightImg },
+  { id: "endurance",   label: "ENDURANCE",        image: enduranceImg },
+  { id: "general",     label: "GENERAL FITNESS",  image: generalFitnessImg },
 ];
 
 export type Program = {

@@ -12,7 +12,7 @@ export default function TrainPage() {
   const { gold, xp, addGold, addXp } = useGame();
   const [tentativeGoal, setTentativeGoal] = useState<Goal | null>(null);
   const [goal, setGoal] = useState<Goal | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const isReduced = useReducedMotion() ?? false;
 
@@ -27,18 +27,12 @@ export default function TrainPage() {
   const handlePick = (id: Goal) => {
     if (goal !== id) {
       setCompleted(new Set());
-      setSelectedProgram(null);
     }
     setGoal(id);
     setTentativeGoal(id);
   };
 
-  const handleProgramSelect = (name: string) => {
-    setSelectedProgram((prev) => (prev === name ? null : name));
-  };
-
   const toggleQuest = (id: string, questGold: number, questXp: number, label: string) => {
-    if (!selectedProgram) return;
     setCompleted((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -262,37 +256,25 @@ export default function TrainPage() {
                 transition={{ duration: dur(0.3), ease: [0.16, 1, 0.3, 1] }}
                 className="flex flex-col gap-3"
               >
-                {programs.map((p, i) => {
-                  const isPicked = selectedProgram === p.name;
-                  return (
-                    <motion.button
-                      key={p.name}
-                      type="button"
-                      aria-pressed={isPicked}
-                      onClick={() => handleProgramSelect(p.name)}
-                      initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: dur(0.28), delay: delay(i * 0.05), ease: [0.16, 1, 0.3, 1] }}
-                      className={cn(
-                        "rounded-lg border px-4 py-4 text-left w-full transition-colors",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                        isPicked
-                          ? "border-primary bg-primary/10 shadow-[0_0_12px_1px_var(--primary-glow)]"
-                          : "border-card-border bg-card hover:border-primary/40",
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-3 mb-1.5">
-                        <h3 className={cn("font-semibold text-lg uppercase tracking-wide", isPicked ? "text-primary" : "text-white")}>
-                          {p.name}
-                        </h3>
-                        <span className="font-mono text-sm text-primary shrink-0 whitespace-nowrap">
-                          {p.meta}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground text-base leading-snug">{p.description}</p>
-                    </motion.button>
-                  );
-                })}
+                {programs.map((p, i) => (
+                  <motion.div
+                    key={p.name}
+                    initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: dur(0.28), delay: delay(i * 0.05), ease: [0.16, 1, 0.3, 1] }}
+                    className="rounded-lg border border-card-border bg-card px-4 py-4"
+                  >
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <h3 className="font-semibold text-lg uppercase tracking-wide text-white">
+                        {p.name}
+                      </h3>
+                      <span className="font-mono text-sm text-primary shrink-0 whitespace-nowrap">
+                        {p.meta}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-base leading-snug">{p.description}</p>
+                  </motion.div>
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
@@ -329,13 +311,7 @@ export default function TrainPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: dur(0.3), ease: [0.16, 1, 0.3, 1] }}
               >
-                {!selectedProgram && (
-                  <p className="text-muted-foreground text-sm mb-3">
-                    Select a program above to unlock daily quests.
-                  </p>
-                )}
-
-                <div className={cn("flex flex-col gap-2.5", !selectedProgram && "opacity-40 pointer-events-none select-none")}>
+                <div className="flex flex-col gap-2.5">
                   {quests.map((q, i) => {
                     const isDone = completed.has(q.id);
                     return (
@@ -344,7 +320,6 @@ export default function TrainPage() {
                         type="button"
                         role="checkbox"
                         aria-checked={isDone}
-                        aria-disabled={!selectedProgram}
                         aria-label={`${q.label} — ${isDone ? "completed" : `mark complete for +${q.gold} Gold, +${q.xp} XP`}`}
                         onClick={() => toggleQuest(q.id, q.gold, q.xp, q.label)}
                         initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
