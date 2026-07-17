@@ -8,20 +8,25 @@ if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET must be set.");
 }
 
-// In both dev and production the frontend and API share the same origin
-// (Replit's path-based proxy routes /api/* to Express, everything else to
-// the Vite dev server or the built SPA).  Same-site means SameSite=Lax is
-// sufficient — no need for SameSite=None.
+// SameSite=None is required because the Replit dev workspace embeds the app
+// preview in an iframe at *.replit.dev inside replit.com.  Chrome treats any
+// fetch from a page whose top-level ancestor is on a different eTLD+1 as
+// cross-site, so SameSite=Lax silently drops the session cookie on POST
+// requests (e.g. /api/auth/verify) even though the iframe and API share the
+// same *.replit.dev domain.
 //
-// The Secure flag must match what the browser actually sees:
-//   dev  — Express is reached over plain HTTP (localhost), even though the
-//           browser accesses it via Replit's HTTPS proxy.  Setting secure:true
-//           here makes express-session silently skip the Set-Cookie header
-//           (because req.secure is false on the loopback interface), so the
-//           client never receives a session cookie.
-//   prod — Replit Autoscale terminates TLS and forwards to Express; the
-//           browser is on HTTPS, so the Secure flag is correct and required.
-const isProd = process.env.NODE_ENV === "production";
+// SameSite=None requires the Secure attribute to be valid in browsers.  We
+// use secure:"auto" (an express-session built-in) so that:
+//   • the Set-Cookie header is ALWAYS emitted (unlike secure:true, which
+//     silently skips the header when req.secure is false),
+//   • the Secure attribute is added only when the connection is actually
+//     HTTPS (req.secure = true, set correctly because app.ts uses
+//     trust proxy: true to honour Replit's X-Forwarded-Proto: https header).
+//
+// Net result:
+//   Browser via Replit HTTPS proxy → req.secure=true → Secure + SameSite=None → works ✓
+//   curl on localhost (HTTP)        → req.secure=false → no Secure flag → SameSite=None
+//     treated as Lax by browsers but cookie is still set for server-side testing ✓
 
 export const sessionMiddleware = session({
   store: new PgSession({
@@ -37,8 +42,10 @@ export const sessionMiddleware = session({
   name: "monfit.sid",
   cookie: {
     httpOnly: true,
-    secure: isProd,
-    sameSite: "lax",
+    // "auto" → always emits Set-Cookie; adds Secure attribute only when
+    // req.secure is true (i.e. when behind the Replit HTTPS proxy).
+    secure: "auto" as unknown as boolean,
+    sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24 * 30,
   },
 });

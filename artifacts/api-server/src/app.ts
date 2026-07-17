@@ -9,8 +9,13 @@ import { sessionMiddleware } from "./lib/session";
 
 const app: Express = express();
 
-// Trust the Replit reverse proxy so req.ip / req.protocol are accurate.
-app.set("trust proxy", 1);
+// Trust all Replit reverse proxy hops so req.ip / req.protocol / req.secure
+// are accurate.  Replit may use more than one internal proxy layer before
+// reaching the app, so using `true` (trust any X-Forwarded-* header) is more
+// reliable than `1` (trust only the outermost hop).  The session middleware
+// uses req.secure to decide whether to set the Secure cookie flag, so this
+// must be correct for SameSite=None cookies to work in the browser.
+app.set("trust proxy", true);
 
 app.use(
   pinoHttp({

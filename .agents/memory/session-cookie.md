@@ -1,17 +1,23 @@
 ---
 name: Session cookie config
-description: Why MONFIT RPG uses SameSite=Lax + Secure only in production for the session cookie.
+description: Why MONFIT RPG uses SameSite=None + secure:"auto" + trust proxy:true for the session cookie.
 ---
 
-The rule: `sameSite: "lax"`, `secure: isProd` (i.e. `process.env.NODE_ENV === "production"`).
+The rule: `sameSite: "none"`, `secure: "auto"`, and `app.set("trust proxy", true)`.
 
-**Why `secure: false` in dev:** The API server runs on plain HTTP (localhost:8080). Even though Replit's HTTPS proxy terminates TLS before forwarding to Express, `req.secure` is false on the loopback interface. Express-session with `secure: true` silently skips the `Set-Cookie` header when `req.secure` is false — the client never receives the session cookie, so every verify request creates a fresh empty session. Symptom: `GET /api/auth/nonce` takes ~1.5s (DB write succeeds), but `POST /api/auth/verify` returns 401 in ~7ms (no DB read — brand new session).
+**Why SameSite=None (not Lax):**
+The Replit dev workspace embeds the app preview in an iframe at `*.replit.dev` inside `replit.com`. Chrome's SameSite enforcement compares the request URL's site against the *top-level browsing context's* eTLD+1. Because the top frame is `replit.com` and the API is on `replit.dev`, POST requests (like `/api/auth/verify`) are treated as cross-site, and `SameSite=Lax` drops the session cookie silently. `SameSite=None` is required to allow the cookie on cross-site POST requests.
 
-**Why `sameSite: "lax"` not `"none"`:** In both dev and production, the frontend and API share the same origin. Replit's path-based proxy routes `/api/*` to the Express server and everything else to the frontend (Vite dev server in dev; Express static files in prod). From the browser's perspective, they are the same-site, so `SameSite=Lax` is sufficient and correct. `SameSite=None` requires `Secure=true` — setting both in dev re-introduces the dropped-cookie bug.
+**Why `secure: "auto"` (not `true`):**
+`SameSite=None` requires the `Secure` attribute, and express-session with `secure: true` only emits `Set-Cookie` when `req.secure` is true. Express's `req.secure` is derived from `X-Forwarded-Proto` (when `trust proxy` is set). With `secure: "auto"`, express-session *always* emits `Set-Cookie` (no silent skipping), and adds the `Secure` attribute only when `req.secure` is true. This means:
+- Browser via Replit HTTPS proxy → `X-Forwarded-Proto: https` → `req.secure=true` → `Secure` flag added → `SameSite=None; Secure` is valid → works ✓
+- `curl` via HTTP localhost → no `X-Forwarded-Proto` → `req.secure=false` → no `Secure` flag → cookie still set, browser treats `SameSite=None` without `Secure` as `Lax` → server-side testing works ✓
 
-**How to apply:** In `artifacts/api-server/src/lib/session.ts`, the cookie config is:
-```js
-const isProd = process.env.NODE_ENV === "production";
-cookie: { httpOnly: true, secure: isProd, sameSite: "lax", maxAge: ... }
-```
-Do not change this to `secure: true` always — it will break dev sign-in.
+**Why `trust proxy: true` (not `1`):**
+Replit may use multiple internal proxy hops before the request reaches Express. `trust proxy: 1` only trusts the outermost hop. `trust proxy: true` trusts any `X-Forwarded-*` header, ensuring `req.secure` (and `req.ip`) are always correct regardless of proxy topology.
+
+**How to apply:**
+- `artifacts/api-server/src/app.ts`: `app.set("trust proxy", true)` (not `1`)
+- `artifacts/api-server/src/lib/session.ts`: `cookie: { httpOnly: true, secure: "auto", sameSite: "none", maxAge: ... }`
+- Cast `"auto"` to `boolean` for TypeScript: `secure: "auto" as unknown as boolean`
+- Do NOT change `SameSite` to `lax` or `secure` to `true`/`false` — either will break sign-in in the Replit dev preview.
