@@ -123,15 +123,15 @@ export default function TrainPage() {
           <ResourceBadges gold={gold} xp={xp} />
         </header>
 
-        {/* Goal selection — hidden once a goal is picked */}
+        {/* Goal selection — slides out after PICK */}
         <AnimatePresence>
           {!goal && (
             <motion.section
               key="goal-section"
               aria-labelledby="goal-heading"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0, y: isReduced ? 0 : -16 }}
-              transition={{ duration: dur(0.3), ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
+              transition={{ duration: dur(0.35), ease: [0.16, 1, 0.3, 1] }}
               className="mb-8"
             >
               <h2
@@ -157,7 +157,7 @@ export default function TrainPage() {
                       )}
                       onClick={() => handleGoalClick(g.id)}
                     >
-                      {/* Image + PICK overlay — PICK is centered inside the image area */}
+                      {/* Image + PICK overlay */}
                       <div className="relative w-full aspect-square overflow-hidden bg-card">
                         <motion.img
                           src={g.image}
@@ -170,7 +170,7 @@ export default function TrainPage() {
                           draggable={false}
                         />
 
-                        {/* PICK button — absolutely centered within the image */}
+                        {/* PICK button — centered in the image area */}
                         <AnimatePresence>
                           {isTentative && (
                             <motion.div
@@ -230,69 +230,105 @@ export default function TrainPage() {
           )}
         </AnimatePresence>
 
-        {/* Programs + Quests — only visible after PICK is clicked */}
-        <AnimatePresence>
-          {goal && (
-            <motion.div
-              key={goal}
-              initial={{ opacity: 0, y: isReduced ? 0 : 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: isReduced ? 0 : 16 }}
-              transition={{ duration: dur(0.35), ease: [0.16, 1, 0.3, 1] }}
-            >
-              {/* Suggested Programs */}
-              <section aria-labelledby="programs-heading" className="mb-8">
-                <h2
-                  id="programs-heading"
-                  className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
-                >
-                  Suggested Programs
-                </h2>
-                <div className="flex flex-col gap-3">
-                  {programs.map((p, i) => {
-                    const isPicked = selectedProgram === p.name;
-                    return (
-                      <motion.button
-                        key={p.name}
-                        type="button"
-                        aria-pressed={isPicked}
-                        onClick={() => handleProgramSelect(p.name)}
-                        initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: dur(0.28), delay: delay(i * 0.05), ease: [0.16, 1, 0.3, 1] }}
-                        className={cn(
-                          "rounded-lg border px-4 py-4 text-left w-full transition-colors",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                          isPicked
-                            ? "border-primary bg-primary/10 shadow-[0_0_12px_1px_var(--primary-glow)]"
-                            : "border-card-border bg-card hover:border-primary/40",
-                        )}
-                      >
-                        <div className="flex items-center justify-between gap-3 mb-1.5">
-                          {/* Program name: uppercase + ~10% larger (text-lg = 18px vs text-base = 16px) */}
-                          <h3 className={cn("font-semibold text-lg uppercase tracking-wide", isPicked ? "text-primary" : "text-white")}>
-                            {p.name}
-                          </h3>
-                          <span className="font-mono text-sm text-primary shrink-0 whitespace-nowrap">
-                            {p.meta}
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground text-base leading-snug">{p.description}</p>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </section>
+        {/* Suggested Programs — always visible, placeholder before goal is picked */}
+        <section aria-labelledby="programs-heading" className="mb-8">
+          <h2
+            id="programs-heading"
+            className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+          >
+            Suggested Programs
+          </h2>
 
-              {/* Daily Quests */}
-              <section aria-labelledby="quests-heading">
-                <h2
-                  id="quests-heading"
-                  className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
-                >
-                  Daily Quests
-                </h2>
+          <AnimatePresence mode="wait">
+            {!goal ? (
+              /* Placeholder before goal is picked */
+              <motion.p
+                key="programs-placeholder"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: dur(0.2) }}
+                className="text-muted-foreground text-sm border border-card-border rounded-lg bg-card px-4 py-5"
+              >
+                Pick a goal above to see suggested training programs.
+              </motion.p>
+            ) : (
+              /* Actual programs */
+              <motion.div
+                key={`programs-${goal}`}
+                initial={{ opacity: 0, y: isReduced ? 0 : 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: dur(0.3), ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col gap-3"
+              >
+                {programs.map((p, i) => {
+                  const isPicked = selectedProgram === p.name;
+                  return (
+                    <motion.button
+                      key={p.name}
+                      type="button"
+                      aria-pressed={isPicked}
+                      onClick={() => handleProgramSelect(p.name)}
+                      initial={{ opacity: 0, x: isReduced ? 0 : -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: dur(0.28), delay: delay(i * 0.05), ease: [0.16, 1, 0.3, 1] }}
+                      className={cn(
+                        "rounded-lg border px-4 py-4 text-left w-full transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                        isPicked
+                          ? "border-primary bg-primary/10 shadow-[0_0_12px_1px_var(--primary-glow)]"
+                          : "border-card-border bg-card hover:border-primary/40",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <h3 className={cn("font-semibold text-lg uppercase tracking-wide", isPicked ? "text-primary" : "text-white")}>
+                          {p.name}
+                        </h3>
+                        <span className="font-mono text-sm text-primary shrink-0 whitespace-nowrap">
+                          {p.meta}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground text-base leading-snug">{p.description}</p>
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
 
+        {/* Daily Quests — always visible, placeholder before goal is picked */}
+        <section aria-labelledby="quests-heading">
+          <h2
+            id="quests-heading"
+            className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+          >
+            Daily Quests
+          </h2>
+
+          <AnimatePresence mode="wait">
+            {!goal ? (
+              /* Placeholder before goal is picked */
+              <motion.p
+                key="quests-placeholder"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: dur(0.2) }}
+                className="text-muted-foreground text-sm border border-card-border rounded-lg bg-card px-4 py-5"
+              >
+                Pick a goal above to unlock your daily quests.
+              </motion.p>
+            ) : (
+              /* Actual quests */
+              <motion.div
+                key={`quests-${goal}`}
+                initial={{ opacity: 0, y: isReduced ? 0 : 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: dur(0.3), ease: [0.16, 1, 0.3, 1] }}
+              >
                 {!selectedProgram && (
                   <p className="text-muted-foreground text-sm mb-3">
                     Select a program above to unlock daily quests.
@@ -357,10 +393,10 @@ export default function TrainPage() {
                     );
                   })}
                 </div>
-              </section>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
       </div>
     </div>
   );
