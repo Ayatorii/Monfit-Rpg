@@ -8,10 +8,21 @@ if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET must be set.");
 }
 
-// Replit dev preview serves frontend and API on different origins (iframe-based),
-// so SameSite=None is required for the session cookie to be sent cross-origin.
-// Secure=true is safe here because Replit always serves over HTTPS — both in the
-// dev workspace preview and in production deployments.
+// In both dev and production the frontend and API share the same origin
+// (Replit's path-based proxy routes /api/* to Express, everything else to
+// the Vite dev server or the built SPA).  Same-site means SameSite=Lax is
+// sufficient — no need for SameSite=None.
+//
+// The Secure flag must match what the browser actually sees:
+//   dev  — Express is reached over plain HTTP (localhost), even though the
+//           browser accesses it via Replit's HTTPS proxy.  Setting secure:true
+//           here makes express-session silently skip the Set-Cookie header
+//           (because req.secure is false on the loopback interface), so the
+//           client never receives a session cookie.
+//   prod — Replit Autoscale terminates TLS and forwards to Express; the
+//           browser is on HTTPS, so the Secure flag is correct and required.
+const isProd = process.env.NODE_ENV === "production";
+
 export const sessionMiddleware = session({
   store: new PgSession({
     pool,
@@ -26,11 +37,8 @@ export const sessionMiddleware = session({
   name: "monfit.sid",
   cookie: {
     httpOnly: true,
-    // Must be true for SameSite=None to work, and Replit is always HTTPS.
-    secure: true,
-    // Required for cross-origin cookies in Replit's iframe-based dev preview
-    // and for Replit Deployments where frontend and API have different origins.
-    sameSite: "none",
+    secure: isProd,
+    sameSite: "lax",
     maxAge: 1000 * 60 * 60 * 24 * 30,
   },
 });
