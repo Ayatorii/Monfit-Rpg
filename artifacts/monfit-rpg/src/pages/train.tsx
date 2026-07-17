@@ -76,18 +76,19 @@ export default function TrainPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: dur(0.6) }}
-            className="fixed inset-0 pointer-events-none z-0"
+            className="fixed inset-0 pointer-events-none"
             style={{
+              zIndex: -1,
               backgroundImage: `url(${selectedGoalData.image})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              opacity: 0.07,
+              opacity: 0.06,
             }}
           />
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 px-4 md:px-8 pt-6 md:pt-10 pb-10 max-w-3xl mx-auto">
+      <div className="px-4 md:px-8 pt-6 md:pt-10 pb-10 max-w-3xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div>
