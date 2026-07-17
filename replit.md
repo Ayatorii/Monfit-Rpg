@@ -30,14 +30,14 @@ Optional secrets (leave unset to disable those features):
 
 ## Run & Operate
 
-Two artifact-managed workflows handle the app. Use the Run button or the workflow panel:
+Two workflows handle the app. Use the Run button or the workflow panel:
 
 | Workflow | What it runs | Port |
 |---|---|---|
-| `artifacts/api-server: API Server` | Express API (build → start) | 8080 |
-| `artifacts/monfit-rpg: web` | Vite dev server | 26223 → preview at / |
+| `API Server` | Express API (build → start) | 8080 |
+| `Monfit RPG Frontend` | Vite dev server | 26223 → preview at / |
 
-Do **not** create manual workflows for these services — the artifact workflows inject `PORT`, `BASE_PATH`, and proxy routing automatically.
+The frontend workflow injects `BASE_PATH=/ PORT=26223` and the API server injects `PORT=8080`. The Vite dev server proxies `/api` → `localhost:8080` in development.
 
 Useful commands:
 ```bash

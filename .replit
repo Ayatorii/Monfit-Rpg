@@ -19,9 +19,8 @@ env = { "CI" = "true" }
 runButton = "Project"
 
 # "Project" starts both services in parallel.
-# - "API Server" is a manually configured workflow (Express on port 8080)
-# - "artifacts/monfit-rpg: web" is the artifact-managed Vite frontend (port 26223)
-#   The Vite dev server proxies /api -> localhost:8080 in development.
+# - "API Server" — Express backend on port 8080
+# - "Monfit RPG Frontend" — Vite dev server on port 26223 (proxies /api -> localhost:8080)
 [[workflows.workflow]]
 name = "Project"
 mode = "parallel"
@@ -33,7 +32,7 @@ args = "API Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "artifacts/monfit-rpg: web"
+args = "Monfit RPG Frontend"
 
 [[workflows.workflow]]
 name = "API Server"
@@ -46,6 +45,18 @@ waitForPort = 8080
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "Monfit RPG Frontend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "BASE_PATH=/ PORT=26223 pnpm --filter @workspace/monfit-rpg run dev"
+waitForPort = 26223
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [agent]
 stack = "PNPM_WORKSPACE"
