@@ -5,17 +5,14 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
+// PORT is only used by the Vite dev server and preview server; it is NOT
+// required during `vite build` (production builds are stateless — they write
+// files to disk and don't listen on a port).  Making it optional here allows
+// the production artifact build step to run without a PORT env var.
 const rawPort = process.env.PORT;
+const port = rawPort ? Number(rawPort) : undefined;
 
-if (!rawPort) {
-  throw new Error(
-    'PORT environment variable is required but was not provided.',
-  );
-}
-
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
+if (rawPort !== undefined && (Number.isNaN(port) || (port as number) <= 0)) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 

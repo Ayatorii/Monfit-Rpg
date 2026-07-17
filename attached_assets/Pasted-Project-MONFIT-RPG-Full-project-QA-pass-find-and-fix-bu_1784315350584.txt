@@ -1,0 +1,43 @@
+Project: MONFIT RPG — Full project QA pass: find and fix bugs/errors across the whole app
+
+We've been through many rounds of changes (RainbowKit reinstalls, wallet moved to header, DB connection changes, cookie config fixes, Vercel removal). Before continuing with new features, do a full audit of the current state to catch regressions, dead code, and bugs left over from all these changes. Go through each section below, report findings with actual evidence, then fix what's broken — don't just report and stop.
+
+## 1. Dead code / leftover cleanup
+- Grep for any remaining references to Vercel, `serverless-http`, `vercel.json`, or the old `/api/index.ts` pattern — confirm nothing was missed in the removal.
+- Grep for any unused/dead guards, refs, or state left over from the multiple auth rewrites (e.g. old auto-reconnect guards that may no longer be needed now that wallet connect lives in the header instead of the Loading Screen).
+- Check for any duplicate/orphaned route handlers, especially in `api-server/src/routes/auth.ts` — confirm there's exactly one nonce handler and one verify handler, not leftover duplicates from earlier rewrites.
+
+## 2. Console errors across every screen
+Open each of these fresh (hard refresh) and report any console errors/warnings (not just wallet-related ones — genuinely anything red or yellow):
+- Loading Screen (Start button state)
+- Train
+- Character
+- Shop
+- Arena
+- Leaderboard
+For each, note whether errors are pre-existing/harmless (e.g. third-party extension noise) vs. actual app bugs — don't dismiss everything as "just extensions," check carefully.
+
+## 3. Full wallet auth flow, end to end
+- Connect wallet from the header → sign → confirm session persists on refresh → disconnect → confirm clean return to guest state → reconnect → confirm it works again (not just once).
+- Confirm the nonce/session race condition fix (`session.save()` before responding) is still in place and working.
+- Confirm cross-origin cookie config (`sameSite: none`, `secure: true`, `credentials: include`) is intact in both the session middleware and `custom-fetch.ts`.
+
+## 4. Core loop data integrity
+For a connected wallet, confirm each of these actually persists to the database (query the DB directly to confirm, don't just trust the UI):
+- Completing a Train quest updates `gold`/`xp` in `players`.
+- Buying/opening a Shop chest updates inventory and deducts gold.
+- Equipping/unequipping on Character updates the `equipped` state and this is reflected correctly in combat stats used by Arena.
+- Fighting in Arena inserts a row into `matches` and updates gold/xp.
+- Leaderboard reflects real match data correctly ranked.
+
+## 5. Schema / migration integrity
+- Confirm `sessions`, `users`, `players`, `matches` (and any others) all exist via proper Drizzle migration files — no manual SQL fixes should be the only source of truth for any table at this point.
+- Confirm the migration set is reproducible: if it were run against a totally fresh database, would all required tables be created correctly?
+
+## 6. Accessibility + anti-slop spot-check
+Run `$impeccable audit` on: Loading Screen, the header wallet-connect UI, and Arena (the most complex remaining screen). Report scores and fix any P1s found.
+
+## 7. Build health
+Run the project's build command end to end (not just dev mode) and confirm it completes with zero errors — this is what will eventually run in the Replit Deployment, so it needs to be clean now.
+
+Report findings for all 7 sections with actual evidence (console output, DB query results, build output) — then fix anything broken. Prioritize: auth flow correctness > data integrity > dead code cleanup > accessibility polish, if time-constrained.

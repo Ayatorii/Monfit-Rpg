@@ -88,6 +88,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [matchHistory, setMatchHistory] = useState<MatchRecord[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // goldRef keeps a synchronously-readable mirror of the gold state so that
+  // spendGold can check affordability and fire the API call in one tick —
+  // without relying on a React state updater function that runs asynchronously
+  // during the render phase.
+  const goldRef = useRef(0);
+  useEffect(() => {
+    goldRef.current = gold;
+  }, [gold]);
+
   const hydratedFor = useRef<string | null>(null);
 
   // Hydrate gold/xp/inventory from the server the first time a wallet signs in.
@@ -146,21 +155,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const spendGold = useCallback(
     (amount: number) => {
-      let success = false;
-      setGold((g) => {
-        if (g < amount) {
-          success = false;
-          return g;
-        }
-        success = true;
-        return g - amount;
-      });
-      if (success && isAuthenticated) {
+      // Read goldRef synchronously — the React state updater form of setGold
+      // runs during the render phase (asynchronously), so capturing a `success`
+      // flag inside an updater and reading it immediately after setGold() would
+      // always see false, preventing the API call from ever firing.
+      if (goldRef.current < amount) return false;
+      setGold((g) => Math.max(0, g - amount));
+      if (isAuthenticated) {
         adjustMyPlayer({ goldDelta: -amount }).catch((err) =>
           console.error("Failed to sync gold spend", err),
         );
       }
-      return success;
+      return true;
     },
     [isAuthenticated],
   );
