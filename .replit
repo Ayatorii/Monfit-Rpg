@@ -1,14 +1,12 @@
 modules = ["nodejs-24", "postgresql-16"]
 
-# Frontend (Vite) → port 80 so the Preview pane shows the app
-[[ports]]
-localPort = 26223
-externalPort = 80
-
-# API server
 [[ports]]
 localPort = 8080
-externalPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 26223
+externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
