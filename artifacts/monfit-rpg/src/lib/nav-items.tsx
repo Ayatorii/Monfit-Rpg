@@ -8,7 +8,7 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { path: "/train", label: "Train", icon: Dumbbell },
+  { path: "/train", label: "Trainings", icon: Dumbbell },
   { path: "/character", label: "Character", icon: User },
   { path: "/shop", label: "Shop", icon: ShoppingBag },
   { path: "/arena", label: "Arena", icon: Swords },

@@ -31,7 +31,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 href={item.path}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-sm transition-colors",
+                  "flex items-center gap-3 rounded-md px-3 py-2.5 font-medium text-sm uppercase tracking-wide transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                   isActive
                     ? "bg-primary/15 text-primary"
@@ -75,7 +75,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   href={item.path}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 py-2.5 text-[11px] font-medium transition-colors",
+                    "flex flex-col items-center justify-center gap-1 flex-1 py-2.5 text-[11px] font-medium uppercase tracking-wide transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                     isActive ? "text-primary" : "text-muted-foreground",
                   )}
