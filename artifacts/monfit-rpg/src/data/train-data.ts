@@ -1,13 +1,15 @@
-import { Dumbbell, Flame, Timer, Sparkles } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import buildMuscleImg from "../assets/goals/build-muscle.png";
+import loseWeightImg from "../assets/goals/lose-weight.png";
+import enduranceImg from "../assets/goals/endurance.png";
+import generalFitnessImg from "../assets/goals/general-fitness.png";
 
 export type Goal = "muscle" | "weight-loss" | "endurance" | "general";
 
-export const GOALS: { id: Goal; label: string; icon: LucideIcon }[] = [
-  { id: "muscle", label: "Build Muscle", icon: Dumbbell },
-  { id: "weight-loss", label: "Lose Weight", icon: Flame },
-  { id: "endurance", label: "Endurance", icon: Timer },
-  { id: "general", label: "General Fitness", icon: Sparkles },
+export const GOALS: { id: Goal; label: string; image: string }[] = [
+  { id: "muscle",      label: "Build Muscle",    image: buildMuscleImg },
+  { id: "weight-loss", label: "Lose Weight",      image: loseWeightImg },
+  { id: "endurance",   label: "Endurance",        image: enduranceImg },
+  { id: "general",     label: "General Fitness",  image: generalFitnessImg },
 ];
 
 export type Program = {
@@ -18,62 +20,32 @@ export type Program = {
 
 export const PROGRAMS: Record<Goal, Program[]> = {
   muscle: [
-    {
-      name: "Push Pull Legs",
-      description: "Classic hypertrophy split targeting every muscle group twice a week.",
-      meta: "6 days/week",
-    },
-    {
-      name: "Upper/Lower Split",
-      description: "Balanced strength and size progression with built-in recovery days.",
-      meta: "4 days/week",
-    },
-    {
-      name: "Full Body Strength",
-      description: "Compound-lift focused sessions for steady mass gains.",
-      meta: "3 days/week",
-    },
+    { name: "Bench Press",     description: "Build upper-body pushing strength and chest muscles.", meta: "2× / week" },
+    { name: "Squats",          description: "Develop powerful legs and core stability.",             meta: "2× / week" },
+    { name: "Deadlifts",       description: "Strengthen the entire posterior chain.",                meta: "1× / week" },
+    { name: "Overhead Press",  description: "Increase shoulder strength and stability.",             meta: "2× / week" },
+    { name: "Pull-Ups",        description: "Build back width and upper-body power.",                meta: "2× / week" },
   ],
   "weight-loss": [
-    {
-      name: "Metabolic Circuit",
-      description: "High-intensity circuits that keep your heart rate up and calories burning.",
-      meta: "5 days/week",
-    },
-    {
-      name: "Fat Burn HIIT",
-      description: "Short, intense intervals paired with active recovery.",
-      meta: "4 days/week",
-    },
+    { name: "Brisk Walking",       description: "Burn calories with low-impact cardio.",               meta: "5× / week" },
+    { name: "HIIT Intervals",      description: "Maximize calorie burn in a short workout.",           meta: "3× / week" },
+    { name: "Jump Rope",           description: "Improve coordination and cardiovascular fitness.",    meta: "3× / week" },
+    { name: "Bodyweight Circuit",  description: "Full-body workout to boost metabolism.",              meta: "3× / week" },
+    { name: "Cycling",             description: "Steady cardio for endurance and fat loss.",           meta: "2× / week" },
   ],
   endurance: [
-    {
-      name: "Distance Builder",
-      description: "Progressive cardio sessions to extend stamina week over week.",
-      meta: "5 days/week",
-    },
-    {
-      name: "Tempo & Intervals",
-      description: "Mixed-pace training to raise your aerobic ceiling.",
-      meta: "4 days/week",
-    },
-    {
-      name: "Cross-Training Base",
-      description: "Low-impact cardio variety to build endurance while protecting joints.",
-      meta: "3 days/week",
-    },
+    { name: "Distance Running",   description: "Improve aerobic capacity and stamina.",               meta: "3× / week" },
+    { name: "Cycling",            description: "Build cardiovascular endurance.",                      meta: "2× / week" },
+    { name: "Rowing",             description: "Train full-body endurance efficiently.",               meta: "2× / week" },
+    { name: "Swimming",           description: "Increase stamina with low joint impact.",              meta: "2× / week" },
+    { name: "Interval Running",   description: "Boost speed and endurance simultaneously.",           meta: "2× / week" },
   ],
   general: [
-    {
-      name: "Balanced Basics",
-      description: "A mix of strength, cardio, and mobility for all-around fitness.",
-      meta: "4 days/week",
-    },
-    {
-      name: "Starter Routine",
-      description: "Beginner-friendly full-body sessions to build a consistent habit.",
-      meta: "3 days/week",
-    },
+    { name: "Push-Ups",             description: "Improve upper-body strength anywhere.",              meta: "3× / week" },
+    { name: "Bodyweight Squats",    description: "Strengthen legs and mobility.",                      meta: "3× / week" },
+    { name: "Plank",                description: "Build core stability and posture.",                  meta: "4× / week" },
+    { name: "Jogging",              description: "Improve overall cardiovascular health.",             meta: "3× / week" },
+    { name: "Full-Body Mobility",   description: "Increase flexibility and reduce stiffness.",         meta: "5× / week" },
   ],
 };
 
@@ -84,10 +56,33 @@ export type Quest = {
   xp: number;
 };
 
-export const DAILY_QUESTS: Quest[] = [
-  { id: "workout", label: "Complete today's workout", gold: 50, xp: 20 },
-  { id: "steps", label: "Log 8000 steps", gold: 25, xp: 15 },
-  { id: "water", label: "Drink 2L water", gold: 15, xp: 10 },
-  { id: "stretch", label: "Stretch for 10 minutes", gold: 15, xp: 10 },
-  { id: "sleep", label: "Get 7+ hours of sleep", gold: 20, xp: 12 },
-];
+export const DAILY_QUESTS: Record<Goal, Quest[]> = {
+  muscle: [
+    { id: "muscle-steps",    label: "✅ Walk 7,000 Steps",            gold: 20, xp: 10 },
+    { id: "muscle-water",    label: "💧 Drink 2L Water",              gold: 15, xp: 8  },
+    { id: "muscle-pushups",  label: "💪 Complete 30 Push-Ups",        gold: 30, xp: 20 },
+    { id: "muscle-protein",  label: "🥩 Reach Your Daily Protein Goal", gold: 25, xp: 15 },
+    { id: "muscle-sleep",    label: "😴 Sleep 8 Hours",               gold: 20, xp: 12 },
+  ],
+  "weight-loss": [
+    { id: "wl-steps",    label: "✅ Walk 7,000 Steps",          gold: 20, xp: 10 },
+    { id: "wl-water",    label: "💧 Drink 2L Water",            gold: 15, xp: 8  },
+    { id: "wl-calories", label: "🔥 Burn 300 Active Calories",  gold: 30, xp: 20 },
+    { id: "wl-deficit",  label: "🍎 Stay Within Your Calorie Goal", gold: 25, xp: 15 },
+    { id: "wl-sugar",    label: "🚫 Skip Sugary Drinks Today",  gold: 20, xp: 12 },
+  ],
+  endurance: [
+    { id: "end-steps",   label: "✅ Walk 7,000 Steps",              gold: 20, xp: 10 },
+    { id: "end-water",   label: "💧 Drink 2L Water",                gold: 15, xp: 8  },
+    { id: "end-cardio",  label: "🏃 Complete 20 Minutes of Cardio", gold: 30, xp: 20 },
+    { id: "end-active",  label: "❤️ Maintain 30 Active Minutes",    gold: 25, xp: 15 },
+    { id: "end-stretch", label: "🧘 Stretch for 10 Minutes",        gold: 15, xp: 10 },
+  ],
+  general: [
+    { id: "gen-steps",   label: "✅ Walk 7,000 Steps",              gold: 20, xp: 10 },
+    { id: "gen-water",   label: "💧 Drink 2L Water",                gold: 15, xp: 8  },
+    { id: "gen-workout", label: "🏋️ Complete One Workout Session",  gold: 30, xp: 20 },
+    { id: "gen-stretch", label: "🧘 Stretch for 10 Minutes",        gold: 15, xp: 10 },
+    { id: "gen-goals",   label: "🎯 Close All Daily Fitness Goals", gold: 25, xp: 15 },
+  ],
+};
