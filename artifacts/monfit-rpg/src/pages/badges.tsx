@@ -182,9 +182,9 @@ function BadgeCard({
         {badge.name}
       </h2>
 
-      {/* State indicator / action */}
+      {/* State indicator / action — mt-auto keeps all states on the same baseline */}
       {state === "minted" && (
-        <span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+        <span className="mt-auto flex items-center gap-1.5 text-sm font-semibold text-primary">
           <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           Minted
         </span>
@@ -198,7 +198,7 @@ function BadgeCard({
           aria-label={`Mint ${badge.name} badge`}
           aria-busy={minting}
           className={cn(
-            "min-h-[44px] w-full rounded-lg border border-primary bg-primary px-4 py-2.5",
+            "mt-auto min-h-[44px] w-full rounded-lg border border-primary bg-primary px-4 py-2.5",
             "text-sm font-bold uppercase tracking-wide text-primary-text",
             "transition-all hover:brightness-110 active:scale-[0.98]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -223,7 +223,7 @@ function BadgeCard({
       )}
 
       {state === "locked" && (
-        <span className="text-xs text-muted-foreground/80 leading-snug">
+        <span className="mt-auto text-xs text-muted-foreground/80 leading-snug">
           Locked
         </span>
       )}
