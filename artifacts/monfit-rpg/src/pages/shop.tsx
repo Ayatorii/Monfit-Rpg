@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Package, Lock, CheckCircle2 } from "lucide-react";
+import { Package, Lock, CheckCircle2, Coins } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useGame, type OwnedItem } from "@/lib/game-context";
-import { rollLoot, RARITY_LABELS, SLOT_LABELS, type LootItem } from "@/data/lootTable";
+import {
+  rollLoot,
+  RARITY_LABELS,
+  SLOT_LABELS,
+  DUPLICATE_GOLD,
+  type LootItem,
+} from "@/data/lootTable";
 import { cn } from "@/lib/utils";
 import ResourceBadges from "@/components/ResourceBadges";
 
@@ -26,9 +33,15 @@ const RARITY_BORDER_VAR: Record<LootItem["rarity"], string> = {
   epic: "hsl(var(--rarity-epic))",
 };
 
+type RevealState =
+  | { type: "new"; item: OwnedItem }
+  | { type: "duplicate"; item: LootItem; goldEarned: number };
+
 export default function ShopPage() {
-  const { gold, xp, spendGold, addToInventory, inventory, equippedItems } = useGame();
-  const [revealItem, setRevealItem] = useState<OwnedItem | null>(null);
+  const [, navigate] = useLocation();
+  const { gold, xp, spendGold, addGold, addToInventory, inventory, equippedItems } =
+    useGame();
+  const [reveal, setReveal] = useState<RevealState | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const buyButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -38,9 +51,23 @@ export default function ShopPage() {
   const handleBuyAndOpen = () => {
     if (!spendGold(CHEST_PRICE)) return;
     const loot = rollLoot();
-    const owned = addToInventory(loot);
-    setRevealItem(owned);
+    const isDuplicate = inventory.some((i) => i.id === loot.id);
+
+    if (isDuplicate) {
+      const goldEarned = DUPLICATE_GOLD[loot.rarity];
+      addGold(goldEarned);
+      setReveal({ type: "duplicate", item: loot, goldEarned });
+    } else {
+      const owned = addToInventory(loot);
+      setReveal({ type: "new", item: owned });
+    }
     setDialogOpen(true);
+  };
+
+  const handleClose = () => {
+    setDialogOpen(false);
+    // Return focus to the buy button after the dialog closes.
+    setTimeout(() => buyButtonRef.current?.focus(), 50);
   };
 
   return (
@@ -62,7 +89,7 @@ export default function ShopPage() {
       <section aria-labelledby="chest-heading" className="mb-10">
         <h2
           id="chest-heading"
-          className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+          className="font-display font-bold text-lg text-foreground mb-3 uppercase tracking-wide"
         >
           Chests
         </h2>
@@ -74,7 +101,7 @@ export default function ShopPage() {
             <Package className="h-8 w-8 text-gold" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-white text-base">Common Chest</h3>
+            <h3 className="font-semibold text-foreground text-base">Common Chest</h3>
             <p className="text-muted-foreground text-sm mt-0.5">
               A weighted roll across common, rare, and epic training gear.
             </p>
@@ -117,11 +144,11 @@ export default function ShopPage() {
         </div>
       </section>
 
-      {/* Temporary inventory */}
+      {/* Inventory */}
       <section aria-labelledby="inventory-heading">
         <h2
           id="inventory-heading"
-          className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+          className="font-display font-bold text-lg text-foreground mb-3 uppercase tracking-wide"
         >
           My Items
         </h2>
@@ -179,43 +206,108 @@ export default function ShopPage() {
       {/* Reveal modal */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent
-          aria-label={revealItem ? `Chest reveal: ${revealItem.name}` : "Chest reveal"}
-          className="max-w-sm border-2 bg-card shadow-none p-0 overflow-hidden"
-          style={
-            revealItem ? { borderColor: RARITY_BORDER_VAR[revealItem.rarity] } : undefined
+          aria-label={
+            reveal
+              ? reveal.type === "duplicate"
+                ? `Duplicate: ${reveal.item.name} converted to ${reveal.goldEarned} Gold`
+                : `New item: ${reveal.item.name}`
+              : "Chest reveal"
           }
+          className="max-w-sm border-2 bg-card shadow-none p-0 overflow-hidden"
+          style={reveal ? { borderColor: RARITY_BORDER_VAR[reveal.item.rarity] } : undefined}
         >
-          {revealItem && (
+          {reveal && (
             <motion.div
+              key={reveal.type}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="flex flex-col items-center text-center px-6 py-8 gap-3"
             >
+              {/* Icon */}
               <div
                 className="flex items-center justify-center h-16 w-16 rounded-md bg-surface border shrink-0"
-                style={{ borderColor: RARITY_BORDER_VAR[revealItem.rarity] }}
+                style={{ borderColor: RARITY_BORDER_VAR[reveal.item.rarity] }}
                 aria-hidden="true"
               >
-                <Package
-                  className="h-8 w-8"
-                  style={{ color: RARITY_BORDER_VAR[revealItem.rarity] }}
-                />
+                {reveal.type === "duplicate" ? (
+                  <Coins
+                    className="h-8 w-8 text-gold"
+                  />
+                ) : (
+                  <Package
+                    className="h-8 w-8"
+                    style={{ color: RARITY_BORDER_VAR[reveal.item.rarity] }}
+                  />
+                )}
               </div>
-              <DialogTitle className="font-display font-black text-2xl text-white leading-tight">
-                {revealItem.name}
+
+              {/* Item name */}
+              <DialogTitle className="font-display font-black text-2xl text-foreground leading-tight">
+                {reveal.item.name}
               </DialogTitle>
+
+              {/* Rarity */}
               <span
                 className={cn(
                   "text-sm font-semibold uppercase tracking-wide",
-                  RARITY_TEXT_CLASS[revealItem.rarity],
+                  RARITY_TEXT_CLASS[reveal.item.rarity],
                 )}
               >
-                {RARITY_LABELS[revealItem.rarity]}
+                {RARITY_LABELS[reveal.item.rarity]}
               </span>
-              <DialogDescription className="text-sm text-muted-foreground">
-                {SLOT_LABELS[revealItem.slot]} · +{revealItem.statValue} {revealItem.statLabel}
-              </DialogDescription>
+
+              {reveal.type === "duplicate" ? (
+                /* ── Duplicate state ── */
+                <>
+                  <DialogDescription
+                    className="text-sm text-muted-foreground"
+                    aria-live="polite"
+                  >
+                    You already own this item.
+                  </DialogDescription>
+                  <div className="flex items-center gap-2 rounded-lg border border-card-border bg-surface px-4 py-2.5 mt-1">
+                    <Coins className="h-4 w-4 text-gold shrink-0" aria-hidden="true" />
+                    <span className="text-sm font-semibold text-foreground">
+                      Duplicate — converted to{" "}
+                      <span className="text-gold">+{reveal.goldEarned} Gold</span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className={cn(
+                      "mt-2 w-full min-h-11 rounded-md border border-card-border bg-muted",
+                      "text-sm font-semibold text-foreground transition-colors hover:bg-muted/70",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    )}
+                  >
+                    Got it
+                  </button>
+                </>
+              ) : (
+                /* ── New item state ── */
+                <>
+                  <DialogDescription className="text-sm text-muted-foreground">
+                    {SLOT_LABELS[reveal.item.slot]} · +{reveal.item.statValue}{" "}
+                    {reveal.item.statLabel}
+                  </DialogDescription>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleClose();
+                      navigate("/character");
+                    }}
+                    className={cn(
+                      "mt-2 w-full min-h-11 rounded-md border border-primary bg-primary",
+                      "text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    )}
+                  >
+                    Equip now →
+                  </button>
+                </>
+              )}
             </motion.div>
           )}
         </DialogContent>

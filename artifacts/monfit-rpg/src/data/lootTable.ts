@@ -17,6 +17,13 @@ export const RARITY_WEIGHTS: Record<Rarity, number> = {
   epic: 5,
 };
 
+/** Gold awarded when a chest roll produces an item the player already owns. */
+export const DUPLICATE_GOLD: Record<Rarity, number> = {
+  common: 10,
+  rare: 30,
+  epic: 100,
+};
+
 export const RARITY_LABELS: Record<Rarity, string> = {
   common: "Common",
   rare: "Rare",
