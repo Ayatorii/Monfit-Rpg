@@ -215,92 +215,84 @@ function SlotButton({
   }
   useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
 
-  // ── Empty slot: unchanged full-width card ──────────────────────────────────
-  if (!equippedItem) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={`${SLOT_LABELS[slot]}: empty — click to equip`}
-        className={cn(
-          "w-full min-h-11 flex flex-col gap-1 rounded-lg border px-3 py-3 text-left transition-all",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          "bg-card border-card-border hover:border-muted-foreground/40",
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span className="text-xs font-medium text-muted-foreground">
-            {SLOT_LABELS[slot]}
-          </span>
-        </div>
-        <span className="text-sm text-muted-foreground/70">+ Add gear</span>
-      </button>
-    );
-  }
-
-  // ── Equipped slot: compact square tile + hover/focus tooltip ───────────────
-  // Visual treatment matches InventoryGrid tiles: rarity-bg, border, sprite icon.
-  // Tooltip pattern is identical to InventoryGrid (same state/timer/ARIA approach).
-  const rarityColor = RARITY_COLOR_VAR[equippedItem.rarity];
+  // All slots — equipped or empty — render as the same 72×72px square tile
+  // so the paperdoll grid stays consistent regardless of equipped state.
+  const rarityColor = equippedItem ? RARITY_COLOR_VAR[equippedItem.rarity] : undefined;
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={onClick}
-        onMouseEnter={() => { cancelClose(); setShowTooltip(true); }}
-        onMouseLeave={scheduleClose}
-        onFocus={() => setShowTooltip(true)}
-        onBlur={scheduleClose}
-        aria-label={`${SLOT_LABELS[slot]}: ${equippedItem.name}, ${RARITY_LABELS[equippedItem.rarity]}, +${equippedItem.statValue} ${equippedItem.statLabel} — click to change`}
-        aria-describedby={tooltipId}
+        onMouseEnter={() => { if (equippedItem) { cancelClose(); setShowTooltip(true); } }}
+        onMouseLeave={() => { if (equippedItem) scheduleClose(); }}
+        onFocus={() => { if (equippedItem) setShowTooltip(true); }}
+        onBlur={() => { if (equippedItem) scheduleClose(); }}
+        aria-label={
+          equippedItem
+            ? `${SLOT_LABELS[slot]}: ${equippedItem.name}, ${RARITY_LABELS[equippedItem.rarity]}, +${equippedItem.statValue} ${equippedItem.statLabel} — click to change`
+            : `${SLOT_LABELS[slot]}: empty — click to equip`
+        }
+        aria-describedby={equippedItem ? tooltipId : undefined}
         className={cn(
-          "aspect-square h-[72px] w-[72px] rounded-lg border-2 flex items-center justify-center transition-all",
+          "h-[72px] w-[72px] rounded-lg flex flex-col items-center justify-center gap-1 transition-all",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          "hover:brightness-110",
+          equippedItem
+            ? "border-2 hover:brightness-110"
+            : "border border-dashed border-card-border bg-card hover:border-muted-foreground/40",
         )}
-        style={{
+        style={equippedItem ? {
           borderColor: rarityColor,
           backgroundColor: `hsl(var(--rarity-${equippedItem.rarity}) / 0.40)`,
-        }}
+        } : undefined}
       >
-        <img
-          src={SLOT_SPRITES[slot]}
-          alt={equippedItem.name}
-          className="h-10 w-10 shrink-0 object-contain"
-        />
+        {equippedItem ? (
+          <img
+            src={SLOT_SPRITES[slot]}
+            alt={equippedItem.name}
+            className="h-10 w-10 shrink-0 object-contain"
+          />
+        ) : (
+          <>
+            <Icon className="h-5 w-5 text-muted-foreground/50" aria-hidden="true" />
+            <span className="text-[10px] font-medium text-muted-foreground/50 leading-none">
+              {SLOT_LABELS[slot]}
+            </span>
+          </>
+        )}
       </button>
 
-      {/* Tooltip — same pattern as InventoryGrid tooltip */}
-      <div
-        id={tooltipId}
-        role="tooltip"
-        aria-hidden={!showTooltip}
-        onMouseEnter={cancelClose}
-        onMouseLeave={scheduleClose}
-        className={cn(
-          "absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2",
-          "w-max max-w-[13rem] rounded-lg border border-card-border px-3 py-2.5",
-          "flex flex-col gap-1 select-none",
-          "transition-opacity duration-150",
-          showTooltip ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
-        )}
-        style={{ backgroundColor: "hsl(var(--card))" }}
-      >
-        <span className="text-xs text-muted-foreground">
-          {SLOT_LABELS[slot]}
-        </span>
-        <span className="text-sm font-semibold text-foreground leading-snug">
-          {equippedItem.name}
-        </span>
-        <span className={cn("text-xs font-semibold uppercase tracking-wide", RARITY_TEXT_CLASS[equippedItem.rarity])}>
-          {RARITY_LABELS[equippedItem.rarity]}
-        </span>
-        <span className="text-xs font-mono text-foreground">
-          +{equippedItem.statValue} {equippedItem.statLabel}
-        </span>
-      </div>
+      {/* Tooltip — only for equipped slots, same pattern as InventoryGrid */}
+      {equippedItem && (
+        <div
+          id={tooltipId}
+          role="tooltip"
+          aria-hidden={!showTooltip}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+          className={cn(
+            "absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2",
+            "w-max max-w-[13rem] rounded-lg border border-card-border px-3 py-2.5",
+            "flex flex-col gap-1 select-none",
+            "transition-opacity duration-150",
+            showTooltip ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+          )}
+          style={{ backgroundColor: "hsl(var(--card))" }}
+        >
+          <span className="text-xs text-muted-foreground">
+            {SLOT_LABELS[slot]}
+          </span>
+          <span className="text-sm font-semibold text-foreground leading-snug">
+            {equippedItem.name}
+          </span>
+          <span className={cn("text-xs font-semibold uppercase tracking-wide", RARITY_TEXT_CLASS[equippedItem.rarity])}>
+            {RARITY_LABELS[equippedItem.rarity]}
+          </span>
+          <span className="text-xs font-mono text-foreground">
+            +{equippedItem.statValue} {equippedItem.statLabel}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -894,8 +886,8 @@ export default function CharacterPage() {
             className="grid gap-x-6 gap-y-3 mb-3"
             style={{ gridTemplateColumns: "1fr minmax(210px, 230px) 1fr" }}
           >
-            {/* Row 1, Col 2 — Head */}
-            <div className="col-start-2 row-start-1">
+            {/* Row 1, Col 2 — Head (centered in middle column) */}
+            <div className="col-start-2 row-start-1 flex justify-center">
               <SlotButton
                 slot="head"
                 equippedItem={equippedItems["head"]}
@@ -903,8 +895,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Row 2, Col 1 — Left Hand */}
-            <div className="col-start-1 row-start-2 self-start">
+            {/* Row 2, Col 1 — Left Hand (pushed right toward paperdoll) */}
+            <div className="col-start-1 row-start-2 self-start flex justify-end">
               <SlotButton
                 slot="leftHand"
                 equippedItem={equippedItems["leftHand"]}
@@ -922,8 +914,8 @@ export default function CharacterPage() {
               </div>
             </div>
 
-            {/* Row 2, Col 3 — Right Hand (top-aligned with Left Hand) */}
-            <div className="col-start-3 row-start-2 self-start">
+            {/* Row 2, Col 3 — Right Hand (pushed left toward paperdoll) */}
+            <div className="col-start-3 row-start-2 self-start flex justify-start">
               <SlotButton
                 slot="rightHand"
                 equippedItem={equippedItems["rightHand"]}
@@ -931,8 +923,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Row 3, Col 1 — Legs */}
-            <div className="col-start-1 row-start-3 self-start">
+            {/* Row 3, Col 1 — Legs (pushed right toward paperdoll) */}
+            <div className="col-start-1 row-start-3 self-start flex justify-end">
               <SlotButton
                 slot="legs"
                 equippedItem={equippedItems["legs"]}
@@ -940,8 +932,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Row 3, Col 3 — Body (top-aligned with Legs) */}
-            <div className="col-start-3 row-start-3 self-start">
+            {/* Row 3, Col 3 — Body (pushed left toward paperdoll) */}
+            <div className="col-start-3 row-start-3 self-start flex justify-start">
               <SlotButton
                 slot="body"
                 equippedItem={equippedItems["body"]}
@@ -949,8 +941,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Row 4, Col 2 — Feet (top-aligned with Attributes) */}
-            <div className="col-start-2 row-start-4 self-start">
+            {/* Row 4, Col 2 — Feet (centered, top-aligned with Attributes) */}
+            <div className="col-start-2 row-start-4 self-start flex justify-center">
               <SlotButton
                 slot="feet"
                 equippedItem={equippedItems["feet"]}
@@ -979,7 +971,7 @@ export default function CharacterPage() {
 
           {/* 2×3 slot grid — paired by body region: Head|Body / L.Hand|R.Hand / Legs|Feet */}
           <div
-            className="grid grid-cols-2 gap-3"
+            className="grid grid-cols-2 gap-3 justify-items-center"
             role="group"
             aria-label="Equipment slots"
           >

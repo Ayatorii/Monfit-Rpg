@@ -1,0 +1,25 @@
+Project: MONFIT RPG — Full mobile responsiveness fix pass
+
+A lot has been added/changed recently (square equipment slots, item sprites, Badges tab, Arena win-chance percentages, chest reveal redesign, etc.) without a fresh mobile check after each change. Do a full mobile audit and fix pass across every screen — text overflow, cramped spacing, misaligned elements, broken touch targets, anything that looks fine on desktop but breaks on a real phone-sized viewport.
+
+Process
+1. Test at a real mobile viewport width (375px and 390px are good references — iPhone SE/standard sizes) using the browser's device emulation or an actual screenshot tool, not just resizing a desktop window loosely.
+2. Go through every screen one at a time and fix what's broken:
+   - **Loading Screen / Start**: logo, title, buttons — confirm no overflow, comfortable spacing, buttons are full-width and easily tappable.
+   - **Header (wallet connect / Gold/XP display)**: confirm it doesn't wrap awkwardly or overlap the nav on small screens.
+   - **Train**: goal cards, suggested programs, daily quests list — confirm cards stack correctly, text doesn't overflow its container, tap targets are full-row (per the earlier fix) and still work at this width.
+   - **Character**: paperdoll + equipment slots + Attributes panel + Level bar — this is the most complex layout (mobile should be: character top, 2×3 slot grid below, stats below that, per the original spec) — confirm this reflow still holds after the recent square-slot redesign, and that the new square tiles/tooltips work correctly via tap (not just hover, which doesn't exist on mobile) — confirm tapping shows the info popover instead of only being reachable via hover.
+   - **Shop**: chest card, reveal modal — confirm the modal fits the viewport without overflow or requiring horizontal scroll, buttons are reachable.
+   - **Arena**: opponent cards with win-chance percentages, battle log — confirm the log renders readably in a narrow column, opponent cards stack cleanly.
+   - **Leaderboard**: ranked list, My Trophies section — confirm rows don't overflow, wallet addresses truncate sensibly rather than wrapping/overflowing.
+   - **Badges**: badge grid, locked/unlocked states, tooltips — confirm tap-to-reveal works correctly on mobile (this is a new screen, likely never mobile-tested yet).
+3. Common things to check everywhere: no horizontal scroll/overflow anywhere, text never gets clipped or overlaps other elements, all interactive elements meet the 44px minimum touch target, adequate spacing between tappable elements so mis-taps are unlikely, font sizes remain legible (not shrunk to the point of being hard to read).
+
+Apply standing anti-slop + accessibility rules (see attached rules file) — this pass should also confirm focus-visible/ARIA/reduced-motion patterns still hold at this viewport, not just visual layout.
+
+Verify
+1. Screenshot every one of the 7 screens (including Badges) at 375px width after fixes, confirm each looks clean with no overflow/clipping/misalignment.
+2. Run `$impeccable audit` on at least Character, Shop, and Badges (the most complex/newest screens) and report scores.
+3. Confirm nothing broke on desktop while fixing mobile — spot check 2-3 screens at desktop width too.
+
+Report screenshots or a clear before/after description for each screen, not just "fixed everything".
