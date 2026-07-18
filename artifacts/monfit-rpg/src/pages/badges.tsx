@@ -155,12 +155,8 @@ function BadgeCard({
   const cardContent = (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 rounded-xl border border-card-border px-5 py-6 text-center transition-all",
-        state === "locked"
-          ? "bg-card opacity-70"
-          : state === "minted"
-            ? ""
-            : "",
+        "h-full flex flex-col items-center gap-4 rounded-xl border border-card-border px-5 py-6 text-center transition-all",
+        state === "locked" ? "bg-card opacity-70" : "",
       )}
       style={
         state !== "locked"
@@ -242,7 +238,7 @@ function BadgeCard({
           role="group"
           aria-label={`${badge.name} — locked. ${badge.progress.current}/${badge.progress.needed}`}
           aria-describedby={`badge-tooltip-${badge.type}`}
-          className="cursor-default rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="h-full cursor-default rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {cardContent}
         </div>
@@ -252,6 +248,7 @@ function BadgeCard({
 
   return (
     <motion.div
+      className="h-full"
       initial={isReduced ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
@@ -372,7 +369,7 @@ export default function BadgesPage() {
           aria-label="Achievement badges"
         >
           {badges.map((badge) => (
-            <div key={badge.type} role="listitem">
+            <div key={badge.type} role="listitem" className="h-full">
               <BadgeCard badge={badge} onMint={handleMint} />
             </div>
           ))}
