@@ -175,6 +175,7 @@ function SlotButton({
   onClick: () => void;
 }) {
   const Icon = SLOT_ICONS[slot];
+  const rarityColor = equippedItem ? RARITY_COLOR_VAR[equippedItem.rarity] : undefined;
 
   return (
     <button
@@ -186,33 +187,36 @@ function SlotButton({
           : `${SLOT_LABELS[slot]}: empty — click to equip`
       }
       className={cn(
-        "w-full min-h-11 flex flex-col gap-1 rounded-lg border px-3 py-3 text-left transition-colors",
+        "w-full min-h-11 flex flex-col gap-1 rounded-lg border px-3 py-3 text-left transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         equippedItem
-          ? "bg-card border-card-border hover:border-primary/50"
+          ? "hover:brightness-110"
           : "bg-card border-card-border hover:border-muted-foreground/40",
       )}
+      style={equippedItem ? {
+        backgroundColor: `hsl(var(--rarity-${equippedItem.rarity}) / 0.40)`,
+        borderColor: rarityColor,
+      } : undefined}
     >
       <div className="flex items-center gap-2">
         <Icon
-          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          className="h-3.5 w-3.5 shrink-0"
+          style={{ color: equippedItem ? rarityColor : undefined }}
           aria-hidden="true"
         />
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className={cn(
+          "text-xs font-medium",
+          equippedItem ? "text-white/70" : "text-muted-foreground",
+        )}>
           {SLOT_LABELS[slot]}
         </span>
       </div>
       {equippedItem ? (
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-foreground leading-snug line-clamp-1">
+          <span className="text-sm font-semibold text-white leading-snug line-clamp-1">
             {equippedItem.name}
           </span>
-          <span
-            className={cn(
-              "text-xs font-semibold uppercase tracking-wide",
-              RARITY_TEXT_CLASS[equippedItem.rarity],
-            )}
-          >
+          <span className="text-xs font-semibold uppercase tracking-wide text-white/75">
             {RARITY_LABELS[equippedItem.rarity]}
           </span>
         </div>
@@ -515,15 +519,13 @@ function InventoryGrid({
               aria-label={`${item.name}${isEquipped ? " (equipped)" : ""} — ${RARITY_LABELS[item.rarity]} ${SLOT_LABELS[item.slot]}, +${item.statValue} ${item.statLabel}. Click to manage.`}
               aria-describedby={slotTooltipId}
               className={cn(
-                "relative w-full aspect-square min-h-[44px] rounded-lg flex flex-col items-center justify-center gap-1 transition-colors",
+                "relative w-full aspect-square min-h-[44px] rounded-lg flex flex-col items-center justify-center gap-1 transition-all",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                isEquipped ? "border-2" : "border",
+                isEquipped ? "border-2 brightness-110" : "border",
               )}
               style={{
                 borderColor: rarityColor,
-                backgroundColor: isEquipped
-                  ? `hsl(var(--rarity-${item.rarity}) / 0.12)`
-                  : "hsl(var(--card))",
+                backgroundColor: `hsl(var(--rarity-${item.rarity}) / 0.40)`,
               }}
             >
               <SlotIcon

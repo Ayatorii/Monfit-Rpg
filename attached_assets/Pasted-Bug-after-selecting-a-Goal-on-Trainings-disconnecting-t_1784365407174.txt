@@ -1,0 +1,20 @@
+Bug: after selecting a Goal on Trainings, disconnecting the wallet, and connecting a DIFFERENT wallet, the previously selected Goal is still shown — it's leaking from the old wallet's session into the new one instead of resetting or loading the new wallet's own saved state.
+
+IMPORTANT — this is not isolated to Trainings/Goal. The user confirmed this affects ALL tabs: Train (Goal, program, quest completion state), Character (equipped items, stats), Shop (inventory/gold), Arena (match history, rating), Leaderboard (any cached ranking display). Treat this as a systemic shared-state issue, not a single-field bug — audit every piece of shared app-level state for the same leak, not just Goal.
+
+Root cause: the shared app-level state (Context/Zustand) isn't being reset or re-fetched when the wallet address changes — it just keeps whatever was in memory from the previous session, for whichever fields happen to be stored there.
+
+Fix
+1. On wallet disconnect: reset ALL wallet-specific shared state to an empty/default state — Goal, program selection, Gold, XP, Level, inventory, equipped items, match history/rating, and anything else tied to a specific wallet's saved data. Don't leave any stale data displayed after disconnect.
+2. On connecting a wallet (first connect, or switching to a different address after a disconnect): re-fetch ALL of that wallet's saved data fresh from the database — every field listed above — rather than reusing whatever was already in the shared state from a previous session in the same browser tab.
+3. Make sure this is keyed correctly to wallet address changes specifically — switching FROM wallet A TO wallet B in the same session (without a full page refresh in between) must correctly load wallet B's own data across every tab, not wallet A's leftover state anywhere.
+4. Guest mode should behave the same way: disconnecting/switching should not leak a previous wallet's data into guest mode either, and vice versa (guest progress shouldn't leak into a newly connected wallet).
+5. The cleanest fix is likely a single central handler: whenever the connected address changes (including to/from null), clear the entire shared store and trigger a fresh fetch — rather than patching each field individually across 5 different tabs. Implement it this way if the current state architecture allows it.
+
+Verify
+1. Connect wallet A, select a Goal, equip an item, earn some Gold via a quest, fight in Arena — disconnect — confirm EVERY tab (Train/Character/Shop/Arena/Leaderboard) resets to empty/default state immediately, not just Trainings.
+2. Connect a DIFFERENT wallet B — confirm every tab shows wallet B's actual correct state (empty if new, or its own previously saved data if it has any) — not wallet A's leftover state anywhere.
+3. Switch back to wallet A — confirm wallet A's own saved data reloads correctly across all tabs, proving this is a real per-wallet fetch and not just a reset-to-empty.
+4. Repeat once more switching A → guest → B to confirm no leakage in either direction through a guest session in between.
+
+Report actual results for all 4 points, confirming EVERY tab was actually tested, not just Trainings.
