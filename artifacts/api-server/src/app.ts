@@ -64,7 +64,7 @@ if (process.env.NODE_ENV === "production") {
 
   // SPA fallback — any path that is not an /api route gets index.html so
   // client-side routing (wouter) works on hard refresh.
-  app.get("*", (_req, res) => {
+  app.get("/{*path}", (_req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
   });
 }
