@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Check, RefreshCw, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,11 @@ export default function TrainPage() {
   const { gold, xp, addGold, addXp, selectedGoal: goal, setSelectedGoal: setGoal } = useGame();
   const [tentativeGoal, setTentativeGoal] = useState<Goal | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  // Tracks which quest IDs have already been POSTed to the server this session.
+  // Prevents the toggle bug: unchecking then re-checking the same quest would
+  // otherwise fire quest-complete again, inflating the server counter past the
+  // real number of distinct quests completed.
+  const submittedQuestsRef = useRef<Set<string>>(new Set());
   const [swapOpen, setSwapOpen] = useState(false);
   const [swapTentative, setSwapTentative] = useState<Goal | null>(null);
   const isReduced = useReducedMotion() ?? false;
@@ -28,6 +33,7 @@ export default function TrainPage() {
   const handlePick = (id: Goal) => {
     if (goal !== id) {
       setCompleted(new Set());
+      submittedQuestsRef.current = new Set();
     }
     setGoal(id);
     setTentativeGoal(id);
@@ -35,6 +41,7 @@ export default function TrainPage() {
 
   const handleSwapPick = (id: Goal) => {
     setCompleted(new Set());
+    submittedQuestsRef.current = new Set();
     setGoal(id);
     setTentativeGoal(id);
     setSwapOpen(false);
@@ -50,6 +57,8 @@ export default function TrainPage() {
     setCompleted((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
+        // Uncheck: reverse local rewards. No server call — the counter never
+        // decrements, and we don't re-fire quest-complete on a re-check.
         next.delete(id);
         addGold(-questGold);
         addXp(-questXp);
@@ -57,8 +66,14 @@ export default function TrainPage() {
         next.add(id);
         addGold(questGold);
         addXp(questXp);
-        // Persist quest completion to backend for badge tracking (fire-and-forget)
-        fetch("/api/players/me/quest-complete", { method: "POST" }).catch(() => {});
+        // Only POST to the server the very first time this quest is checked in
+        // this session. The submittedQuestsRef guard prevents the toggle bug:
+        // uncheck → re-check would otherwise fire another increment, inflating
+        // questsCompleted past the real number of distinct quests completed.
+        if (!submittedQuestsRef.current.has(id)) {
+          submittedQuestsRef.current.add(id);
+          fetch("/api/players/me/quest-complete", { method: "POST" }).catch(() => {});
+        }
         toast({
           title: `Quest complete!`,
           description: `${label} — +${questGold} Gold, +${questXp} XP`,

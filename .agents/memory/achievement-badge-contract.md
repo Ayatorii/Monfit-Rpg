@@ -5,7 +5,7 @@ description: Deployed ERC-721 achievement badge contract on Monad testnet — ad
 
 # AchievementBadge Contract
 
-**Address:** `0x2064327d8Cd029C8403b3F049C9302dC8506f93d`
+**Address:** `0x5DD439654C279423696254f52e30c7456689c88F` (redeployed after eligibility bug; old address `0x2064327d8Cd029C8403b3F049C9302dC8506f93d` is abandoned)
 **Chain:** Monad Testnet (chainId 10143)
 **Deployer/Owner/Minter wallet:** `0xD9C92AfA8A4317039E21a90eCCBa7B8996574352`
 **Verification:** Verified on Sourcify via `https://sourcify-api-monad.blockvision.org/verify` (standard JSON payload with metadata.json + source)
@@ -34,8 +34,8 @@ function badgeTypeOf(uint256 tokenId) view returns (uint8)
 
 ## Quest tracking
 `players.quests_completed` counter incremented via `POST /api/players/me/quest-complete`
-Called fire-and-forget from `train.tsx toggleQuest` on quest completion (not on un-check).
+Called fire-and-forget from `train.tsx toggleQuest` ONLY on first check per quest per session — guarded by `submittedQuestsRef` (a `useRef<Set<string>>`). Re-checks of an already-submitted quest do NOT re-fire the endpoint. The ref resets when the player switches goals.
 
-**Why:** Second contract deployed after SeasonTrophy; do not redeploy unless explicitly asked.
+**Why:** Second contract deployed after SeasonTrophy; do not redeploy unless explicitly asked. Contract was redeployed once to clear bad mints caused by the quest toggle bug (toggle-on fired quest-complete every time, inflating the counter).
 
 **How to apply:** When adding badge features, use the ABI above and the address. The hasMinted check is authoritative — no DB mirror.
