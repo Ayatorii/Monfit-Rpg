@@ -60,6 +60,29 @@ router.use((req, res, next): void => {
   next();
 });
 
+/** POST /me/quest-complete — increment the server-side quests-completed counter by 1. */
+router.post("/me/quest-complete", async (req, res): Promise<void> => {
+  const walletAddress = req.session.walletAddress as string;
+
+  const [player] = await db
+    .select()
+    .from(playersTable)
+    .where(eq(playersTable.walletAddress, walletAddress));
+
+  if (!player) {
+    res.status(404).json({ error: "Player not found" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(playersTable)
+    .set({ questsCompleted: player.questsCompleted + 1, updatedAt: new Date() })
+    .where(eq(playersTable.walletAddress, walletAddress))
+    .returning();
+
+  res.json({ questsCompleted: updated!.questsCompleted });
+});
+
 router.get("/me", async (req, res): Promise<void> => {
   const walletAddress = req.session.walletAddress as string;
 

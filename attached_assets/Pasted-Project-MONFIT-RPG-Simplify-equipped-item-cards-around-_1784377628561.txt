@@ -1,0 +1,20 @@
+Project: MONFIT RPG — Simplify equipped-item cards around the paperdoll into square slots
+
+Currently the 6 equipment cards around the paperdoll (Head/Left Hand/Right Hand/Legs/Body/Feet) show, inline, all the time: slot icon, slot label, item name, and rarity as text. Change this to match the same compact interaction pattern already used in the "My Items" grid:
+
+Change
+- Each equipped slot becomes a simple square icon tile (same visual treatment as My Items grid tiles) — just the item's sprite icon, sitting on a background colored by its rarity (reuse the existing `--rarity-common`/`--rarity-rare`/`--rarity-epic` tokens — same ones already driving the current blue/gray card backgrounds seen in the screenshot, just apply them to a square tile instead of a full card).
+- Remove the always-visible text (slot label, item name, rarity label) from directly on the tile.
+- On hover (desktop) or tap (mobile): show a tooltip/popover with the full details — slot name, item name, rarity, and the stat bonus it provides (e.g. "Left Hand — Compression Sleeve — Rare — +5 STR"). Reuse the exact tooltip component/pattern already built for the My Items grid — don't build a second, different tooltip implementation.
+- Empty slots (currently "+ Add gear" cards) stay as they are — this change only applies to slots that have an item equipped.
+- Clicking/tapping a slot (equipped or empty) should still open the existing equip/unequip interaction (bottom sheet on mobile / equivalent on desktop) — the tooltip is for hover/focus info display, tapping still triggers the equip flow as before.
+- Keep the tile large enough to comfortably read the icon and meet the 44px minimum touch target on mobile.
+
+Apply standing anti-slop + accessibility rules (see attached rules file): tooltip needs proper ARIA and keyboard-focus support, focus-visible ring on each slot tile, zero hardcoded colors.
+
+Verify
+1. Confirm all 6 slots (equipped ones) now show as compact square tiles with the sprite icon on a rarity-colored background, not the old full card with visible text.
+2. Hover (desktop) and tap (mobile) each equipped slot — confirm the tooltip shows correct name/rarity/stat info.
+3. Confirm clicking a slot still opens the equip/unequip flow correctly.
+4. Confirm empty slots are unaffected.
+5. Run `$impeccable audit` on the Character screen and report the score.

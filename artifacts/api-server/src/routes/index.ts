@@ -5,6 +5,7 @@ import leaderboardRouter from "./leaderboard";
 import authRouter from "./auth";
 import playersRouter from "./players";
 import adminRouter from "./admin";
+import badgesRouter from "./badges";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use("/leaderboard", leaderboardRouter);
 router.use("/auth", authRouter);
 router.use("/players", playersRouter);
 router.use("/admin", adminRouter);
+router.use("/badges", badgesRouter);
 
 export default router;

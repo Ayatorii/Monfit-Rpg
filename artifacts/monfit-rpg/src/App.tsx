@@ -15,6 +15,7 @@ import CharacterPage from "@/pages/character";
 import ShopPage from "@/pages/shop";
 import ArenaPage from "@/pages/arena";
 import LeaderboardPage from "@/pages/leaderboard";
+import BadgesPage from "@/pages/badges";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,11 @@ function Router() {
       <Route path="/leaderboard">
         <AppShell>
           <LeaderboardPage />
+        </AppShell>
+      </Route>
+      <Route path="/badges">
+        <AppShell>
+          <BadgesPage />
         </AppShell>
       </Route>
       <Route component={NotFound} />

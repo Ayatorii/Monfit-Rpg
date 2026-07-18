@@ -57,6 +57,8 @@ export default function TrainPage() {
         next.add(id);
         addGold(questGold);
         addXp(questXp);
+        // Persist quest completion to backend for badge tracking (fire-and-forget)
+        fetch("/api/players/me/quest-complete", { method: "POST" }).catch(() => {});
         toast({
           title: `Quest complete!`,
           description: `${label} — +${questGold} Gold, +${questXp} XP`,

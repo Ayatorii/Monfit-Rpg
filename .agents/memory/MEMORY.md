@@ -2,3 +2,4 @@
 - [Production single-process](production-serving.md) — Express serves both /api routes and built Vite SPA static files in production; dev uses two separate artifact workflows.
 - [spendGold race condition](spendgold-pattern.md) — React state updater functions run async; never use a captured flag inside an updater to decide whether to fire an API call.
 - [SeasonTrophy contract](season-trophy-contract.md) — deployed + verified on Monad testnet; address and key facts for hackathon submission.
+- [AchievementBadge contract](achievement-badge-contract.md) — ERC-721 badges (WalletConnector/TaskMaster/GreatWarrior); address, badge types, backend route integration.

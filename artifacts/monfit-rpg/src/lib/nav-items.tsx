@@ -1,4 +1,4 @@
-import { Dumbbell, User, ShoppingBag, Swords, Trophy } from "lucide-react";
+import { Dumbbell, User, ShoppingBag, Swords, Trophy, Medal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type NavItem = {
@@ -13,4 +13,5 @@ export const NAV_ITEMS: NavItem[] = [
   { path: "/shop", label: "Shop", icon: ShoppingBag },
   { path: "/arena", label: "Arena", icon: Swords },
   { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { path: "/badges", label: "Badges", icon: Medal },
 ];
