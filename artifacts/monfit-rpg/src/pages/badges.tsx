@@ -155,12 +155,12 @@ function BadgeCard({
   const cardContent = (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 rounded-xl border px-5 py-6 text-center transition-all",
+        "flex flex-col items-center gap-4 rounded-xl border border-card-border px-5 py-6 text-center transition-all",
         state === "locked"
-          ? "border-card-border bg-card opacity-70"
+          ? "bg-card opacity-70"
           : state === "minted"
-            ? "border-primary/40"
-            : "border-primary/60",
+            ? ""
+            : "",
       )}
       style={
         state !== "locked"
@@ -179,14 +179,6 @@ function BadgeCard({
           )}
           loading="lazy"
         />
-        {state === "minted" && (
-          <span
-            className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-primary flex items-center justify-center"
-            aria-label="Minted"
-          >
-            <CheckCircle2 className="h-4 w-4 text-primary-text" aria-hidden="true" />
-          </span>
-        )}
       </div>
 
       {/* Name */}
