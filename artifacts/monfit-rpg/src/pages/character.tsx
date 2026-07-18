@@ -700,7 +700,7 @@ export default function CharacterPage() {
               className="col-start-2 row-start-2 row-span-2 flex items-center justify-center"
               aria-hidden="true"
             >
-              <div className="w-36 h-52">
+              <div className="w-[10.8rem] h-[15.6rem]">
                 <CharacterSilhouette equippedItems={equippedItems} />
               </div>
             </div>
