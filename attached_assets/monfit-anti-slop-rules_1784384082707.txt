@@ -1,0 +1,20 @@
+ANTI-AI-SLOP DESIGN RULES (based on Impeccable's detector ruleset — insert this block into every future UI-related prompt for this project)
+
+Explicitly avoid these, they are the most common AI-generated-UI tells:
+- No glow/drop-shadow effects on text, buttons, or icons ("dark glows") — flat, crisp edges instead.
+- No radial/linear gradient backgrounds, especially purple-to-blue or violet vignettes ("purple gradients") — use a single flat solid background color.
+- No bounce/elastic easing on animations — use simple ease-out or linear transitions only.
+- No pure #000000 black or pure gray as a surface color without a slight color tint toward the brand palette (e.g. tint dark surfaces slightly toward #0E091C rather than flat black).
+- No cards nested inside cards, no default rounded-square icon tile sitting above every heading.
+- No gray text on colored/dark backgrounds — use the defined off-white/light token instead for readability and intentionality.
+- Do not default to Inter, Arial, or system-ui — use the project's defined font (currently: Onest).
+- Any icon/logo assets that already exist in the project (e.g. the MONFIT RPG emblem) must be used as-is (the actual image file) — do not redraw or reinterpret them as a simplified inline SVG/icon substitute.
+
+After building any screen, do a self-check against this list before presenting it as done.
+
+Additional lessons carried forward from Step 1 (Loading Screen) and Step 2 (Train screen) audits — apply from the start, don't wait for a fix pass:
+- All custom interactive elements (buttons, nav links, cards) need `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background` — do not rely on the browser default focus outline.
+- Any row/card with a checkbox or toggle (e.g. quest completion) must have the ENTIRE row as the clickable/tappable target, not just the small checkbox — minimum 44×44px touch target on mobile.
+- Any progress/percentage bar animates `transform: scaleX()`, never `width`.
+- role="navigation" + aria-label on nav, aria-current="page" on active tab, aria-pressed on toggle/selection cards, aria-label on checkboxes.
+- Zero hard-coded hex/rgba anywhere — everything through CSS variable tokens (verified via grep before calling a screen done).

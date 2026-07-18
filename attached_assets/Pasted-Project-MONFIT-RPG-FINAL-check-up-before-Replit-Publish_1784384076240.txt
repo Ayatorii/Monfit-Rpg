@@ -1,0 +1,47 @@
+Project: MONFIT RPG — FINAL check-up before Replit Publish and hackathon submission
+
+This is the last pass before publishing and submitting. Go through every section, report real evidence, fix what's broken. If something can't be fixed in time, report it clearly as a known limitation rather than silently leaving it broken.
+
+## 1. Full click-through — fresh wallet AND guest mode
+- Loading Screen → Start → guest mode works cleanly, no console errors.
+- Connect Wallet from header → real SIWE signature → lands correctly → session persists on refresh.
+- Train: pick a Goal, see programs, complete a quest, Gold/XP update and persist.
+- Character: paperdoll renders correctly with the new square equipped-slot tiles, tooltips work on both hover (desktop) and tap (mobile), equip/unequip/sell all work, stats recalculate correctly.
+- Shop: buy/open a chest, reveal shows correctly (no auto-navigation), duplicate auto-sell works.
+- Arena: opponent roster with win-chance percentages, fight, battle log animates, results persist.
+- Leaderboard: real ranking, My Trophies section shows correctly.
+- Badges: all 3 badges show correct locked/unlocked/minted state based on REAL progress (not all unlocked immediately — this was a confirmed bug, verify the fix actually holds), tooltips show correct progress, minting works and is blocked when ineligible.
+- Disconnect → reconnect a DIFFERENT wallet → confirm zero data leakage across every single tab (Goal, Character, Gold, Badges progress, everything).
+
+## 2. Console health
+Hard-refresh all 7 screens (Loading, Train, Character, Shop, Arena, Leaderboard, Badges), report any red console errors, distinguish real bugs from third-party extension noise.
+
+## 3. Mobile responsiveness final confirmation
+Re-verify at 375px width: bottom nav with 6 tabs doesn't overlap (confirmed fix from the nav-crowding bug), Character's square slots + tooltips work via tap, Badges grid displays cleanly, no horizontal overflow anywhere across all 7 screens.
+
+## 4. On-chain verification — BOTH contracts
+- `SeasonTrophy`: confirm deployed + verified address, confirm mint flow still works from real Leaderboard data.
+- `AchievementBadge`: confirm deployed + verified address (should be the FRESH redeployed instance from the eligibility bug fix, not the old one with incorrectly-minted badges), confirm minting is correctly gated by real progress.
+- List both contract addresses clearly in the final report — these go in the README and submission form.
+
+## 5. Anti-slop + accessibility final audit
+Run `$impeccable audit` on all 7 screens, report every score in one summary table. Fix any remaining P1s; note P2/P3 as acceptable if time is truly out.
+
+## 6. Metadata
+Confirm favicon renders correctly in the browser tab, confirm og:title/og:description/og:image meta tags are present and correctly formed.
+
+## 7. Build health for Replit Deployment
+Run the actual production build command end to end, zero errors. Confirm `.replit` binds the server to `0.0.0.0` and the port mapping is correct for a Replit Deployment (Autoscale) — this is the actual publish step coming right after this check-up.
+
+## 8. Known limitations — confirm still accurate, still intentional
+- Quests have no daily cooldown (intentional).
+- Guest progress is fully ephemeral, no migration to wallet (intentional).
+- Arena is PvE against a fixed NPC roster, not live PvP (intentional, documented in README).
+
+## Final output
+Give me ONE consolidated summary at the end:
+- What's fully solid and demo-ready.
+- What got fixed during this pass.
+- Both contract addresses (SeasonTrophy + AchievementBadge).
+- Anything you'd flag as a remaining risk for the live demo or judging agent.
+- A clear go/no-go recommendation on whether this is ready to Publish right now.
