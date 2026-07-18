@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Package, Lock, CheckCircle2, Coins } from "lucide-react";
 import {
@@ -38,8 +37,7 @@ type RevealState =
   | { type: "duplicate"; item: LootItem; goldEarned: number };
 
 export default function ShopPage() {
-  const [, navigate] = useLocation();
-  const { gold, xp, spendGold, addGold, addToInventory, inventory, equippedItems } =
+  const { gold, xp, spendGold, addGold, addToInventory, equipItem, inventory, equippedItems } =
     useGame();
   const [reveal, setReveal] = useState<RevealState | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -295,8 +293,8 @@ export default function ShopPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      equipItem(reveal.item);
                       handleClose();
-                      navigate("/character");
                     }}
                     className={cn(
                       "mt-2 w-full min-h-11 rounded-md border border-primary bg-primary",
