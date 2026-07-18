@@ -18,7 +18,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-60 md:border-r md:border-surface-border md:bg-surface md:py-6 md:px-3 md:gap-1 md:pb-4"
         >
           <div className="px-3 mb-6">
-            <span className="font-display font-black text-xl tracking-tight text-white">
+            <span className="font-display font-black text-xl tracking-tight text-foreground">
               MONFIT <span className="text-primary">RPG</span>
             </span>
           </div>

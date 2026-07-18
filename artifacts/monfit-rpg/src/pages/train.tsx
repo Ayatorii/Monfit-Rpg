@@ -100,7 +100,7 @@ export default function TrainPage() {
       <div className="px-4 md:px-8 pt-6 md:pt-10 pb-10 max-w-3xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
-          <div>
+          <div className="min-w-0 flex-1 mr-3">
             <AnimatePresence mode="wait">
               <motion.h1
                 key={pageTitle}
@@ -225,8 +225,8 @@ export default function TrainPage() {
                                 className={cn(
                                   "px-10 py-4 rounded-full",
                                   "font-bold text-2xl uppercase tracking-widest",
-                                  "bg-primary text-white",
-                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                                  "bg-primary text-primary-foreground",
+                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                   "hover:bg-primary/90 active:scale-95 transition-all",
                                 )}
                               >
@@ -247,7 +247,7 @@ export default function TrainPage() {
                         <span
                           className={cn(
                             "block font-semibold text-sm text-center",
-                            isTentative ? "text-white" : "text-foreground",
+                            isTentative ? "text-foreground" : "text-foreground",
                           )}
                         >
                           {g.label}
@@ -513,9 +513,9 @@ export default function TrainPage() {
                                 className={cn(
                                   "rounded-full px-4 py-2.5",
                                   "font-bold text-base uppercase tracking-widest",
-                                  "bg-primary text-white",
+                                  "bg-primary text-primary-foreground",
                                   "hover:bg-primary/90 active:scale-95 transition-all",
-                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                 )}
                               >
                                 PICK
@@ -535,7 +535,7 @@ export default function TrainPage() {
                         <span
                           className={cn(
                             "block font-semibold text-xs text-center",
-                            isTentative ? "text-white" : "text-foreground",
+                            isTentative ? "text-foreground" : "text-foreground",
                           )}
                         >
                           {g.label}

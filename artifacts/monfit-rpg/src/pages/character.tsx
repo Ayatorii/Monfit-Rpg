@@ -862,7 +862,7 @@ export default function CharacterPage() {
       <div className="px-4 md:px-8 pt-6 md:pt-10 pb-10 max-w-5xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
-          <div>
+          <div className="min-w-0 flex-1 mr-3">
             <h1 className="font-display font-black text-3xl md:text-4xl text-foreground text-balance leading-none">
               CHARACTER
             </h1>

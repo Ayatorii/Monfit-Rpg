@@ -109,7 +109,7 @@ function OpponentCard({
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <span className="font-display font-black text-xl text-white leading-none">
+          <span className="font-display font-black text-xl text-foreground leading-none">
             {npc.name}
           </span>
           <span
@@ -543,25 +543,25 @@ export default function ArenaPage() {
     <div className="px-4 md:px-8 pt-6 md:pt-10 pb-10 max-w-2xl mx-auto">
       {/* Header */}
       <header className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1 mr-3">
           {view !== "roster" && (
             <button
               type="button"
               onClick={handleBack}
               aria-label="Back to opponent roster"
               className={cn(
-                "flex items-center justify-center h-11 w-11 rounded-lg border border-card-border bg-card transition-colors hover:border-muted-foreground/40",
+                "flex items-center justify-center h-11 w-11 shrink-0 rounded-lg border border-card-border bg-card transition-colors hover:border-muted-foreground/40",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >
               <ChevronLeft className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </button>
           )}
-          <div>
-            <h1 className="font-display font-black text-3xl md:text-4xl text-foreground text-balance leading-none">
+          <div className="min-w-0">
+            <h1 className="font-display font-black text-2xl md:text-4xl text-foreground leading-none truncate">
               {pageTitle}
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5 text-pretty">{pageSubtitle}</p>
+            <p className="text-muted-foreground text-sm mt-0.5 truncate">{pageSubtitle}</p>
           </div>
         </div>
         <ResourceBadges gold={gold} xp={xp} />

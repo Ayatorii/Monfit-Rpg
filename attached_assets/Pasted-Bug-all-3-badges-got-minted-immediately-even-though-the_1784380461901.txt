@@ -1,0 +1,23 @@
+Bug: all 3 badges got minted immediately even though the actual requirements (100 battles, 100 quests) weren't met. This means eligibility checking is broken somewhere — either not implemented, hardcoded to true, or comparing the wrong values. Find the real cause with evidence before fixing.
+
+Debug
+1. Paste the actual current code for `GET /api/badges/status` and `POST /api/badges/mint` — specifically the eligibility check logic for each badge type (Wallet Connector / Task Master / Great Warrior). Report exactly what condition is being evaluated for each.
+2. Paste the actual current values for the test wallet: what is `questsCompleted` actually set to in the `players` table, and what is the actual count of rows in `matches` for that wallet? Compare these real numbers against the 100 threshold — this will show whether the data itself is wrong (e.g. `questsCompleted` never actually increments) or the comparison logic is wrong (e.g. checking `>= 0` instead of `>= 100`, or the check being skipped/short-circuited somewhere).
+3. Check the FRONTEND gating too: confirm the Mint button's visibility/enabled state actually reads from a real eligibility check response, not a hardcoded `true` or a leftover placeholder from early scaffolding.
+4. Check whether `POST /api/badges/mint` re-verifies eligibility server-side at all before calling `mintBadge`, or whether it just trusts that the button being clickable means it's eligible (a client-only check with no server-side re-check is exactly the kind of bug that would cause this).
+
+Fix
+- Correct whatever the actual root cause turns out to be from steps 1-4 above (likely candidates: `questsCompleted` not actually incrementing on quest completion, or the mint route missing/broken server-side eligibility verification).
+- Ensure `POST /api/badges/mint` ALWAYS re-checks eligibility server-side before calling the contract, regardless of what the frontend sends or shows — never trust the client for this.
+
+Clean slate for testing
+Since 3 badges are now incorrectly minted on-chain for the test wallet and this can't be undone on the existing contract, redeploy a FRESH `AchievementBadge` contract instance (same code, once the logic bug above is fixed) via the same Foundry setup — this is fine since it's testnet with no real value at stake. Update `VITE_BADGE_CONTRACT_ADDRESS` (or equivalent env var) to the new address, verify the new contract via devnads, and report the new contract address.
+
+Verify (real evidence)
+1. On the fresh contract with a test wallet that has 0 quests completed and 0 matches played: confirm all 3 badges show as LOCKED except Wallet Connector (which should be unlocked immediately after sign-in, per its actual intended trivial requirement).
+2. Complete a few quests (fewer than 100) — confirm Task Master stays locked, with the tooltip showing correct progress (e.g. "3/100").
+3. Manually drive the count past 100 (via actual gameplay or direct DB adjustment for faster testing) — confirm Task Master flips to unlocked and the Mint button appears ONLY now.
+4. Repeat the same test for Great Warrior with actual/simulated Arena matches.
+5. Attempt to call `POST /api/badges/mint` directly (e.g. via curl) for a badge that is NOT yet eligible — confirm the server rejects it, proving server-side re-verification actually works and isn't just a frontend-only gate.
+
+Report the actual root cause found in steps 1-4 before applying the fix, then report the new contract address and the verification results.

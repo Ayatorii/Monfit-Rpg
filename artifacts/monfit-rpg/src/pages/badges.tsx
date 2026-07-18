@@ -77,7 +77,7 @@ function ProgressTooltip({
         aria-hidden={!open}
         className={cn(
           "absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-3",
-          "w-56 rounded-lg border border-card-border px-3 py-2.5",
+          "w-44 sm:w-56 rounded-lg border border-card-border px-3 py-2.5",
           "flex flex-col gap-2 pointer-events-none select-none",
           "transition-opacity duration-150",
           open ? "opacity-100" : "opacity-0",
