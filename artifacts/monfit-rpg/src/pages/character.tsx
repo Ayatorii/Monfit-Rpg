@@ -292,11 +292,9 @@ function LevelBar({ xp }: { xp: number }) {
 
 function StatPanel({
   xp,
-  gold,
   equippedItems,
 }: {
   xp: number;
-  gold: number;
   equippedItems: Partial<Record<Slot, OwnedItem>>;
 }) {
   const level = Math.floor(xp / 100) + 1;
@@ -333,12 +331,6 @@ function StatPanel({
             style={{ transform: `scaleX(${xpProgress})` }}
           />
         </div>
-      </div>
-
-      {/* Gold */}
-      <div className="flex items-center justify-between border-t border-card-border pt-3">
-        <span className="text-xs text-muted-foreground">Gold</span>
-        <span className="text-sm font-bold text-gold tabular-nums">{gold}</span>
       </div>
 
       {/* Stats */}
@@ -777,7 +769,7 @@ export default function CharacterPage() {
           </div>
 
           {/* Stat panel */}
-          <StatPanel xp={xp} gold={gold} equippedItems={equippedItems} />
+          <StatPanel xp={xp} equippedItems={equippedItems} />
         </div>
 
         {/* Inventory */}
