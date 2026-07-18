@@ -700,7 +700,7 @@ export default function CharacterPage() {
               className="col-start-2 row-start-2 row-span-2 flex items-center justify-center"
               aria-hidden="true"
             >
-              <div className="w-[10.8rem] h-[15.6rem]">
+              <div className="w-[12.42rem] h-[17.94rem]">
                 <CharacterSilhouette equippedItems={equippedItems} />
               </div>
             </div>
@@ -732,8 +732,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Row 4, Col 2 — Feet (bottom-aligned with Attributes) */}
-            <div className="col-start-2 row-start-4 self-end">
+            {/* Row 4, Col 2 — Feet (top-aligned with Attributes) */}
+            <div className="col-start-2 row-start-4 self-start">
               <SlotButton
                 slot="feet"
                 equippedItem={equippedItems["feet"]}
@@ -741,8 +741,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Row 4, Col 3 — Attributes (bottom-aligned with Feet) */}
-            <div className="col-start-3 row-start-4 self-end">
+            {/* Row 4, Col 3 — Attributes (top-aligned with Feet) */}
+            <div className="col-start-3 row-start-4 self-start">
               <AttributesPanel equippedItems={equippedItems} />
             </div>
           </div>
