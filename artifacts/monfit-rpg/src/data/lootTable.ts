@@ -32,24 +32,37 @@ export const SLOT_LABELS: Record<Slot, string> = {
   feet: "Feet",
 };
 
+// Stat bonus rule: slot determines which attribute the item boosts.
+// leftHand / rightHand → STR
+// legs / feet          → AGI
+// head / body          → VIT
+export const SLOT_STAT: Record<Slot, "STR" | "AGI" | "VIT"> = {
+  leftHand:  "STR",
+  rightHand: "STR",
+  legs:      "AGI",
+  feet:      "AGI",
+  head:      "VIT",
+  body:      "VIT",
+};
+
 export const LOOT_TABLE: LootItem[] = [
   // Common — 70% combined weight
   { id: "worn-leather-gloves", name: "Worn Leather Gloves", rarity: "common", slot: "rightHand", statLabel: "STR", statValue: 2 },
-  { id: "training-shorts", name: "Training Shorts", rarity: "common", slot: "legs", statLabel: "STA", statValue: 2 },
-  { id: "scuffed-runners", name: "Scuffed Runners", rarity: "common", slot: "feet", statLabel: "SPD", statValue: 2 },
-  { id: "frayed-headband", name: "Frayed Headband", rarity: "common", slot: "head", statLabel: "FOC", statValue: 2 },
-  { id: "cotton-tank", name: "Cotton Tank", rarity: "common", slot: "body", statLabel: "END", statValue: 2 },
-  { id: "chalk-dusted-wraps", name: "Chalk-Dusted Wraps", rarity: "common", slot: "leftHand", statLabel: "GRP", statValue: 2 },
+  { id: "training-shorts",     name: "Training Shorts",     rarity: "common", slot: "legs",      statLabel: "AGI", statValue: 2 },
+  { id: "scuffed-runners",     name: "Scuffed Runners",     rarity: "common", slot: "feet",      statLabel: "AGI", statValue: 2 },
+  { id: "frayed-headband",     name: "Frayed Headband",     rarity: "common", slot: "head",      statLabel: "VIT", statValue: 2 },
+  { id: "cotton-tank",         name: "Cotton Tank",         rarity: "common", slot: "body",      statLabel: "VIT", statValue: 2 },
+  { id: "chalk-dusted-wraps",  name: "Chalk-Dusted Wraps",  rarity: "common", slot: "leftHand",  statLabel: "STR", statValue: 2 },
 
   // Rare — 25% combined weight
   { id: "reinforced-gauntlets", name: "Reinforced Gauntlets", rarity: "rare", slot: "rightHand", statLabel: "STR", statValue: 5 },
-  { id: "endurance-boots", name: "Endurance Boots", rarity: "rare", slot: "feet", statLabel: "SPD", statValue: 5 },
-  { id: "compression-sleeve", name: "Compression Sleeve", rarity: "rare", slot: "leftHand", statLabel: "GRP", statValue: 5 },
-  { id: "tempered-chestplate", name: "Tempered Chestplate", rarity: "rare", slot: "body", statLabel: "END", statValue: 5 },
+  { id: "endurance-boots",      name: "Endurance Boots",      rarity: "rare", slot: "feet",      statLabel: "AGI", statValue: 5 },
+  { id: "compression-sleeve",   name: "Compression Sleeve",   rarity: "rare", slot: "leftHand",  statLabel: "STR", statValue: 5 },
+  { id: "tempered-chestplate",  name: "Tempered Chestplate",  rarity: "rare", slot: "body",      statLabel: "VIT", statValue: 5 },
 
   // Epic — 5% combined weight
-  { id: "champions-warhelm", name: "Champion's Warhelm", rarity: "epic", slot: "head", statLabel: "FOC", statValue: 12 },
-  { id: "titan-grip-gauntlets", name: "Titan Grip Gauntlets", rarity: "epic", slot: "rightHand", statLabel: "STR", statValue: 12 },
+  { id: "champions-warhelm",     name: "Champion's Warhelm",     rarity: "epic", slot: "head",      statLabel: "VIT", statValue: 12 },
+  { id: "titan-grip-gauntlets",  name: "Titan Grip Gauntlets",   rarity: "epic", slot: "rightHand", statLabel: "STR", statValue: 12 },
 ];
 
 /**

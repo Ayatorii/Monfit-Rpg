@@ -1,0 +1,21 @@
+Project: MONFIT RPG — Fix item stat types to match a clean slot-based rule
+
+Currently some items in the loot table have stat types like "FOC" and "GRP" that don't match the 3 character attributes (STR/AGI/VIT) shown on the Character screen, even though equipping them visibly bumps STR/AGI on the stat panel — meaning there's a mismatch between what's stored on the item and what's actually displayed/calculated. Fix this at the root with a clean, consistent rule:
+
+New rule — stat bonus type is determined by equipment slot, not stored arbitrarily per item
+- **Left Hand** and **Right Hand** items → bonus applies to **STR**
+- **Legs** and **Feet** items → bonus applies to **AGI**
+- **Body** and **Head** items → bonus applies to **VIT**
+
+Implementation
+1. Update the loot table config (wherever items are defined, e.g. `src/data/lootTable.ts`) so every item's stat bonus field only ever uses `STR`, `AGI`, or `VIT` — remove `FOC`, `GRP`, or any other stat type entirely from the data model. Derive the correct stat type from the item's `slot` field per the rule above (either compute it at read-time from slot, or explicitly set it correctly per item — whichever is cleaner given how the data is currently structured, your call, but the end result must be consistent with the rule for every single item, no exceptions).
+2. Confirm the stat calculation logic (wherever STR/AGI/VIT totals are computed from equipped items, used by both the Character stat panel and Arena combat) sums correctly per this new rule and doesn't reference the old FOC/GRP fields anywhere.
+3. **Fix existing data**: some players (e.g. the test wallet already used throughout development) already have items in their inventory/equipped state with the old incorrect stat types (e.g. "Chalk-Dusted Wraps" for Left Hand, "Frayed Headband" for Head — confirm what stat type these currently have stored and correct it to match the new rule: Left Hand → STR, Head → VIT). Write a one-time data migration/update script to correct existing rows in the database rather than leaving old inventory items permanently mismatched.
+
+Verify
+1. Query a few existing items in the database after the fix — confirm their stored stat type now matches the slot-based rule (e.g. any Left Hand or Right Hand item shows STR, any Legs/Feet item shows AGI, any Body/Head item shows VIT).
+2. On the Character screen, equip one item per slot type and confirm the Attributes panel updates the CORRECT stat each time (e.g. equipping a Feet item increases AGI, not something else).
+3. Open a chest in Shop and confirm any newly-rolled item also follows this rule correctly (test a few rolls to hit different slots).
+4. Confirm Arena combat calculations still work correctly using the corrected stat values.
+
+Report actual database values before and after the fix for at least 2-3 existing items, not just "fixed".
