@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Shield, Hand, Swords, Layers, Footprints, CheckCircle2, Coins } from "lucide-react";
+import imgHead from "@assets/common-head_1784376918929.png";
+import imgBody from "@assets/common-body_1784376918928.png";
+import imgLeftHand from "@assets/common-left-hand_1784376918930.png";
+import imgRightHand from "@assets/common-right-hand_1784376918932.png";
+import imgLegs from "@assets/common-legs_1784376918931.png";
+import imgFeet from "@assets/common-feet_1784376918929.png";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +48,15 @@ const SLOT_ICONS: Record<Slot, React.FC<React.SVGProps<SVGSVGElement>>> = {
   rightHand: Swords,
   legs: Layers,
   feet: Footprints,
+};
+
+const SLOT_SPRITES: Record<Slot, string> = {
+  head: imgHead,
+  body: imgBody,
+  leftHand: imgLeftHand,
+  rightHand: imgRightHand,
+  legs: imgLegs,
+  feet: imgFeet,
 };
 
 // Desktop layout: 2 cards per side column; head/feet live in the center column
@@ -209,11 +224,18 @@ function SlotButton({
       } : undefined}
     >
       <div className="flex items-center gap-2">
-        <Icon
-          className="h-3.5 w-3.5 shrink-0"
-          style={{ color: equippedItem ? rarityColor : undefined }}
-          aria-hidden="true"
-        />
+        {equippedItem ? (
+          <img
+            src={SLOT_SPRITES[slot]}
+            alt={equippedItem.name}
+            className="h-6 w-6 shrink-0 object-contain"
+          />
+        ) : (
+          <Icon
+            className="h-3.5 w-3.5 shrink-0"
+            aria-hidden="true"
+          />
+        )}
         <span className={cn(
           "text-xs font-medium",
           equippedItem ? "text-white/70" : "text-muted-foreground",
@@ -542,7 +564,6 @@ function InventoryGrid({
           equippedItems[item.slot]?.instanceId === item.instanceId;
         const slotTooltipId = `inv-tooltip-${item.instanceId}`;
         const showTooltip = tooltipId === item.instanceId;
-        const SlotIcon = SLOT_ICONS[item.slot];
         const rarityColor = RARITY_COLOR_VAR[item.rarity];
         const sellValue = DUPLICATE_GOLD[item.rarity];
 
@@ -567,10 +588,10 @@ function InventoryGrid({
                 backgroundColor: `hsl(var(--rarity-${item.rarity}) / 0.40)`,
               }}
             >
-              <SlotIcon
-                className="h-5 w-5 shrink-0"
-                style={{ color: rarityColor }}
-                aria-hidden="true"
+              <img
+                src={SLOT_SPRITES[item.slot]}
+                alt={item.name}
+                className="h-10 w-10 shrink-0 object-contain"
               />
               {/* Equipped badge */}
               {isEquipped && (

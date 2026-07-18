@@ -1,0 +1,38 @@
+Project: MONFIT RPG — Badges tab (on-chain achievement mints)
+
+This is a substantial feature — work through the phases below IN ORDER, and if you're running low on context/response budget, stop after completing a phase cleanly and report progress rather than trying to cram everything into one response and running out mid-way.
+
+## Badge definitions
+3 badges, images attached (GREAT_WARRIOR.png, TASK_MASTER.png, WALLET_CONNECTOR.png). Display names come directly from the image content:
+- **Great Warrior** — requirement: 100 total Arena battles fought (win or lose, just total matches played) reaches 100.
+- **Task Master** — requirement: 100 total daily quests completed reaches 100.
+- **Wallet Connector** — requirement: wallet is connected and signed in (this one is trivially eligible immediately after a successful SIWE sign-in — no counter needed).
+
+## Phase 1 — Backend data + contract
+1. Add a `questsCompleted` counter column to the `players` table (Drizzle migration) if one doesn't already exist — increment it every time a Train quest is marked complete (wherever that logic currently lives).
+2. Total Arena battles = count of rows in the existing `matches` table for that wallet — no new column needed, just a count query.
+3. New contract `AchievementBadge.sol` (ERC-721, OpenZeppelin, same Foundry project already set up for SeasonTrophy):
+   - Owner-gated `mintBadge(address player, uint8 badgeType) external onlyOwner returns (uint256 tokenId)` where badgeType is an enum/uint8 (0 = WalletConnector, 1 = TaskMaster, 2 = GreatWarrior).
+   - Prevent double-minting: track `mapping(address => mapping(uint8 => bool)) hasMinted` (or similar) and revert if the player already has that badge type.
+   - Store badgeType per tokenId so it can be read back later.
+4. Deploy to Monad Testnet via the same Foundry setup/deployer wallet already used for SeasonTrophy (`forge script ... --rpc-url https://testnet-rpc.monad.xyz --private-key $DEPLOYER_PRIVATE_KEY --broadcast`), verify via the devnads verification API. Report the new contract address clearly — this is a SECOND contract address in addition to SeasonTrophy, note both in the README.
+5. New backend routes:
+   - `GET /api/badges/status` — for the connected wallet, returns each badge's current progress (e.g. `{ questsCompleted: 42, totalNeeded: 100 }`), whether the requirement is met, and whether it's already been minted (check on-chain via `hasMinted` or track a mirror flag in the DB — your call on which is simpler/more reliable).
+   - `POST /api/badges/mint` — body `{ badgeType }`. Re-verify eligibility server-side (never trust the client), confirm not already minted, call `mintBadge` using `DEPLOYER_PRIVATE_KEY`, return the transaction hash.
+
+## Phase 2 — Frontend
+1. Add a new "Badges" tab to the nav, positioned directly below Leaderboard (6 tabs total now: Train/Character/Shop/Arena/Leaderboard/Badges).
+2. Badges screen: a grid of the 3 badge cards, each showing its image, display name, and current state:
+   - **Locked** (requirement not met): image shown dimmed/grayscale, card is non-clickable. On hover (desktop) or tap (mobile), show a tooltip/popover with the requirement and current progress (e.g. "Fight 100 times in the Arena — 42/100 so far").
+   - **Unlocked, not yet minted** (requirement met): image shown in full color, a "Mint" button appears. Clicking it calls `POST /api/badges/mint`, shows a loading state during the transaction, then updates to the Minted state on success.
+   - **Minted**: image shown in full color with a clear "Minted" indicator (checkmark badge or similar), no button — already owned.
+3. Apply standing anti-slop + accessibility rules (see attached rules file): tooltip needs `role="tooltip"`/proper ARIA and keyboard-focus support (not just hover/tap), focus-visible ring on the Mint button, 44px minimum touch target, transform-based loading animation only, zero hardcoded colors.
+
+## Verify (real evidence)
+1. Confirm a fresh wallet sees all 3 badges in the correct locked/unlocked state (Wallet Connector should be immediately unlocked after sign-in; the other two locked at 0 progress).
+2. Manually drive up quest completions or arena battles (or query/adjust the DB directly for a faster test) until one crosses its threshold — confirm the card correctly flips to unlocked with a working Mint button.
+3. Click Mint — confirm a real transaction is submitted, paste the actual transaction hash, confirm it's visible on the Monad testnet explorer.
+4. Confirm attempting to mint an already-minted badge is correctly blocked (both client-side by not showing the button, and server-side if called directly).
+5. Run `$impeccable audit` on the new Badges screen and report the score.
+
+Report progress phase by phase — it's fine to finish Phase 1 and report before starting Phase 2 if that's how the context budget works out.

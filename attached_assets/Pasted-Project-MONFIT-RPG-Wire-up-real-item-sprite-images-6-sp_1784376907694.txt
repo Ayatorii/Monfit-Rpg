@@ -1,0 +1,21 @@
+Project: MONFIT RPG — Wire up real item sprite images
+
+6 sprite images have been generated (one per equipment slot: Head, Body, Left Hand, Right Hand, Legs, Feet) and are attached. Replace the current placeholder icons with these real images across the app.
+
+Implementation
+1. Import the 6 images via the same `@assets/` alias pattern already used for the logo — add them to the assets folder and import each one where needed, don't inline base64 or link external URLs.
+2. Map each image to its corresponding slot in the item data model: every item with `slot: "head"` uses the Head sprite, every item with `slot: "leftHand"` uses the Left Hand sprite, etc. — regardless of the item's specific name or rarity, since these are shared per-slot icons for the hackathon scope (rarity is conveyed separately via the background color already implemented).
+3. Replace the icon rendering in BOTH places:
+   - The equipment slot cards around the paperdoll on Character (currently showing a generic icon like a crown/hand icon per slot label — replace with the real sprite when that slot has an item equipped; keep a simple neutral placeholder icon only for genuinely empty "+ Add gear" slots).
+   - The "My Items" inventory grid — each item's icon should show its slot's real sprite, sitting on top of/inside its existing rarity-colored background (don't remove the rarity background — the sprite goes on top of it, e.g. centered within the colored slot).
+4. Size and center the sprite appropriately within its slot container at both mobile and desktop breakpoints — confirm it doesn't get cropped, stretched, or overflow the rounded slot container.
+5. Add descriptive `alt` text per image (e.g. "Head armor icon", or more specifically the equipped item's actual name if available in that context, e.g. `alt="Frayed Headband"` when rendering a specific equipped item).
+
+Verify
+1. Equip one item per slot and confirm the correct sprite shows in each equipment card around the paperdoll, sitting on the correct rarity-colored background.
+2. Check the My Items grid shows the correct sprite per item, matching its slot.
+3. Confirm empty/unequipped slots still show a simple neutral placeholder, not a sprite.
+4. Check both mobile and desktop layouts — sprites should look clean and properly contained at both sizes.
+5. Run `$impeccable audit` on the Character screen after this change and report the score.
+
+Report which slots were tested and confirm the sprite/rarity-background combination looks correct together (not just the sprite alone).
