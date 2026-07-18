@@ -145,9 +145,6 @@ function OpponentCard({
           >
             {pct}% Win
           </span>
-          <span className="text-xs font-semibold text-primary-text">
-            Challenge →
-          </span>
         </div>
       </div>
     </button>
