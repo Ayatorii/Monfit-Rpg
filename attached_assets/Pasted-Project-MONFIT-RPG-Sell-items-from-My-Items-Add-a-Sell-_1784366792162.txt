@@ -1,0 +1,19 @@
+Project: MONFIT RPG — Sell items from My Items
+
+Add a "Sell" action to each item in the My Items inventory grid (Character screen), converting it to Gold and removing it from inventory.
+
+Implementation
+1. Reuse the same rarity-based gold values already defined for duplicate auto-sell (Common = 10, Rare = 30, Epic = 100 — from the earlier duplicate-sell fix) so selling manually and auto-selling a duplicate give the same value for the same rarity. Pull from that same config, don't duplicate the values in a second place.
+2. Add a "Sell" action to each item slot's tooltip/popover (the same one that already shows name/rarity/stat bonus on hover/tap) — a button there, or a secondary action revealed via a long-press/right-click/explicit small icon on the slot, whichever fits the existing interaction pattern best without cluttering the grid visually.
+3. If the item being sold is currently EQUIPPED: require confirmation before selling (a simple inline confirm, e.g. "This is equipped — sell anyway?" with Confirm/Cancel), and automatically unequip it as part of the sell (update the `equipped` state, recalculate stats) rather than leaving a dangling reference to a sold item.
+4. If the item is not equipped: sell immediately on confirmation without the extra equipped-specific warning (a simple "Sell for X Gold?" confirm is still fine either way — don't make this a silent one-tap action, selling should always require at least one confirmation step to avoid accidental loss).
+5. On sell: remove the item from inventory, add the gold value to the player's balance, persist both changes to the database for connected wallets (same as the rest of the Shop/Character economy).
+6. Apply standing anti-slop + accessibility rules to any new UI (confirm dialog needs proper ARIA — `role="alertdialog"` or similar since it's a destructive confirmation, focus-visible on buttons, no hardcoded colors).
+
+Verify
+1. Sell an unequipped common item — confirm it's removed from inventory and Gold increases by 10.
+2. Sell an equipped item — confirm the equipped-item warning appears, confirm selling unequips it first and recalculates stats correctly (e.g. Character stat panel updates immediately), then removes it and adds gold.
+3. Cancel a sell confirmation — confirm nothing changes (item stays, gold unchanged).
+4. Confirm this all persists correctly to the database for a connected wallet (query and confirm), not just local state.
+
+Report actual before/after inventory + gold state for both an equipped and unequipped item sale.
