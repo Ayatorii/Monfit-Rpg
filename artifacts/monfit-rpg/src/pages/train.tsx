@@ -107,7 +107,7 @@ export default function TrainPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: isReduced ? 0 : 8 }}
                 transition={{ duration: dur(0.22) }}
-                className="font-display font-black text-3xl md:text-4xl text-white leading-none"
+                className="font-display font-black text-3xl md:text-4xl text-foreground text-balance leading-none"
               >
                 {pageTitle}
               </motion.h1>
@@ -121,7 +121,7 @@ export default function TrainPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: dur(0.2) }}
-                  className="text-muted-foreground text-sm mt-1"
+                  className="text-muted-foreground text-sm mt-1 text-pretty"
                 >
                   Pick a goal to see your program and daily quests.
                 </motion.p>
@@ -167,7 +167,7 @@ export default function TrainPage() {
             >
               <h2
                 id="goal-heading"
-                className="font-display font-bold text-lg text-white mb-4 uppercase tracking-wide"
+                className="font-display font-bold text-lg text-foreground text-balance mb-4 uppercase tracking-wide"
               >
                 Pick Your Goal
               </h2>
@@ -264,12 +264,12 @@ export default function TrainPage() {
         <section aria-labelledby="programs-heading" className="mb-8">
           <h2
             id="programs-heading"
-            className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+            className="font-display font-bold text-lg text-foreground text-balance mb-3 uppercase tracking-wide"
           >
             Suggested Programs
           </h2>
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {!goal ? (
               <motion.p
                 key="programs-placeholder"
@@ -299,7 +299,7 @@ export default function TrainPage() {
                     className="rounded-lg border border-card-border bg-card px-4 py-4"
                   >
                     <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <h3 className="font-semibold text-lg uppercase tracking-wide text-white">
+                      <h3 className="font-semibold text-lg uppercase tracking-wide text-foreground text-balance">
                         {p.name}
                       </h3>
                       <span className="font-mono text-sm text-primary shrink-0 whitespace-nowrap">
@@ -318,12 +318,12 @@ export default function TrainPage() {
         <section aria-labelledby="quests-heading">
           <h2
             id="quests-heading"
-            className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+            className="font-display font-bold text-lg text-foreground text-balance mb-3 uppercase tracking-wide"
           >
             Daily Quests
           </h2>
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {!goal ? (
               <motion.p
                 key="quests-placeholder"
@@ -441,7 +441,7 @@ export default function TrainPage() {
               <div className="mb-5 flex items-center justify-between">
                 <h2
                   id="swap-heading"
-                  className="font-display font-black text-2xl text-white leading-none"
+                  className="font-display font-black text-2xl text-foreground text-balance leading-none"
                 >
                   SWAP GOAL
                 </h2>

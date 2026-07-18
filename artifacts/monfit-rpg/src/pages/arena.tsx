@@ -197,11 +197,11 @@ function BattleView({
         aria-live="polite"
         aria-label="Battle log"
         aria-atomic="false"
-        className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1"
+        className="flex flex-col gap-1 max-h-[28vh] overflow-y-auto pr-1"
       >
         <AnimatePresence initial={false}>
           {visibleEvents.map((evt, i) => (
-            <BattleEventRow key={i} event={evt} npcName={npc.name} reduced={reduced} />
+            <BattleEventRow key={`r${evt.round}-${evt.actor}-${i}`} event={evt} npcName={npc.name} reduced={reduced} />
           ))}
         </AnimatePresence>
 
@@ -518,10 +518,10 @@ export default function ArenaPage() {
             </button>
           )}
           <div>
-            <h1 className="font-display font-black text-3xl md:text-4xl text-white leading-none">
+            <h1 className="font-display font-black text-3xl md:text-4xl text-foreground text-balance leading-none">
               {pageTitle}
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">{pageSubtitle}</p>
+            <p className="text-muted-foreground text-sm mt-0.5 text-pretty">{pageSubtitle}</p>
           </div>
         </div>
         <ResourceBadges gold={gold} xp={xp} />

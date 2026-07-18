@@ -197,7 +197,7 @@ function SlotButton({
           className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
           aria-hidden="true"
         />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-medium text-muted-foreground">
           {SLOT_LABELS[slot]}
         </span>
       </div>
@@ -247,7 +247,7 @@ function StatPanel({
       {/* Level + XP */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="font-display font-semibold text-sm text-white uppercase tracking-wider">
+          <span className="font-display font-semibold text-sm text-foreground">
             Level {level}
           </span>
           <span className="text-xs font-mono text-muted-foreground">
@@ -330,7 +330,7 @@ function ItemPickerDialog({
         className="max-w-sm border border-card-border bg-card shadow-none p-0 overflow-hidden"
       >
         <div className="px-5 pt-5 pb-4">
-          <DialogTitle className="font-display font-black text-2xl text-white leading-tight mb-0.5">
+          <DialogTitle className="font-display font-black text-2xl text-foreground text-balance leading-tight mb-0.5">
             {SLOT_LABELS[slot]}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -552,10 +552,10 @@ export default function CharacterPage() {
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-display font-black text-3xl md:text-4xl text-white leading-none">
+            <h1 className="font-display font-black text-3xl md:text-4xl text-foreground text-balance leading-none">
               CHARACTER
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1 text-pretty">
               Equip gear to boost your attributes.
             </p>
           </div>
@@ -630,7 +630,7 @@ export default function CharacterPage() {
         <section aria-labelledby="inventory-heading">
           <h2
             id="inventory-heading"
-            className="font-display font-bold text-lg text-white mb-3 uppercase tracking-wide"
+            className="font-display font-bold text-lg text-foreground text-balance mb-3 uppercase tracking-wide"
           >
             My Items
           </h2>

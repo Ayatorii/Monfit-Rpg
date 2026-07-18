@@ -116,7 +116,7 @@ function RankedRow({
             : "border-card-border bg-card",
       )}
       style={isTop3 && !isCurrentPlayer ? rankStyle?.accentStyle : undefined}
-      role="row"
+      role="listitem"
       aria-label={`Rank ${player.rank}: ${shortenAddress(player.walletAddress)}, Level ${player.level}, ${player.wins} wins, ${player.losses} losses, score ${player.score}`}
     >
       {/* Rank number */}
@@ -381,10 +381,10 @@ export default function LeaderboardPage() {
         transition={{ duration: 0.2, ease: "easeOut" }}
         className="flex flex-col gap-1"
       >
-        <h1 className="font-display font-black text-3xl text-white tracking-tight">
+        <h1 className="font-display font-black text-3xl text-foreground text-balance tracking-tight">
           LEADERBOARD
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground text-pretty">
           Top fighters this season — ranked by Arena score
         </p>
 
@@ -417,7 +417,7 @@ export default function LeaderboardPage() {
             className="flex flex-col gap-2"
           >
             {Array.from({ length: 6 }).map((_, i) => (
-              <RowSkeleton key={i} />
+              <RowSkeleton key={`skeleton-${i}`} />
             ))}
           </div>
         )}
@@ -466,7 +466,7 @@ export default function LeaderboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-            role="table"
+            role="list"
             aria-label="Arena leaderboard"
             className="flex flex-col gap-2"
           >

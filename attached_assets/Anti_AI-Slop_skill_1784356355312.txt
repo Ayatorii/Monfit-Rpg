@@ -1,0 +1,22 @@
+Создать самому через чат:
+
+NAME: AVE's ANTI-AI-SLOP DESIGN RULES 
+
+Explicitly avoid these, they are the most common AI-generated-UI tells:
+- No glow/drop-shadow effects on text, buttons, or icons ("dark glows") — flat, crisp edges instead.
+- No radial/linear gradient backgrounds, especially purple-to-blue or violet vignettes ("purple gradients") — use a single flat solid background color.
+- No bounce/elastic easing on animations — use simple ease-out or linear transitions only.
+- No pure #000000 black or pure gray as a surface color without a slight color tint toward the brand palette (e.g. tint dark surfaces slightly toward #0E091C rather than flat black).
+- No cards nested inside cards, no default rounded-square icon tile sitting above every heading.
+- No gray text on colored/dark backgrounds — use the defined off-white/light token instead for readability and intentionality.
+- Do not default to Inter, Arial, or system-ui — use the project's defined font (currently: Onest).
+- Any icon/logo assets that already exist in the project (e.g. the MONFIT RPG emblem) must be used as-is (the actual image file) — do not redraw or reinterpret them as a simplified inline SVG/icon substitute.
+
+After building any screen, do a self-check against this list before presenting it as done.
+
+
+npx skills add https://github.com/therealharpaljadeja/monskills --skill monskills
+
+npx skills add https://github.com/pbakaus/impeccable --skill impeccable
+
+npx skills add https://github.com/nextlevelbuilder/ui-ux-pro-max-skill --ui-ux-pro-max-skill

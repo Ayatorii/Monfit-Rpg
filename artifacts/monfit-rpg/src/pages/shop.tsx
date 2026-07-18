@@ -48,10 +48,10 @@ export default function ShopPage() {
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-display font-black text-3xl md:text-4xl text-white leading-none">
+          <h1 className="font-display font-black text-3xl md:text-4xl text-foreground text-balance leading-none">
             SHOP
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1 text-pretty">
             Spend your Gold on chests for a chance at rare gear.
           </p>
         </div>

@@ -1,0 +1,53 @@
+Project: MONFIT RPG — On-chain SeasonTrophy contract (resuming, check prior state first)
+
+Before starting fresh: this was initiated once before (a DEPLOYER_PRIVATE_KEY secret was requested and may already be set from a burner testnet wallet). Check first:
+1. Does `DEPLOYER_PRIVATE_KEY` already exist in Secrets? If so, confirm the wallet has testnet MON funded (check balance via the Monad testnet RPC) before assuming it needs to be redone.
+2. Is there already any Foundry project scaffolding, a partial `SeasonTrophy.sol`, or a previous (possibly failed/incomplete) deployment attempt anywhere in the repo? Report what exists before writing new code over it.
+
+Current project state relevant to this step: wallet auth is fully working (header-based Connect Wallet, real SIWE sign-in, persists to Postgres), and Leaderboard shows real ranked match data from the `matches` table. This step wires the on-chain trophy to that real data.
+
+## Contract: SeasonTrophy.sol
+- ERC-721 (OpenZeppelin via `forge install OpenZeppelin/openzeppelin-contracts`).
+- Owner-gated: `mintTrophy(address player, uint256 season, uint8 rank) external onlyOwner returns (uint256 tokenId)`.
+- Store `season`/`rank` per token (mapping `tokenId => TrophyData`).
+- Simple on-chain-generated `tokenURI` (data URI or minimal JSON) — no need for hosted art assets for this hackathon.
+- Owner = the backend/deployer wallet (the one in `DEPLOYER_PRIVATE_KEY`).
+
+## Foundry setup
+```
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+evm_version = "prague"
+solc_version = "0.8.28"
+
+[rpc_endpoints]
+monad_testnet = "https://testnet-rpc.monad.xyz"
+```
+- Write `script/Deploy.s.sol`.
+- Confirm deployer wallet balance before deploying; if empty, fund via https://faucet.monad.xyz.
+- Deploy: `forge script script/Deploy.s.sol:DeployScript --rpc-url https://testnet-rpc.monad.xyz --private-key $DEPLOYER_PRIVATE_KEY --broadcast`
+- Verify using the devnads verification API (covers MonadVision, Socialscan, Monadscan in one call) rather than manual `forge verify-contract`.
+- Report the final deployed contract address clearly — this goes directly into the hackathon submission form.
+
+## Backend integration
+- New route (e.g. `POST /api/admin/mint-season-trophies`), protected by a simple shared-secret header check (doesn't need full auth hardening for a hackathon demo trigger):
+  1. Query the real Leaderboard ranking (reuse the existing aggregation logic already powering the Leaderboard screen).
+  2. Take the top N (e.g. top 3) wallet addresses.
+  3. Call `mintTrophy` on-chain for each, using `DEPLOYER_PRIVATE_KEY`.
+  4. Return the transaction hashes.
+
+## Frontend — "My Trophies"
+- Add a small trophies section — place it on the Character screen (fits naturally alongside stats/equipment) showing season + rank for each token the connected wallet owns.
+- Read directly via `viem`'s `readContract` from the frontend — no backend proxy needed for this read.
+- Empty state if the connected wallet owns none yet.
+- Apply standing anti-slop + accessibility rules (see attached rules file) to this new UI.
+
+## Verify (real evidence)
+1. Contract address + link to it on the Monad testnet explorer.
+2. Verification confirmation (devnads response or explorer showing verified source).
+3. Trigger the mint endpoint using REAL leaderboard data from actual Arena matches played earlier — paste actual transaction hash(es), confirm visible on the explorer.
+4. Load "My Trophies" on Character for a wallet that received one — confirm real on-chain data displays, not a placeholder.
+
+Deliverable: deployed + verified SeasonTrophy contract, working mint flow driven by real Leaderboard data, and trophies visible on the Character screen.
