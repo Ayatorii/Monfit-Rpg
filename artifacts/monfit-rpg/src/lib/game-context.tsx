@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { LOOT_TABLE, type LootItem, type Slot } from "@/data/lootTable";
+import { type Goal, GOALS } from "@/data/train-data";
 import { useAuth } from "@/lib/auth-context";
 import {
   getMyPlayer,
@@ -15,9 +16,12 @@ import {
   addMyPlayerItem,
   listMyPlayerItems,
   updateMyPlayerItem,
+  updateMyPlayerGoal,
   recordArenaMatch,
 } from "@workspace/api-client-react";
 import type { PlayerItem } from "@workspace/api-client-react";
+
+const VALID_GOALS = new Set<string>(GOALS.map((g) => g.id));
 
 export type OwnedItem = LootItem & {
   instanceId: string;
@@ -42,6 +46,10 @@ type GameContextValue = {
   equippedItems: EquippedItems;
   matchHistory: MatchRecord[];
   isSyncing: boolean;
+  /** The player's currently selected training goal. Persists across navigation; synced to DB for connected wallets. */
+  selectedGoal: Goal | null;
+  /** Set the active training goal. Persists to the DB for connected wallets. */
+  setSelectedGoal: (goal: Goal | null) => void;
   /** Adjust gold by a delta (positive or negative). Never drops below 0. */
   addGold: (delta: number) => void;
   /** Adjust xp by a delta (positive or negative). Never drops below 0. */
@@ -87,6 +95,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [equippedItems, setEquippedItems] = useState<EquippedItems>({});
   const [matchHistory, setMatchHistory] = useState<MatchRecord[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedGoal, setSelectedGoalState] = useState<Goal | null>(null);
 
   // goldRef keeps a synchronously-readable mirror of the gold state so that
   // spendGold can check affordability and fire the API call in one tick —
@@ -111,6 +120,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const [player, items] = await Promise.all([getMyPlayer(), listMyPlayerItems()]);
         setGold(player.gold);
         setXp(player.xp);
+        if (player.selectedGoal && VALID_GOALS.has(player.selectedGoal)) {
+          setSelectedGoalState(player.selectedGoal as Goal);
+        }
 
         const owned = items.map(toOwnedItem).filter((i): i is OwnedItem => i !== null);
         setInventory(owned);
@@ -225,6 +237,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [isAuthenticated, equippedItems],
   );
 
+  const setSelectedGoal = useCallback(
+    (goal: Goal | null) => {
+      setSelectedGoalState(goal);
+      if (isAuthenticated) {
+        updateMyPlayerGoal({ selectedGoal: goal }).catch((err) =>
+          console.error("Failed to sync selected goal", err),
+        );
+      }
+    },
+    [isAuthenticated],
+  );
+
   const addMatchResult = useCallback(
     (record: MatchRecord) => {
       setMatchHistory((prev) => [record, ...prev]);
@@ -250,6 +274,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         equippedItems,
         matchHistory,
         isSyncing,
+        selectedGoal,
+        setSelectedGoal,
         addGold,
         addXp,
         spendGold,

@@ -41,7 +41,8 @@ export const VerifyAuthResponse = zod.object({
   "walletAddress": zod.string(),
   "xp": zod.number(),
   "gold": zod.number(),
-  "level": zod.number()
+  "level": zod.number(),
+  "selectedGoal": zod.union([zod.string(),zod.null()]).optional()
 })
 }),zod.null()])
 })
@@ -57,7 +58,8 @@ export const GetAuthSessionResponse = zod.object({
   "walletAddress": zod.string(),
   "xp": zod.number(),
   "gold": zod.number(),
-  "level": zod.number()
+  "level": zod.number(),
+  "selectedGoal": zod.union([zod.string(),zod.null()]).optional()
 })
 }),zod.null()])
 })
@@ -76,7 +78,8 @@ export const GetMyPlayerResponse = zod.object({
   "walletAddress": zod.string(),
   "xp": zod.number(),
   "gold": zod.number(),
-  "level": zod.number()
+  "level": zod.number(),
+  "selectedGoal": zod.union([zod.string(),zod.null()]).optional()
 })
 
 
@@ -92,7 +95,24 @@ export const AdjustMyPlayerResponse = zod.object({
   "walletAddress": zod.string(),
   "xp": zod.number(),
   "gold": zod.number(),
-  "level": zod.number()
+  "level": zod.number(),
+  "selectedGoal": zod.union([zod.string(),zod.null()]).optional()
+})
+
+
+/**
+ * @summary Set or clear the signed-in wallet's selected training goal
+ */
+export const UpdateMyPlayerGoalBody = zod.object({
+  "selectedGoal": zod.union([zod.string(),zod.null()])
+})
+
+export const UpdateMyPlayerGoalResponse = zod.object({
+  "walletAddress": zod.string(),
+  "xp": zod.number(),
+  "gold": zod.number(),
+  "level": zod.number(),
+  "selectedGoal": zod.union([zod.string(),zod.null()]).optional()
 })
 
 

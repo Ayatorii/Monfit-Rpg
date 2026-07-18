@@ -5,12 +5,13 @@ import type { Player, PlayerItem } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-function toPlayer(row: { walletAddress: string; xp: number; gold: number }): Player {
+function toPlayer(row: { walletAddress: string; xp: number; gold: number; selectedGoal?: string | null }): Player {
   return {
     walletAddress: row.walletAddress,
     xp: row.xp,
     gold: row.gold,
     level: Math.floor(row.xp / 100) + 1,
+    selectedGoal: row.selectedGoal ?? null,
   };
 }
 
@@ -78,6 +79,34 @@ router.post("/me/adjust", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(playersTable)
     .set({ gold: nextGold, xp: nextXp, updatedAt: new Date() })
+    .where(eq(playersTable.walletAddress, walletAddress))
+    .returning();
+
+  res.json(toPlayer(updated!));
+});
+
+router.patch("/me/goal", async (req, res): Promise<void> => {
+  const walletAddress = req.session.walletAddress as string;
+  const { selectedGoal } = req.body as { selectedGoal?: unknown };
+
+  if (selectedGoal !== null && typeof selectedGoal !== "string") {
+    res.status(400).json({ error: "selectedGoal must be a string or null" });
+    return;
+  }
+
+  const [player] = await db
+    .select()
+    .from(playersTable)
+    .where(eq(playersTable.walletAddress, walletAddress));
+
+  if (!player) {
+    res.status(404).json({ error: "Player not found" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(playersTable)
+    .set({ selectedGoal: (selectedGoal as string | null) ?? null, updatedAt: new Date() })
     .where(eq(playersTable.walletAddress, walletAddress))
     .returning();
 

@@ -29,6 +29,7 @@ import type {
   Leaderboard,
   Player,
   PlayerAdjustment,
+  PlayerGoalUpdate,
   PlayerItem,
   PlayerItemInput,
   PlayerItemUpdate,
@@ -583,6 +584,77 @@ export const useAdjustMyPlayer = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getAdjustMyPlayerMutationOptions(options));
+    }
+
+export const getUpdateMyPlayerGoalUrl = () => {
+
+
+
+
+  return `/api/players/me/goal`
+}
+
+/**
+ * @summary Set or clear the signed-in wallet's selected training goal
+ */
+export const updateMyPlayerGoal = async (playerGoalUpdate: PlayerGoalUpdate, options?: RequestInit): Promise<Player> => {
+
+  return customFetch<Player>(getUpdateMyPlayerGoalUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(playerGoalUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateMyPlayerGoalMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyPlayerGoal>>, TError,{data: BodyType<PlayerGoalUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyPlayerGoal>>, TError,{data: BodyType<PlayerGoalUpdate>}, TContext> => {
+
+const mutationKey = ['updateMyPlayerGoal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyPlayerGoal>>, {data: BodyType<PlayerGoalUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyPlayerGoal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyPlayerGoalMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyPlayerGoal>>>
+    export type UpdateMyPlayerGoalMutationBody = BodyType<PlayerGoalUpdate>
+    export type UpdateMyPlayerGoalMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Set or clear the signed-in wallet's selected training goal
+ */
+export const useUpdateMyPlayerGoal = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyPlayerGoal>>, TError,{data: BodyType<PlayerGoalUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyPlayerGoal>>,
+        TError,
+        {data: BodyType<PlayerGoalUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyPlayerGoalMutationOptions(options));
     }
 
 export const getListMyPlayerItemsUrl = () => {

@@ -27,6 +27,11 @@ export interface Player {
   xp: number;
   gold: number;
   level: number;
+  selectedGoal?: string | null;
+}
+
+export interface PlayerGoalUpdate {
+  selectedGoal: string | null;
 }
 
 export interface AuthUser {

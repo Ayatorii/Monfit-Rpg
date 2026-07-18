@@ -9,9 +9,8 @@ import ResourceBadges from "@/components/ResourceBadges";
 
 export default function TrainPage() {
   const { toast } = useToast();
-  const { gold, xp, addGold, addXp } = useGame();
+  const { gold, xp, addGold, addXp, selectedGoal: goal, setSelectedGoal: setGoal } = useGame();
   const [tentativeGoal, setTentativeGoal] = useState<Goal | null>(null);
-  const [goal, setGoal] = useState<Goal | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [swapOpen, setSwapOpen] = useState(false);
   const [swapTentative, setSwapTentative] = useState<Goal | null>(null);

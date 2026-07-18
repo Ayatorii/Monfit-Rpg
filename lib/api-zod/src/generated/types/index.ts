@@ -17,6 +17,7 @@ export * from './healthStatus';
 export * from './leaderboard';
 export * from './player';
 export * from './playerAdjustment';
+export * from './playerGoalUpdate';
 export * from './playerItem';
 export * from './playerItemInput';
 export * from './playerItemUpdate';

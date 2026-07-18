@@ -6,10 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Player {
-  walletAddress: string;
-  xp: number;
-  gold: number;
-  level: number;
-  selectedGoal?: string | null;
+export interface PlayerGoalUpdate {
+  selectedGoal: string | null;
 }

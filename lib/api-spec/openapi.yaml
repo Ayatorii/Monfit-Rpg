@@ -138,6 +138,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /players/me/goal:
+    patch:
+      operationId: updateMyPlayerGoal
+      tags: [players]
+      summary: Set or clear the signed-in wallet's selected training goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlayerGoalUpdate"
+      responses:
+        "200":
+          description: Updated player profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+        "401":
+          description: Not signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /players/me/items:
     get:
       operationId: listMyPlayerItems
@@ -303,6 +328,19 @@ components:
           type: integer
         level:
           type: integer
+        selectedGoal:
+          anyOf:
+            - type: string
+            - type: "null"
+
+    PlayerGoalUpdate:
+      type: object
+      required: [selectedGoal]
+      properties:
+        selectedGoal:
+          anyOf:
+            - type: string
+            - type: "null"
 
     AuthUser:
       type: object

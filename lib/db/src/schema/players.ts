@@ -7,6 +7,7 @@ export const playersTable = pgTable("players", {
   walletAddress: text("wallet_address").notNull().unique(),
   xp: integer("xp").notNull().default(0),
   gold: integer("gold").notNull().default(0),
+  selectedGoal: text("selected_goal"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
