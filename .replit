@@ -68,3 +68,10 @@ timeoutMs = 60000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+CURRENT_SEASON = "1"
+SEASON_TROPHY_ADDRESS = "0xbe28f09078c9d55432cddefb3ebd0d18f8b1cee6"
+VITE_TROPHY_CONTRACT_ADDRESS = "0xbe28f09078c9d55432cddefb3ebd0d18f8b1cee6"

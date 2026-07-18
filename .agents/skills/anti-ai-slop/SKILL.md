@@ -36,6 +36,31 @@ The project fonts are **Onest** (body/UI) and **Barlow Condensed** (display/head
 ### 9. Use existing assets as-is — never redraw them
 The MONFIT RPG emblem (`06a9ab81-...removalai_preview_1784032498122.png`) and all goal images (`build-muscle.png`, `lose-weight.png`, `endurance.png`, `general-fitness.png`) must be used as the actual image files. Do not substitute an inline SVG, a lucide icon, or a simplified reinterpretation — that destroys brand identity.
 
+### 10. Every interactive element must have a visible focus ring
+All custom buttons, nav links, cards, and checkboxes need:
+```
+focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+```
+Do not rely on the browser default focus outline.
+
+### 11. Full-row tap targets on checkboxes and toggles
+Any row or card with a checkbox, toggle, or selection state (e.g. quest completion, item selection) must make the **entire row** the tappable/clickable target — not just the small checkbox element. Minimum 44×44px touch target on mobile (`min-h-11`).
+
+### 12. Progress bars animate `transform: scaleX()`, never `width`
+Animating `width` causes layout reflow and is janky on low-end devices. Use `transform: scaleX()` with `origin-left` instead. The XP and HP bars in this project already use this pattern — maintain it.
+
+### 13. Correct ARIA on navigation and interactive patterns
+- `role="navigation"` + `aria-label` on every nav element
+- `aria-current="page"` on the active tab/link
+- `aria-pressed` on toggle/selection cards
+- `aria-label` on icon-only buttons and checkboxes
+
+### 14. Zero hard-coded hex or rgba values in component code
+All colors must go through CSS variable tokens. Never write `#6E54FF`, `rgba(0,0,0,0.3)`, or similar literals in component className strings or inline styles. Verify with a grep before calling any screen done:
+```bash
+grep -r "#[0-9a-fA-F]\{3,6\}\|rgba(" artifacts/monfit-rpg/src/
+```
+
 ---
 
 ## Mandatory Self-Check
@@ -52,6 +77,11 @@ Run this before presenting any finished screen. Answer each line:
 [ ] Gray text only on light surfaces — dark surfaces use foreground/muted-foreground/primary-text tokens
 [ ] Fonts are Onest (body) and Barlow Condensed (display) — not Inter / Arial / system-ui
 [ ] Existing image assets used as <img> files, not redrawn as SVG or icons
+[ ] Every custom interactive element has focus-visible:ring-2 focus ring
+[ ] Checkbox/toggle rows use full-row tap target (min-h-11)
+[ ] Progress bars use transform:scaleX(), not width animation
+[ ] Nav has role="navigation" + aria-label; active tab has aria-current="page"
+[ ] No hard-coded hex/rgba — grep confirms zero literals in component code
 ```
 
 If any box is unchecked, fix it before presenting.

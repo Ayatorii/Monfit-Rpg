@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import MyTrophies from "@/components/MyTrophies";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Shield, Hand, Swords, Layers, Footprints, CheckCircle2 } from "lucide-react";
 import {
@@ -640,6 +641,9 @@ export default function CharacterPage() {
             onSlotClick={openSlot}
           />
         </section>
+
+        {/* Season Trophies — on-chain read via viem */}
+        <MyTrophies />
       </div>
 
       {/* Item picker dialog */}
