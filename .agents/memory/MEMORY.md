@@ -1,5 +1,6 @@
 - [Session cookie config](session-cookie.md) — SameSite=None + secure:"auto" + trust proxy:true required for Replit cross-origin iframe preview.
 - [Production single-process](production-serving.md) — Express serves both /api routes and built Vite SPA static files in production; dev uses two separate artifact workflows.
 - [spendGold race condition](spendgold-pattern.md) — React state updater functions run async; never use a captured flag inside an updater to decide whether to fire an API call.
-- [SeasonTrophy contract](season-trophy-contract.md) — deployed + verified on Monad testnet; address and key facts for hackathon submission.
+- [SeasonTrophy contract](season-trophy-contract.md) — redeployed via Safe multisig on Monad testnet; new address `0x2ec42214...`, owned by Safe.
+- [Safe multisig](safe-multisig.md) — 2-of-3 Safe on Monad testnet; agent wallet + 2 user wallets; propose.sh for all onchain ops.
 - [AchievementBadge contract](achievement-badge-contract.md) — ERC-721 badges (WalletConnector/TaskMaster/GreatWarrior); address, badge types, backend route integration.
