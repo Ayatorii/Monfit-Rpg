@@ -1,0 +1,25 @@
+Project: MONFIT RPG — Character screen polish + move My Trophies to Leaderboard
+
+Three changes:
+
+## 1. Confirm/restore desktop (≥768px) Character layout matches the reference
+Attached reference image shows the intended desktop layout: paperdoll centered with Head/Left Hand/Legs on the left and Right Hand/Body/Feet on the right, an Attributes panel to the right of the character, and a Level/XP bar spanning the bottom. Compare the current live desktop layout against this reference and fix any divergence — confirm this wasn't broken by any recent mobile-specific styling changes (check for any CSS that might be leaking mobile layout rules into the desktop breakpoint).
+
+## 2. Redesign "My Items" as an icon-based inventory slot grid
+Currently "My Items" renders as a plain text list (name, rarity label, slot label, "Equipped" badge as text). Replace with a proper inventory-grid presentation:
+- Each item shown as a square/rounded icon slot (consistent sizing, grid layout — similar visual language to the equipment slots above it) displaying the item's icon/image (if item art exists; otherwise a simple placeholder icon distinguished by rarity color, consistent with the existing rarity token colors from Shop).
+- Rarity shown via the slot's border/glow color (reuse `--rarity-common`/`--rarity-rare`/`--rarity-epic` tokens), not a text label inside the slot itself.
+- On hover (desktop) or tap (mobile): show a tooltip/popover with the item's full details — name, rarity, equipment slot, and stat bonus (e.g. "+2 STR"). Position it so it doesn't get clipped at screen edges.
+- Currently-equipped items should have a distinct visual indicator (e.g. a small checkmark badge or highlighted border) so equipped vs. unequipped is clear at a glance without needing the tooltip.
+- Tapping/clicking a slot should still open the existing equip/unequip interaction (bottom sheet on mobile, whatever the desktop equivalent is) — don't lose that functionality while restyling.
+- Apply standing anti-slop + accessibility rules: tooltip needs proper ARIA (e.g. `role="tooltip"`, associated via `aria-describedby`), keyboard-focusable slots should also be able to trigger the tooltip on focus (not just hover/tap), 44px minimum touch target on mobile.
+
+## 3. Remove "My Trophies" from Character, move it to Leaderboard
+- Remove the My Trophies section entirely from the Character screen.
+- Add an equivalent section to the Leaderboard screen instead — same functionality (reads the connected wallet's owned SeasonTrophy tokens directly via `viem`'s `readContract`, shows season + rank per trophy, empty state if none owned). Placement on Leaderboard: makes sense as a section either above or below the main ranked list — your call on what reads best, just keep it clearly separated from the ranked list itself.
+- Confirm the existing read logic/component can just be relocated rather than rewritten from scratch.
+
+Self-check before calling this done
+- Run `$impeccable audit` on both the updated Character screen and the updated Leaderboard screen, report scores.
+- Confirm the tooltip/popover works correctly on both a real hover (desktop) and a real tap (mobile viewport or actual device) — report which you tested.
+- Confirm equipping/unequipping still works correctly through the new slot UI.

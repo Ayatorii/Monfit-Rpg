@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import MyTrophies from "@/components/MyTrophies";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Shield, Hand, Swords, Layers, Footprints, CheckCircle2 } from "lucide-react";
 import {
@@ -414,9 +413,9 @@ function ItemPickerDialog({
   );
 }
 
-// ─── Inventory List ───────────────────────────────────────────────────────────
+// ─── Inventory Grid ───────────────────────────────────────────────────────────
 
-function InventoryList({
+function InventoryGrid({
   inventory,
   equippedItems,
   onSlotClick,
@@ -425,6 +424,8 @@ function InventoryList({
   equippedItems: Partial<Record<Slot, OwnedItem>>;
   onSlotClick: (slot: Slot) => void;
 }) {
+  const [tooltipId, setTooltipId] = useState<string | null>(null);
+
   if (inventory.length === 0) {
     return (
       <p className="text-muted-foreground text-sm border border-card-border rounded-lg bg-card px-4 py-5">
@@ -434,54 +435,92 @@ function InventoryList({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className="grid gap-2"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(3.5rem, 1fr))" }}
+      role="list"
+      aria-label="Inventory items"
+    >
       {inventory.map((item) => {
         const isEquipped =
           equippedItems[item.slot]?.instanceId === item.instanceId;
+        const slotTooltipId = `inv-tooltip-${item.instanceId}`;
+        const showTooltip = tooltipId === item.instanceId;
+        const SlotIcon = SLOT_ICONS[item.slot];
+        const rarityColor = RARITY_COLOR_VAR[item.rarity];
+
         return (
-          <button
-            key={item.instanceId}
-            type="button"
-            onClick={() => onSlotClick(item.slot)}
-            aria-label={
-              isEquipped
-                ? `${item.name} — equipped in ${SLOT_LABELS[item.slot]} slot`
-                : `${item.name} — click to equip in ${SLOT_LABELS[item.slot]} slot`
-            }
-            className={cn(
-              "w-full min-h-11 flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              isEquipped
-                ? "border-primary/30 bg-primary/5 hover:bg-primary/10"
-                : "border-card-border bg-card hover:border-muted-foreground/40",
-            )}
-          >
-            <span
-              className="h-2 w-2 rounded-full shrink-0"
-              style={{ backgroundColor: RARITY_COLOR_VAR[item.rarity] }}
-              aria-hidden="true"
-            />
-            <span className="flex-1 text-sm font-medium text-foreground">
-              {item.name}
-            </span>
-            {isEquipped && (
-              <span className="flex items-center gap-1 text-xs font-semibold text-primary-text shrink-0">
-                <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                Equipped
-              </span>
-            )}
-            <span
+          <div key={item.instanceId} className="relative" role="listitem">
+            <button
+              type="button"
+              onClick={() => onSlotClick(item.slot)}
+              onMouseEnter={() => setTooltipId(item.instanceId)}
+              onMouseLeave={() => setTooltipId(null)}
+              onFocus={() => setTooltipId(item.instanceId)}
+              onBlur={() => setTooltipId(null)}
+              aria-label={`${item.name}${isEquipped ? " (equipped)" : ""} — ${RARITY_LABELS[item.rarity]} ${SLOT_LABELS[item.slot]}, +${item.statValue} ${item.statLabel}. Click to manage.`}
+              aria-describedby={slotTooltipId}
               className={cn(
-                "text-xs font-semibold uppercase tracking-wide shrink-0",
-                RARITY_TEXT_CLASS[item.rarity],
+                "relative w-full aspect-square min-h-[44px] rounded-lg flex flex-col items-center justify-center gap-1 transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                isEquipped ? "border-2" : "border",
               )}
+              style={{
+                borderColor: rarityColor,
+                backgroundColor: isEquipped
+                  ? `hsl(var(--rarity-${item.rarity}) / 0.12)`
+                  : "hsl(var(--card))",
+              }}
             >
-              {RARITY_LABELS[item.rarity]}
-            </span>
-            <span className="text-xs font-mono text-muted-foreground shrink-0 whitespace-nowrap">
-              {SLOT_LABELS[item.slot]}
-            </span>
-          </button>
+              <SlotIcon
+                className="h-5 w-5 shrink-0"
+                style={{ color: rarityColor }}
+                aria-hidden="true"
+              />
+              {/* Equipped badge */}
+              {isEquipped && (
+                <span
+                  className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center"
+                  aria-hidden="true"
+                >
+                  <CheckCircle2 className="h-2.5 w-2.5 text-primary-text" />
+                </span>
+              )}
+            </button>
+
+            {/* Tooltip — always in DOM for aria-describedby; visually toggled */}
+            <div
+              id={slotTooltipId}
+              role="tooltip"
+              aria-hidden={!showTooltip}
+              className={cn(
+                "absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2",
+                "w-max max-w-[12rem] rounded-lg border border-card-border px-3 py-2",
+                "flex flex-col gap-0.5 pointer-events-none select-none",
+                "transition-opacity duration-150",
+                showTooltip ? "opacity-100" : "opacity-0",
+              )}
+              style={{ backgroundColor: "hsl(var(--card))" }}
+            >
+              <span className="text-sm font-semibold text-foreground leading-snug">
+                {item.name}
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-semibold uppercase tracking-wide",
+                  RARITY_TEXT_CLASS[item.rarity],
+                )}
+              >
+                {RARITY_LABELS[item.rarity]}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {SLOT_LABELS[item.slot]}
+              </span>
+              <span className="text-xs font-mono text-foreground">
+                +{item.statValue} {item.statLabel}
+              </span>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -635,15 +674,12 @@ export default function CharacterPage() {
           >
             My Items
           </h2>
-          <InventoryList
+          <InventoryGrid
             inventory={inventory}
             equippedItems={equippedItems}
             onSlotClick={openSlot}
           />
         </section>
-
-        {/* Season Trophies — on-chain read via viem */}
-        <MyTrophies />
       </div>
 
       {/* Item picker dialog */}
