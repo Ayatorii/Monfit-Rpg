@@ -1,0 +1,20 @@
+Project: MONFIT RPG — Add OKX Wallet to the RainbowKit wallet list
+
+Add OKX Wallet as an additional connector option in the RainbowKit modal, alongside whatever's already configured (MetaMask, Rabby, WalletConnect, etc.).
+
+Implementation
+RainbowKit ships `okxWallet` as a built-in wallet connector under `@rainbow-me/rainbowkit/wallets`. Since the current config uses `getDefaultConfig`, check whether it's simpler to:
+- Switch to the more granular `connectorsForWallets` + `getDefaultWallets` API (RainbowKit's recommended approach when you need to customize the exact wallet list) and explicitly include `okxWallet` alongside the other wallets already wanted, OR
+- Check if `getDefaultConfig` already includes OKX Wallet automatically in its default recommended list (RainbowKit's defaults do include many wallets out of the box) — verify this first before assuming custom wallet-list configuration is even necessary.
+
+Steps
+1. Check the current wagmi/RainbowKit config file and report whether OKX Wallet already appears in the connect modal without any changes (it's possible it's already included by default and just needs confirming).
+2. If not present: add it explicitly using RainbowKit's wallet list customization, importing `okxWallet` from `@rainbow-me/rainbowkit/wallets`, alongside the existing wallets (don't remove any currently working ones — this is additive).
+3. Confirm the WalletConnect project ID is passed correctly to okxWallet's config if required by its specific setup (some wallet connectors need `projectId` passed explicitly even in the wallet list, not just at the top-level config).
+
+Verify
+1. Open the Connect Wallet modal and confirm OKX Wallet now appears as an option in the list.
+2. Confirm all previously working wallets (MetaMask, Rabby, WalletConnect) still appear and still work correctly — this must be additive, not a regression to the existing working flow.
+3. If OKX Wallet extension/app is available to test with, do a real connect+sign test; if not available for testing, at minimum confirm it appears correctly in the list and doesn't throw any console errors when selected.
+
+Report what you found in step 1 before making any changes.

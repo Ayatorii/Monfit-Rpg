@@ -1,4 +1,5 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { getDefaultConfig, getDefaultWallets } from "@rainbow-me/rainbowkit";
+import { okxWallet } from "@rainbow-me/rainbowkit/wallets";
 import { monadTestnet } from "viem/chains";
 
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | undefined;
@@ -9,8 +10,14 @@ if (!projectId) {
   );
 }
 
+const { wallets: defaultWallets } = getDefaultWallets();
+
 /**
- * Standard RainbowKit config with WalletConnect support.
+ * RainbowKit config with WalletConnect support + OKX Wallet added explicitly.
+ *
+ * getDefaultWallets() returns the standard recommended list (Safe, Rainbow,
+ * Coinbase, MetaMask, WalletConnect). OKX Wallet is NOT included by default
+ * so we add it as a second group here.
  *
  * NOTE: WalletConnect (Reown) will log a 403 on startup until the Vercel
  * deployment domain is registered at cloud.reown.com under this project ID.
@@ -22,4 +29,11 @@ export const wagmiConfig = getDefaultConfig({
   projectId,
   chains: [monadTestnet],
   ssr: false,
+  wallets: [
+    ...defaultWallets,
+    {
+      groupName: "More",
+      wallets: [okxWallet],
+    },
+  ],
 });
