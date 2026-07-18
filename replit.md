@@ -13,20 +13,27 @@ A fitness-meets-crypto RPG on Monad Testnet. Players train, fight arena battles,
 
 ## Getting started after import
 
-1. The Replit-managed PostgreSQL database is provisioned automatically — no setup needed.
-2. Ensure the following secrets are set in **Tools → Secrets**:
+1. Set the following **required** secrets in **Tools → Secrets**:
+   - `DATABASE_URL` — PostgreSQL connection string. Use a Replit-managed database: open the **Database** tool in the sidebar and copy the connection string.
    - `SESSION_SECRET` — any random string (e.g. `openssl rand -hex 32`)
    - `VITE_WALLETCONNECT_PROJECT_ID` — from [cloud.walletconnect.com](https://cloud.walletconnect.com)
+2. Push the database schema (one-time, and after any schema changes):
+   ```bash
+   pnpm --filter @workspace/db run push
+   ```
+   > This also runs automatically via `scripts/post-merge.sh` after every task-agent merge.
 3. Click **Run**. The "Project" workflow starts both services in parallel:
    - `API Server` — Express backend on port 8080
-   - `artifacts/monfit-rpg: web` — Vite frontend on port 26223 (proxies /api → 8080)
+   - `Monfit RPG Frontend` — Vite dev server on port 26223 (proxies /api → 8080)
 4. The Preview pane will show the MONFIT RPG loading screen. Connect a wallet to play.
+
+> **Note:** The API server and database layer both fail fast with clear error messages if `DATABASE_URL` or `PORT` are missing — check workflow logs if services don't start.
 
 Optional secrets (leave unset to disable those features):
 - `DEPLOYER_PRIVATE_KEY` — Monad wallet private key for on-chain trophy minting
-- `VITE_TROPHY_CONTRACT_ADDRESS` / `SEASON_TROPHY_ADDRESS` — trophy NFT contracts
-- `MINT_ADMIN_SECRET` — shared secret for the admin mint endpoint
-- `CURRENT_SEASON` — season identifier string
+- `MINT_ADMIN_SECRET` — shared secret protecting the admin trophy mint endpoint
+- `VITE_TROPHY_CONTRACT_ADDRESS` / `SEASON_TROPHY_ADDRESS` — trophy NFT contract addresses (pre-set as env vars)
+- `CURRENT_SEASON` — season identifier string (pre-set to `1`)
 
 ## Run & Operate
 
