@@ -58,34 +58,61 @@ export default function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        {/* Mobile bottom nav */}
+        {/* Mobile bottom nav
+            Pattern: icon-only for inactive tabs, icon + shortLabel for the active tab.
+            This is the standard approach for 6-item tab bars on 320–430 px screens —
+            "Leaderboard" at any legible font size overflows a 53 px column (320÷6).
+            Each tab is h-[54px] to guarantee a ≥44 px touch target even icon-only.
+        */}
         <nav
           role="navigation"
           aria-label="Tab bar navigation"
           className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-surface border-t border-surface-border"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <div className="flex items-stretch justify-around">
+          <div className="flex items-stretch">
             {NAV_ITEMS.map((item) => {
               const isActive = location === item.path;
               const Icon = item.icon;
+              const displayLabel = item.shortLabel ?? item.label;
               return (
                 <Link
                   key={item.path}
                   href={item.path}
                   aria-current={isActive ? "page" : undefined}
+                  aria-label={item.label}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 py-2.5 text-[11px] font-medium uppercase tracking-wide transition-colors",
+                    // Equal flex columns; fixed height = guaranteed 44 px+ touch target
+                    "relative flex flex-col items-center justify-center flex-1 h-[54px] transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-                    isActive ? "text-primary" : "text-muted-foreground",
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
+                  {/* Thin indicator bar along the top edge of the active tab */}
+                  {isActive && (
+                    <span
+                      className="absolute top-0 left-3 right-3 h-0.5 rounded-b-sm bg-primary"
+                      aria-hidden="true"
+                    />
+                  )}
+
                   <Icon
-                    className="h-5 w-5"
+                    className="h-5 w-5 shrink-0"
                     aria-hidden="true"
                     strokeWidth={isActive ? 2.5 : 2}
                   />
-                  {item.label}
+
+                  {isActive ? (
+                    /* Active: abbreviated label visible, max 6 chars so it fits 53 px.
+                       Uses text-primary-text (≥5.8:1 on surface) not text-primary (~3.9:1)
+                       — the 10px size requires 4.5:1 for WCAG AA; primary-text clears it. */
+                    <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide leading-none text-primary-text">
+                      {displayLabel}
+                    </span>
+                  ) : (
+                    /* Inactive: icon only — full label available to screen readers */
+                    <span className="sr-only">{item.label}</span>
+                  )}
                 </Link>
               );
             })}
