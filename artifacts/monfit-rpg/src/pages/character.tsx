@@ -34,8 +34,9 @@ const SLOT_ICONS: Record<Slot, React.FC<React.SVGProps<SVGSVGElement>>> = {
   feet: Footprints,
 };
 
-const LEFT_SLOTS: Slot[] = ["head", "leftHand", "legs"];
-const RIGHT_SLOTS: Slot[] = ["body", "rightHand", "feet"];
+// Desktop layout: 2 cards per side column; head/feet live in the center column
+const DESKTOP_LEFT_SLOTS: Slot[] = ["leftHand", "legs"];
+const DESKTOP_RIGHT_SLOTS: Slot[] = ["rightHand", "body"];
 
 // Mobile grid pairs slots by body region (top → bottom)
 const MOBILE_SLOT_PAIRS: [Slot, Slot][] = [
@@ -222,7 +223,72 @@ function SlotButton({
   );
 }
 
-// ─── Stat Panel ───────────────────────────────────────────────────────────────
+// ─── Attributes Panel (desktop right column) ──────────────────────────────────
+
+function AttributesPanel({
+  equippedItems,
+}: {
+  equippedItems: Partial<Record<Slot, OwnedItem>>;
+}) {
+  const stats = (["STR", "AGI", "VIT"] as const).map((stat) => {
+    const bonus = statBonus(equippedItems, stat);
+    return { stat, base: BASE_STATS[stat], bonus, total: BASE_STATS[stat] + bonus };
+  });
+
+  return (
+    <div className="rounded-lg border border-card-border bg-card px-4 py-4 flex flex-col gap-2">
+      <span className="text-xs text-muted-foreground mb-0.5">Attributes</span>
+      {stats.map(({ stat, base, bonus, total }) => (
+        <div key={stat} className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-foreground">{stat}</span>
+          <div className="flex items-center gap-1.5 tabular-nums">
+            <span className="text-sm text-muted-foreground">{base}</span>
+            {bonus > 0 && (
+              <span className="text-xs font-semibold text-xp">(+{bonus})</span>
+            )}
+            <span className="text-sm font-bold text-foreground">= {total}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Level Bar (desktop full-width row below paperdoll) ───────────────────────
+
+function LevelBar({ xp }: { xp: number }) {
+  const level = Math.floor(xp / 100) + 1;
+  const xpInLevel = xp % 100;
+  const xpProgress = xpInLevel / 100;
+
+  return (
+    <div className="rounded-lg border border-card-border bg-card px-4 py-3">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="font-display font-semibold text-sm text-foreground">
+          Level {level}
+        </span>
+        <span className="text-xs font-mono text-muted-foreground">
+          {xpInLevel} / 100 XP
+        </span>
+      </div>
+      <div
+        className="h-2 rounded-full bg-muted overflow-hidden"
+        role="progressbar"
+        aria-valuenow={xpInLevel}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`XP progress: ${xpInLevel} of 100`}
+      >
+        <div
+          className="h-full rounded-full bg-xp origin-left transition-transform duration-500 ease-out"
+          style={{ transform: `scaleX(${xpProgress})` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Stat Panel (mobile only — Level + Gold + Attributes) ─────────────────────
 
 function StatPanel({
   xp,
@@ -271,17 +337,13 @@ function StatPanel({
 
       {/* Gold */}
       <div className="flex items-center justify-between border-t border-card-border pt-3">
-        <span className="text-xs text-muted-foreground">
-          Gold
-        </span>
+        <span className="text-xs text-muted-foreground">Gold</span>
         <span className="text-sm font-bold text-gold tabular-nums">{gold}</span>
       </div>
 
       {/* Stats */}
       <div className="border-t border-card-border pt-3 flex flex-col gap-2">
-        <span className="text-xs text-muted-foreground mb-0.5">
-          Attributes
-        </span>
+        <span className="text-xs text-muted-foreground mb-0.5">Attributes</span>
         {stats.map(({ stat, base, bonus, total }) => (
           <div key={stat} className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">{stat}</span>
@@ -603,38 +665,59 @@ export default function CharacterPage() {
         </header>
 
         {/* ── Desktop layout ── */}
-        <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] md:gap-6 mb-10">
-          {/* Left slots */}
-          <div className="flex flex-col gap-3">
-            {LEFT_SLOTS.map((slot) => (
-              <SlotButton
-                key={slot}
-                slot={slot}
-                equippedItem={equippedItems[slot]}
-                onClick={() => openSlot(slot)}
-              />
-            ))}
-          </div>
+        <div className="hidden md:block mb-10">
+          {/* 3-column paperdoll grid */}
+          <div className="grid grid-cols-[1fr_minmax(210px,230px)_1fr] gap-6 items-center mb-3">
+            {/* Left: leftHand + legs — vertically centered against center column */}
+            <div className="flex flex-col gap-3">
+              {DESKTOP_LEFT_SLOTS.map((slot) => (
+                <SlotButton
+                  key={slot}
+                  slot={slot}
+                  equippedItem={equippedItems[slot]}
+                  onClick={() => openSlot(slot)}
+                />
+              ))}
+            </div>
 
-          {/* Silhouette */}
-          <div className="flex items-start justify-center pt-1">
-            <div className="w-36 h-56" aria-hidden="true">
-              <CharacterSilhouette equippedItems={equippedItems} />
+            {/* Center: head → silhouette → feet */}
+            <div className="flex flex-col gap-3">
+              <SlotButton
+                slot="head"
+                equippedItem={equippedItems["head"]}
+                onClick={() => openSlot("head")}
+              />
+              <div
+                className="flex items-center justify-center py-2"
+                aria-hidden="true"
+              >
+                <div className="w-36 h-52">
+                  <CharacterSilhouette equippedItems={equippedItems} />
+                </div>
+              </div>
+              <SlotButton
+                slot="feet"
+                equippedItem={equippedItems["feet"]}
+                onClick={() => openSlot("feet")}
+              />
+            </div>
+
+            {/* Right: rightHand + body + attributes panel */}
+            <div className="flex flex-col gap-3">
+              {DESKTOP_RIGHT_SLOTS.map((slot) => (
+                <SlotButton
+                  key={slot}
+                  slot={slot}
+                  equippedItem={equippedItems[slot]}
+                  onClick={() => openSlot(slot)}
+                />
+              ))}
+              <AttributesPanel equippedItems={equippedItems} />
             </div>
           </div>
 
-          {/* Right slots + stat panel */}
-          <div className="flex flex-col gap-3">
-            {RIGHT_SLOTS.map((slot) => (
-              <SlotButton
-                key={slot}
-                slot={slot}
-                equippedItem={equippedItems[slot]}
-                onClick={() => openSlot(slot)}
-              />
-            ))}
-            <StatPanel xp={xp} gold={gold} equippedItems={equippedItems} />
-          </div>
+          {/* Level / XP bar — full width below paperdoll */}
+          <LevelBar xp={xp} />
         </div>
 
         {/* ── Mobile layout ── */}
