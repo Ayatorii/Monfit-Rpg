@@ -1,0 +1,29 @@
+Project: MONFIT RPG — Polish pass: favicon, social share tags, empty states, guest confirmation
+
+## 1. Confirm guest progress does NOT persist (by design)
+Guest mode progress should be fully ephemeral — local to the current session only, no database persistence, and no migration into a wallet if the user later connects. Confirm this is actually the current behavior (it should already be, given guest mode was built as local/in-memory state) — just verify there's no half-built migration logic lying around that could cause confusing partial behavior. No new work needed here beyond this confirmation.
+
+## 2. Favicon
+Set the browser tab favicon using the existing MONFIT RPG logo (the sword + dumbbell + violet emblem PNG already used on the Loading Screen/header). Generate appropriately sized favicon files (standard favicon.ico plus modern PNG sizes like 32x32/192x192 if the build setup supports it) and wire them into the HTML head.
+
+## 3. Social share meta tags (og:title, og:description, og:image, twitter card)
+Add proper meta tags to the HTML head for link previews when shared on social media (relevant for the hackathon's "Most Viral Solution" prize):
+- `<title>` — "MONFIT RPG"
+- `og:title` — "MONFIT RPG"
+- `og:description` — a short, compelling one-liner (e.g. "Turn your workouts into an RPG adventure — earn gold and XP, gear up your character, and battle other players on Monad.")
+- `og:image` — use the logo (ideally a wider promotional image if one exists, otherwise the square logo is fine for now)
+- `twitter:card` — `summary_large_image`
+- Confirm these render correctly by testing with a social media debugger/preview tool if available (e.g. paste the live URL into a Twitter/X card validator or similar), or at minimum confirm the meta tags are present and correctly formed in the page source.
+
+## 4. Empty/first-time states for a fresh wallet
+Audit every screen with a brand-new wallet (0 gold, 0 XP, Level 1, no items, no matches) and confirm each has a clean, intentional empty state rather than a broken/blank look:
+- Train: no Goal selected yet → clear prompt to pick one (already exists, just confirm).
+- Character: no items equipped → paperdoll shows all empty slots correctly, stat panel shows base stats only (10/10/10, no bonuses).
+- Shop: fresh wallet with 0 gold → "Buy & Open" button correctly disabled with clear messaging (not just visually broken/faded).
+- Arena: no items equipped yet → confirm the player can still see the NPC roster and fight with base stats, nothing crashes.
+- Leaderboard: brand new wallet with zero matches → confirm it doesn't show a broken "undefined rank" or crash; either omit the "you're ranked" callout entirely or show something like "Fight in the Arena to get ranked."
+- My Trophies (on Leaderboard): fresh wallet owns no trophies → clean empty state, not a broken/loading-forever section.
+
+Test this specifically with a genuinely fresh test wallet (not the one that's been used throughout development, which already has items/gold/matches) to see the real first-time experience.
+
+Report findings and fix anything broken for section 4. Confirm sections 2 and 3 render correctly (screenshot or describe what you see).

@@ -1,3 +1,15 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark brand background -->
+  <rect width="32" height="32" rx="7" fill="#0E091C"/>
+  <!-- Dumbbell bar — diagonal top-left to bottom-right (dark) -->
+  <line x1="7" y1="7" x2="25" y2="25" stroke="#3A3550" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Dumbbell weights -->
+  <circle cx="6.5" cy="6.5" r="2.8" fill="#2E2A42"/>
+  <circle cx="25.5" cy="25.5" r="2.8" fill="#2E2A42"/>
+  <!-- Sword blade — diagonal bottom-left to top-right (light) -->
+  <line x1="7" y1="25" x2="24" y2="8" stroke="#C8C4E8" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Sword guard — perpendicular cross piece -->
+  <line x1="10.5" y1="23" x2="14.5" y2="27" stroke="#9B8AFB" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Violet diamond — the Monad-inspired center mark -->
+  <rect x="12.4" y="12.4" width="7.2" height="7.2" rx="1.6" fill="#6E54FF" transform="rotate(45 16 16)"/>
 </svg>
