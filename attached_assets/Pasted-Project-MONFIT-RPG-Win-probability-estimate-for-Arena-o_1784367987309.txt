@@ -1,0 +1,23 @@
+Project: MONFIT RPG — Win probability estimate for Arena opponents
+
+On the Arena opponent selection screen, show an estimated win chance percentage for each NPC opponent, calculated from the player's CURRENT stats (base + equipped item bonuses) versus that opponent's stats. This should update dynamically whenever the player's equipped gear changes (revisiting Arena after changing equipment on Character should show updated percentages).
+
+Implementation — Monte Carlo estimate using the EXISTING battle simulation
+Since the battle formula already has randomness (±10-15% damage variance, AGI-based dodge chance), don't try to derive an exact analytical probability formula — instead reuse the existing `simulateBattle` function to run many simulated fights in the background and compute a win rate:
+1. For each opponent card, run the existing `simulateBattle(playerStats, opponentStats)` function a fixed number of times (e.g. 200 runs — enough for a reasonably stable estimate without being slow) using the player's current real stats and that opponent's stats.
+2. Count how many of those simulated runs result in a win (draws can count as a half-win or be excluded from the denominator — pick whichever is simpler and consistent).
+3. Display the resulting percentage on each opponent's card (e.g. "68% Win Chance"), styled consistently with the existing difficulty-tier color convention already used for opponent cards.
+4. This calculation should run client-side (fast, since simulateBattle is a pure deterministic-with-randomness function, no network calls needed) — do NOT call the backend 200 times per opponent, just run the existing pure function locally in a loop.
+5. Recompute whenever the player's effective stats change (e.g. on mount/focus of the Arena screen, or reactively if stats are in shared state) so it reflects current gear, not stale numbers from an earlier visit.
+
+UI details
+- Color-code the percentage for quick readability: e.g. green-ish for high (≥60%), amber/neutral for mid (40-60%), red-ish for low (<40%) — reuse existing token colors that fit this pattern (e.g. rarity or difficulty tier colors) rather than introducing new arbitrary colors.
+- Keep this lightweight and non-blocking — if computing 200 simulations for multiple opponents causes any visible lag, reduce the run count (e.g. to 100) rather than adding a loading spinner for what should be a near-instant calculation.
+
+Verify
+1. With base stats only (no gear), confirm win percentages are shown and look reasonable (harder opponents show lower percentages, easier ones higher).
+2. Equip a strength item on Character, return to Arena, confirm the percentages update to reflect the new stats (higher win chance where relevant).
+3. Confirm the percentage roughly correlates with actual fight outcomes — fight the same opponent multiple times and confirm the win rate you experience is in the right ballpark relative to the displayed percentage (not required to be exact, just plausible).
+4. Run `$impeccable audit` on the updated Arena screen and report the score.
+
+Report actual percentages shown for at least 2-3 opponents before and after an equipment change.

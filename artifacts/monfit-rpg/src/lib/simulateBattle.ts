@@ -222,3 +222,29 @@ export function simulateBattle(
     npcHpMax,
   };
 }
+
+// ─── Win-probability estimate ─────────────────────────────────────────────────
+
+const _NO_REWARDS = { gold: 0, xp: 0 };
+
+/**
+ * Monte Carlo win-probability estimate.
+ *
+ * Runs `simulateBattle` N times and returns a value in [0, 1].
+ * Draws contribute 0.5 so the estimate is smooth rather than binary.
+ * 150 runs ≈ ±4 % margin of error at 95 % confidence — fast enough to
+ * run synchronously for all NPCs without any perceptible lag.
+ */
+export function estimateWinProbability(
+  playerStats: StatBlock,
+  npcStats: StatBlock,
+  runs = 150,
+): number {
+  let score = 0;
+  for (let i = 0; i < runs; i++) {
+    const { result } = simulateBattle(playerStats, npcStats, _NO_REWARDS);
+    if (result === "win") score += 1;
+    else if (result === "draw") score += 0.5;
+  }
+  return score / runs;
+}

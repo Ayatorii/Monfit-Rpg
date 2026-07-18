@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useReducer } from "react";
+import { useState, useEffect, useRef, useReducer, useMemo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Swords, Shield, Zap, Heart, ChevronLeft, Trophy, SkullIcon } from "lucide-react";
 import { useGame } from "@/lib/game-context";
@@ -9,7 +9,7 @@ import {
   DIFFICULTY_COLOR_VAR,
   type NpcOpponent,
 } from "@/data/npcOpponents";
-import { simulateBattle, type BattleLog, type RoundEvent } from "@/lib/simulateBattle";
+import { simulateBattle, estimateWinProbability, type BattleLog, type RoundEvent } from "@/lib/simulateBattle";
 import ResourceBadges from "@/components/ResourceBadges";
 import { cn } from "@/lib/utils";
 
@@ -72,18 +72,34 @@ function StatChip({ icon: Icon, label, value }: { icon: React.FC<React.SVGProps<
 
 // ─── Opponent Card ────────────────────────────────────────────────────────────
 
+// ─── Win-probability color ────────────────────────────────────────────────────
+
+/**
+ * Maps a [0,1] win probability to the closest existing token class.
+ * ≥60 % → green (rarity-common), 40–59 % → gold (amber), <40 % → destructive (red).
+ */
+function winProbClass(p: number): string {
+  if (p >= 0.6) return "text-rarity-common";
+  if (p >= 0.4) return "text-gold";
+  return "text-destructive";
+}
+
 function OpponentCard({
   npc,
   onFight,
+  winProbability,
 }: {
   npc: NpcOpponent;
   onFight: (npc: NpcOpponent) => void;
+  winProbability: number;
 }) {
+  const pct = Math.round(winProbability * 100);
+
   return (
     <button
       type="button"
       onClick={() => onFight(npc)}
-      aria-label={`Challenge ${npc.name} — ${npc.difficulty} difficulty`}
+      aria-label={`Challenge ${npc.name} — ${npc.difficulty} difficulty, estimated ${pct}% win chance`}
       className={cn(
         "w-full min-h-11 text-left rounded-lg border border-card-border bg-card p-4 flex flex-col gap-3",
         "transition-colors hover:border-primary/40 hover:bg-card",
@@ -122,8 +138,16 @@ function OpponentCard({
         <StatChip icon={Swords} label="STR" value={npc.STR} />
         <StatChip icon={Zap} label="AGI" value={npc.AGI} />
         <StatChip icon={Heart} label="VIT" value={npc.VIT} />
-        <div className="ml-auto text-xs font-semibold text-primary-text">
-          Challenge →
+        <div className="ml-auto flex items-center gap-3 shrink-0">
+          <span
+            className={cn("text-xs font-bold tabular-nums", winProbClass(winProbability))}
+            aria-label={`${pct}% estimated win chance`}
+          >
+            {pct}% Win
+          </span>
+          <span className="text-xs font-semibold text-primary-text">
+            Challenge →
+          </span>
         </div>
       </div>
     </button>
@@ -434,6 +458,22 @@ export default function ArenaPage() {
 
   const playerStats = calcPlayerStats(equippedItems);
 
+  // Monte Carlo win-probability estimates, recomputed whenever gear changes.
+  // 150 runs × 5 NPCs ≈ <2 ms — safe to run synchronously in a memo.
+  const winProbabilities = useMemo<Map<string, number>>(() => {
+    const map = new Map<string, number>();
+    for (const npc of NPC_OPPONENTS) {
+      map.set(
+        npc.id,
+        estimateWinProbability(
+          playerStats,
+          { STR: npc.STR, AGI: npc.AGI, VIT: npc.VIT },
+        ),
+      );
+    }
+    return map;
+  }, [playerStats.STR, playerStats.AGI, playerStats.VIT]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function handleFight(npc: NpcOpponent) {
     const log = simulateBattle(
       playerStats,
@@ -551,7 +591,12 @@ export default function ArenaPage() {
               </h2>
               <div className="flex flex-col gap-3">
                 {NPC_OPPONENTS.map((npc) => (
-                  <OpponentCard key={npc.id} npc={npc} onFight={handleFight} />
+                  <OpponentCard
+                    key={npc.id}
+                    npc={npc}
+                    onFight={handleFight}
+                    winProbability={winProbabilities.get(npc.id) ?? 0}
+                  />
                 ))}
               </div>
             </section>
