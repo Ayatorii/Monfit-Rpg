@@ -666,35 +666,74 @@ export default function CharacterPage() {
 
         {/* ── Desktop layout ── */}
         <div className="hidden md:block mb-10">
-          {/* 3-column paperdoll grid */}
-          <div className="grid grid-cols-[1fr_minmax(210px,230px)_1fr] gap-6 items-center mb-3">
-            {/* Left: leftHand + legs — vertically centered against center column */}
-            <div className="flex flex-col gap-3">
-              {DESKTOP_LEFT_SLOTS.map((slot) => (
-                <SlotButton
-                  key={slot}
-                  slot={slot}
-                  equippedItem={equippedItems[slot]}
-                  onClick={() => openSlot(slot)}
-                />
-              ))}
-            </div>
-
-            {/* Center: head → silhouette → feet */}
-            <div className="flex flex-col gap-3">
+          {/*
+            4-row explicit grid for precise cross-column alignment:
+              Row 1: [empty] | head | [empty]
+              Row 2: leftHand | silhouette (spans 2-3) | rightHand   ← same baseline
+              Row 3: legs     | silhouette (continued)  | body        ← same baseline
+              Row 4: [empty]  | feet (self-end)          | attributes (self-end) ← bottoms aligned
+          */}
+          <div
+            className="grid gap-x-6 gap-y-3 mb-3"
+            style={{ gridTemplateColumns: "1fr minmax(210px, 230px) 1fr" }}
+          >
+            {/* Row 1, Col 2 — Head */}
+            <div className="col-start-2 row-start-1">
               <SlotButton
                 slot="head"
                 equippedItem={equippedItems["head"]}
                 onClick={() => openSlot("head")}
               />
-              <div
-                className="flex items-center justify-center py-2"
-                aria-hidden="true"
-              >
-                <div className="w-36 h-52">
-                  <CharacterSilhouette equippedItems={equippedItems} />
-                </div>
+            </div>
+
+            {/* Row 2, Col 1 — Left Hand */}
+            <div className="col-start-1 row-start-2 self-start">
+              <SlotButton
+                slot="leftHand"
+                equippedItem={equippedItems["leftHand"]}
+                onClick={() => openSlot("leftHand")}
+              />
+            </div>
+
+            {/* Rows 2-3, Col 2 — Silhouette (spans both middle rows) */}
+            <div
+              className="col-start-2 row-start-2 row-span-2 flex items-center justify-center"
+              aria-hidden="true"
+            >
+              <div className="w-36 h-52">
+                <CharacterSilhouette equippedItems={equippedItems} />
               </div>
+            </div>
+
+            {/* Row 2, Col 3 — Right Hand (top-aligned with Left Hand) */}
+            <div className="col-start-3 row-start-2 self-start">
+              <SlotButton
+                slot="rightHand"
+                equippedItem={equippedItems["rightHand"]}
+                onClick={() => openSlot("rightHand")}
+              />
+            </div>
+
+            {/* Row 3, Col 1 — Legs */}
+            <div className="col-start-1 row-start-3 self-start">
+              <SlotButton
+                slot="legs"
+                equippedItem={equippedItems["legs"]}
+                onClick={() => openSlot("legs")}
+              />
+            </div>
+
+            {/* Row 3, Col 3 — Body (top-aligned with Legs) */}
+            <div className="col-start-3 row-start-3 self-start">
+              <SlotButton
+                slot="body"
+                equippedItem={equippedItems["body"]}
+                onClick={() => openSlot("body")}
+              />
+            </div>
+
+            {/* Row 4, Col 2 — Feet (bottom-aligned with Attributes) */}
+            <div className="col-start-2 row-start-4 self-end">
               <SlotButton
                 slot="feet"
                 equippedItem={equippedItems["feet"]}
@@ -702,16 +741,8 @@ export default function CharacterPage() {
               />
             </div>
 
-            {/* Right: rightHand + body + attributes panel */}
-            <div className="flex flex-col gap-3">
-              {DESKTOP_RIGHT_SLOTS.map((slot) => (
-                <SlotButton
-                  key={slot}
-                  slot={slot}
-                  equippedItem={equippedItems[slot]}
-                  onClick={() => openSlot(slot)}
-                />
-              ))}
+            {/* Row 4, Col 3 — Attributes (bottom-aligned with Feet) */}
+            <div className="col-start-3 row-start-4 self-end">
               <AttributesPanel equippedItems={equippedItems} />
             </div>
           </div>
