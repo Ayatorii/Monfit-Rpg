@@ -1,6 +1,26 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, playersTable, playerItemsTable } from "@workspace/db";
+
+// Mirrors frontend lootTable.ts DUPLICATE_GOLD values so manual sells and
+// duplicate auto-sells award the same gold for the same rarity.
+const ITEM_SELL_VALUE: Record<string, number> = {
+  // Common — 10 gold
+  "worn-leather-gloves": 10,
+  "training-shorts":     10,
+  "scuffed-runners":     10,
+  "frayed-headband":     10,
+  "cotton-tank":         10,
+  "chalk-dusted-wraps":  10,
+  // Rare — 30 gold
+  "reinforced-gauntlets": 30,
+  "endurance-boots":      30,
+  "compression-sleeve":   30,
+  "tempered-chestplate":  30,
+  // Epic — 100 gold
+  "champions-warhelm":    100,
+  "titan-grip-gauntlets": 100,
+};
 import type { Player, PlayerItem } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -183,6 +203,49 @@ router.patch("/me/items/:instanceId", async (req, res): Promise<void> => {
     .returning();
 
   res.json(toPlayerItem(updated!));
+});
+
+router.delete("/me/items/:instanceId", async (req, res): Promise<void> => {
+  const walletAddress = req.session.walletAddress as string;
+  const raw = Array.isArray(req.params.instanceId) ? req.params.instanceId[0] : req.params.instanceId;
+  const id = Number(raw);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid instanceId" });
+    return;
+  }
+
+  const [item] = await db
+    .select()
+    .from(playerItemsTable)
+    .where(and(eq(playerItemsTable.id, id), eq(playerItemsTable.walletAddress, walletAddress)));
+
+  if (!item) {
+    res.status(404).json({ error: "Item not found" });
+    return;
+  }
+
+  const goldEarned = ITEM_SELL_VALUE[item.itemId] ?? 10;
+
+  await db.delete(playerItemsTable).where(eq(playerItemsTable.id, id));
+
+  const [player] = await db
+    .select()
+    .from(playersTable)
+    .where(eq(playersTable.walletAddress, walletAddress));
+
+  if (!player) {
+    res.status(500).json({ error: "Player not found after item delete" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(playersTable)
+    .set({ gold: player.gold + goldEarned, updatedAt: new Date() })
+    .where(eq(playersTable.walletAddress, walletAddress))
+    .returning();
+
+  res.json({ goldEarned, gold: updated!.gold });
 });
 
 export default router;

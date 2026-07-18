@@ -1,14 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Shield, Hand, Swords, Layers, Footprints, CheckCircle2 } from "lucide-react";
+import { Crown, Shield, Hand, Swords, Layers, Footprints, CheckCircle2, Coins } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useGame, type OwnedItem } from "@/lib/game-context";
-import { SLOT_LABELS, RARITY_LABELS, type Slot, type Rarity } from "@/data/lootTable";
+import { SLOT_LABELS, RARITY_LABELS, DUPLICATE_GOLD, type Slot, type Rarity } from "@/data/lootTable";
 import { BASE_STATS, statBonus } from "@/lib/playerStats";
 import ResourceBadges from "@/components/ResourceBadges";
 import { cn } from "@/lib/utils";
@@ -367,6 +377,7 @@ function ItemPickerDialog({
   equippedItems,
   onEquip,
   onUnequip,
+  onSell,
 }: {
   slot: Slot | null;
   open: boolean;
@@ -375,6 +386,7 @@ function ItemPickerDialog({
   equippedItems: Partial<Record<Slot, OwnedItem>>;
   onEquip: (item: OwnedItem) => void;
   onUnequip: (slot: Slot) => void;
+  onSell: (item: OwnedItem) => void;
 }) {
   if (!slot) return null;
 
@@ -407,64 +419,73 @@ function ItemPickerDialog({
             {slotItems.map((item) => {
               const isEquipped = equipped?.instanceId === item.instanceId;
               return (
-                <button
-                  key={item.instanceId}
-                  type="button"
-                  onClick={() => {
-                    if (isEquipped) {
-                      onUnequip(slot);
-                    } else {
-                      onEquip(item);
-                    }
-                    onOpenChange(false);
-                  }}
-                  aria-pressed={isEquipped}
-                  aria-label={
-                    isEquipped
-                      ? `Unequip ${item.name}`
-                      : `Equip ${item.name}`
-                  }
-                  className={cn(
-                    "w-full min-h-11 flex items-center gap-3 px-5 py-3 text-left transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:z-10 relative",
-                    isEquipped
-                      ? "bg-primary/10 hover:bg-primary/15"
-                      : "hover:bg-muted/40",
-                  )}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: RARITY_COLOR_VAR[item.rarity] }}
-                    aria-hidden="true"
-                  />
-                  <span className="flex-1 text-sm font-medium text-foreground">
-                    {item.name}
-                  </span>
-                  <span
+                <div key={item.instanceId} className="flex items-center gap-2 px-2">
+                  {/* Equip / unequip button — takes up most of the row */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEquipped) {
+                        onUnequip(slot);
+                      } else {
+                        onEquip(item);
+                      }
+                      onOpenChange(false);
+                    }}
+                    aria-pressed={isEquipped}
+                    aria-label={isEquipped ? `Unequip ${item.name}` : `Equip ${item.name}`}
                     className={cn(
-                      "text-xs font-semibold uppercase tracking-wide shrink-0",
-                      RARITY_TEXT_CLASS[item.rarity],
+                      "flex-1 min-h-11 flex items-center gap-3 px-3 py-3 text-left transition-colors rounded-lg",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      isEquipped
+                        ? "bg-primary/10 hover:bg-primary/15"
+                        : "hover:bg-muted/40",
                     )}
                   >
-                    {RARITY_LABELS[item.rarity]}
-                  </span>
-                  <span className="text-xs font-mono text-muted-foreground shrink-0 whitespace-nowrap">
-                    +{item.statValue} {item.statLabel}
-                  </span>
-                  {isEquipped && (
-                    <span className="text-xs font-semibold text-primary-text shrink-0">
-                      Unequip
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: RARITY_COLOR_VAR[item.rarity] }}
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1 text-sm font-medium text-foreground">
+                      {item.name}
                     </span>
-                  )}
-                </button>
+                    <span
+                      className={cn(
+                        "text-xs font-semibold uppercase tracking-wide shrink-0",
+                        RARITY_TEXT_CLASS[item.rarity],
+                      )}
+                    >
+                      {RARITY_LABELS[item.rarity]}
+                    </span>
+                    <span className="text-xs font-mono text-muted-foreground shrink-0 whitespace-nowrap">
+                      +{item.statValue} {item.statLabel}
+                    </span>
+                    {isEquipped && (
+                      <span className="text-xs font-semibold text-primary-text shrink-0">
+                        Unequip
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Sell button — separate action, does not equip/unequip */}
+                  <button
+                    type="button"
+                    onClick={() => onSell(item)}
+                    aria-label={`Sell ${item.name} for ${DUPLICATE_GOLD[item.rarity]} Gold`}
+                    className={cn(
+                      "shrink-0 min-h-11 min-w-[2.75rem] flex items-center justify-center rounded-lg border border-card-border",
+                      "text-xs font-semibold text-muted-foreground transition-colors",
+                      "hover:border-gold/60 hover:text-gold hover:bg-gold/10",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    )}
+                    title={`Sell for ${DUPLICATE_GOLD[item.rarity]} Gold`}
+                  >
+                    <Coins className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
               );
             })}
           </div>
-        )}
-
-        {equipped && slotItems.some((i) => i.instanceId === equipped.instanceId) === false && (
-          /* equipped item is in inventory but its slot-filter already covers it */
-          null
         )}
       </DialogContent>
     </Dialog>
@@ -477,12 +498,29 @@ function InventoryGrid({
   inventory,
   equippedItems,
   onSlotClick,
+  onSell,
 }: {
   inventory: OwnedItem[];
   equippedItems: Partial<Record<Slot, OwnedItem>>;
   onSlotClick: (slot: Slot) => void;
+  onSell: (item: OwnedItem) => void;
 }) {
   const [tooltipId, setTooltipId] = useState<string | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function scheduleClose() {
+    leaveTimer.current = setTimeout(() => setTooltipId(null), 180);
+  }
+
+  function cancelClose() {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+  }
+
+  // Clean up on unmount
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
 
   if (inventory.length === 0) {
     return (
@@ -506,16 +544,17 @@ function InventoryGrid({
         const showTooltip = tooltipId === item.instanceId;
         const SlotIcon = SLOT_ICONS[item.slot];
         const rarityColor = RARITY_COLOR_VAR[item.rarity];
+        const sellValue = DUPLICATE_GOLD[item.rarity];
 
         return (
           <div key={item.instanceId} className="relative" role="listitem">
             <button
               type="button"
               onClick={() => onSlotClick(item.slot)}
-              onMouseEnter={() => setTooltipId(item.instanceId)}
-              onMouseLeave={() => setTooltipId(null)}
+              onMouseEnter={() => { cancelClose(); setTooltipId(item.instanceId); }}
+              onMouseLeave={scheduleClose}
               onFocus={() => setTooltipId(item.instanceId)}
-              onBlur={() => setTooltipId(null)}
+              onBlur={scheduleClose}
               aria-label={`${item.name}${isEquipped ? " (equipped)" : ""} — ${RARITY_LABELS[item.rarity]} ${SLOT_LABELS[item.slot]}, +${item.statValue} ${item.statLabel}. Click to manage.`}
               aria-describedby={slotTooltipId}
               className={cn(
@@ -544,17 +583,19 @@ function InventoryGrid({
               )}
             </button>
 
-            {/* Tooltip — always in DOM for aria-describedby; visually toggled */}
+            {/* Interactive tooltip — stays open while hovered so the sell button is reachable */}
             <div
               id={slotTooltipId}
               role="tooltip"
               aria-hidden={!showTooltip}
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
               className={cn(
                 "absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2",
-                "w-max max-w-[12rem] rounded-lg border border-card-border px-3 py-2",
-                "flex flex-col gap-0.5 pointer-events-none select-none",
+                "w-max max-w-[13rem] rounded-lg border border-card-border px-3 py-2.5",
+                "flex flex-col gap-1 select-none",
                 "transition-opacity duration-150",
-                showTooltip ? "opacity-100" : "opacity-0",
+                showTooltip ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
               )}
               style={{ backgroundColor: "hsl(var(--card))" }}
             >
@@ -575,11 +616,97 @@ function InventoryGrid({
               <span className="text-xs font-mono text-foreground">
                 +{item.statValue} {item.statLabel}
               </span>
+              {/* Sell button inside tooltip */}
+              <button
+                type="button"
+                onClick={() => { setTooltipId(null); onSell(item); }}
+                aria-label={`Sell ${item.name} for ${sellValue} Gold`}
+                className={cn(
+                  "mt-0.5 flex items-center gap-1.5 rounded-md border border-card-border px-2 py-1",
+                  "text-xs font-semibold text-muted-foreground transition-colors w-full",
+                  "hover:border-gold/60 hover:text-gold hover:bg-gold/10",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                )}
+              >
+                <Coins className="h-3 w-3 shrink-0" aria-hidden="true" />
+                Sell for {sellValue} Gold
+              </button>
             </div>
           </div>
         );
       })}
     </div>
+  );
+}
+
+// ─── Sell Confirm Dialog ──────────────────────────────────────────────────────
+
+function SellConfirmDialog({
+  item,
+  isEquipped,
+  isSelling,
+  onConfirm,
+  onCancel,
+}: {
+  item: OwnedItem | null;
+  isEquipped: boolean;
+  isSelling: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const open = item !== null;
+  const sellValue = item ? DUPLICATE_GOLD[item.rarity] : 0;
+
+  return (
+    <AlertDialog open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
+      <AlertDialogContent
+        className="max-w-sm border border-card-border bg-card shadow-none"
+        role="alertdialog"
+        aria-modal="true"
+      >
+        <AlertDialogHeader>
+          <AlertDialogTitle className="font-display font-black text-xl text-foreground">
+            {isEquipped ? "Sell equipped item?" : `Sell for ${sellValue} Gold?`}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-muted-foreground text-pretty">
+            {isEquipped ? (
+              <>
+                <span className="font-semibold text-foreground">{item?.name}</span>
+                {" "}is currently equipped. Selling it will unequip it and remove it from your inventory.{" "}
+                You'll receive{" "}
+                <span className="font-semibold text-gold">{sellValue} Gold</span>.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-foreground">{item?.name}</span>
+                {" "}will be removed from your inventory and you'll receive{" "}
+                <span className="font-semibold text-gold">{sellValue} Gold</span>.
+                This cannot be undone.
+              </>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={onCancel}
+            disabled={isSelling}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={isSelling}
+            className={cn(
+              "bg-gold/20 border border-gold/40 text-gold hover:bg-gold/30 hover:border-gold/60",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            )}
+          >
+            {isSelling ? "Selling…" : `Sell for ${sellValue} Gold`}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -614,11 +741,15 @@ function EquipFeedback({ message }: { message: string | null }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CharacterPage() {
-  const { gold, xp, inventory, equippedItems, equipItem, unequipItem } = useGame();
+  const { gold, xp, inventory, equippedItems, equipItem, unequipItem, sellItem } = useGame();
   const [activeSlot, setActiveSlot] = useState<Slot | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sell state
+  const [pendingSell, setPendingSell] = useState<{ item: OwnedItem; isEquipped: boolean } | null>(null);
+  const [isSelling, setIsSelling] = useState(false);
 
   function openSlot(slot: Slot) {
     setActiveSlot(slot);
@@ -640,6 +771,31 @@ export default function CharacterPage() {
     const item = equippedItems[slot];
     unequipItem(slot);
     showFeedback(item ? `${item.name} unequipped` : "Slot cleared");
+  }
+
+  function handleSellRequest(item: OwnedItem) {
+    const isEquipped = equippedItems[item.slot]?.instanceId === item.instanceId;
+    setPendingSell({ item, isEquipped });
+    // Close the item picker so the confirmation is unambiguous
+    setDialogOpen(false);
+  }
+
+  async function handleSellConfirm() {
+    if (!pendingSell || isSelling) return;
+    setIsSelling(true);
+    try {
+      const goldEarned = await sellItem(pendingSell.item.instanceId);
+      showFeedback(`Sold for ${goldEarned} Gold`);
+      setPendingSell(null);
+    } catch (err) {
+      console.error("Sell failed", err);
+    } finally {
+      setIsSelling(false);
+    }
+  }
+
+  function handleSellCancel() {
+    setPendingSell(null);
   }
 
   return (
@@ -786,6 +942,7 @@ export default function CharacterPage() {
             inventory={inventory}
             equippedItems={equippedItems}
             onSlotClick={openSlot}
+            onSell={handleSellRequest}
           />
         </section>
       </div>
@@ -799,9 +956,19 @@ export default function CharacterPage() {
         equippedItems={equippedItems}
         onEquip={handleEquip}
         onUnequip={handleUnequip}
+        onSell={handleSellRequest}
       />
 
-      {/* Equip feedback */}
+      {/* Sell confirmation */}
+      <SellConfirmDialog
+        item={pendingSell?.item ?? null}
+        isEquipped={pendingSell?.isEquipped ?? false}
+        isSelling={isSelling}
+        onConfirm={handleSellConfirm}
+        onCancel={handleSellCancel}
+      />
+
+      {/* Equip / sell feedback */}
       <EquipFeedback message={feedbackMsg} />
     </>
   );

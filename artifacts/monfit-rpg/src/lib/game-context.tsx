@@ -18,6 +18,7 @@ import {
   updateMyPlayerItem,
   updateMyPlayerGoal,
   recordArenaMatch,
+  sellMyPlayerItem,
 } from "@workspace/api-client-react";
 import type { PlayerItem } from "@workspace/api-client-react";
 
@@ -64,6 +65,8 @@ type GameContextValue = {
   unequipItem: (slot: Slot) => void;
   /** Records a completed arena match in the history. */
   addMatchResult: (record: MatchRecord) => void;
+  /** Sells an inventory item by instanceId. Removes it, unequips if needed, awards gold. Returns gold earned. */
+  sellItem: (instanceId: string) => Promise<number>;
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -287,6 +290,54 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [isAuthenticated],
   );
 
+  const sellItem = useCallback(
+    async (instanceId: string): Promise<number> => {
+      // Find the item before we remove it so we can roll back on failure.
+      const item = inventory.find((i) => i.instanceId === instanceId);
+      if (!item) throw new Error("Item not found in inventory");
+
+      const isEquipped = equippedItems[item.slot]?.instanceId === instanceId;
+
+      // Optimistic: remove from inventory, unequip if needed, add sell-value gold.
+      setInventory((prev) => prev.filter((i) => i.instanceId !== instanceId));
+      if (isEquipped) {
+        setEquippedItems((prev) => {
+          const next = { ...prev };
+          delete next[item.slot];
+          return next;
+        });
+      }
+      // We'll get the real gold value from the server; add it optimistically too.
+      // Use the same values as DUPLICATE_GOLD (10/30/100) — if server disagrees we
+      // won't revert the optimistic add, but the server response updates goldRef.
+      const SELL_VALUE: Record<string, number> = { common: 10, rare: 30, epic: 100 };
+      const optimisticGold = SELL_VALUE[item.rarity] ?? 10;
+      setGold((g) => g + optimisticGold);
+
+      if (isAuthenticated) {
+        try {
+          const result = await sellMyPlayerItem(instanceId);
+          // Reconcile: server is authoritative on final gold balance.
+          setGold(result.gold);
+          goldRef.current = result.gold;
+          return result.goldEarned;
+        } catch (err) {
+          // Roll back optimistic changes on failure.
+          setInventory((prev) => [item, ...prev]);
+          if (isEquipped) {
+            setEquippedItems((prev) => ({ ...prev, [item.slot]: item }));
+          }
+          setGold((g) => g - optimisticGold);
+          throw err;
+        }
+      }
+
+      // Guest mode: no server call, return optimistic value.
+      return optimisticGold;
+    },
+    [isAuthenticated, inventory, equippedItems],
+  );
+
   return (
     <GameContext.Provider
       value={{
@@ -305,6 +356,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         equipItem,
         unequipItem,
         addMatchResult,
+        sellItem,
       }}
     >
       {children}
