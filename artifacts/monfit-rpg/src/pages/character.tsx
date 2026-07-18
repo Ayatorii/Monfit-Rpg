@@ -200,62 +200,108 @@ function SlotButton({
   onClick: () => void;
 }) {
   const Icon = SLOT_ICONS[slot];
-  const rarityColor = equippedItem ? RARITY_COLOR_VAR[equippedItem.rarity] : undefined;
+  const [showTooltip, setShowTooltip] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tooltipId = `slot-tooltip-${slot}`;
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={
-        equippedItem
-          ? `${SLOT_LABELS[slot]}: ${equippedItem.name} equipped — click to change`
-          : `${SLOT_LABELS[slot]}: empty — click to equip`
-      }
-      className={cn(
-        "w-full min-h-11 flex flex-col gap-1 rounded-lg border px-3 py-3 text-left transition-all",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        equippedItem
-          ? "hover:brightness-110"
-          : "bg-card border-card-border hover:border-muted-foreground/40",
-      )}
-      style={equippedItem ? {
-        backgroundColor: `hsl(var(--rarity-${equippedItem.rarity}) / 0.40)`,
-        borderColor: rarityColor,
-      } : undefined}
-    >
-      <div className="flex items-center gap-2">
-        {equippedItem ? (
-          <img
-            src={SLOT_SPRITES[slot]}
-            alt={equippedItem.name}
-            className="h-6 w-6 shrink-0 object-contain"
-          />
-        ) : (
-          <Icon
-            className="h-3.5 w-3.5 shrink-0"
-            aria-hidden="true"
-          />
+  function scheduleClose() {
+    leaveTimer.current = setTimeout(() => setShowTooltip(false), 180);
+  }
+  function cancelClose() {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+  }
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
+
+  // ── Empty slot: unchanged full-width card ──────────────────────────────────
+  if (!equippedItem) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`${SLOT_LABELS[slot]}: empty — click to equip`}
+        className={cn(
+          "w-full min-h-11 flex flex-col gap-1 rounded-lg border px-3 py-3 text-left transition-all",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "bg-card border-card-border hover:border-muted-foreground/40",
         )}
-        <span className={cn(
-          "text-xs font-medium",
-          equippedItem ? "text-white/70" : "text-muted-foreground",
-        )}>
-          {SLOT_LABELS[slot]}
-        </span>
-      </div>
-      {equippedItem ? (
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-white leading-snug line-clamp-1">
-            {equippedItem.name}
-          </span>
-          <span className="text-xs font-semibold uppercase tracking-wide text-white/75">
-            {RARITY_LABELS[equippedItem.rarity]}
+      >
+        <div className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="text-xs font-medium text-muted-foreground">
+            {SLOT_LABELS[slot]}
           </span>
         </div>
-      ) : (
         <span className="text-sm text-muted-foreground/70">+ Add gear</span>
-      )}
-    </button>
+      </button>
+    );
+  }
+
+  // ── Equipped slot: compact square tile + hover/focus tooltip ───────────────
+  // Visual treatment matches InventoryGrid tiles: rarity-bg, border, sprite icon.
+  // Tooltip pattern is identical to InventoryGrid (same state/timer/ARIA approach).
+  const rarityColor = RARITY_COLOR_VAR[equippedItem.rarity];
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onClick}
+        onMouseEnter={() => { cancelClose(); setShowTooltip(true); }}
+        onMouseLeave={scheduleClose}
+        onFocus={() => setShowTooltip(true)}
+        onBlur={scheduleClose}
+        aria-label={`${SLOT_LABELS[slot]}: ${equippedItem.name}, ${RARITY_LABELS[equippedItem.rarity]}, +${equippedItem.statValue} ${equippedItem.statLabel} — click to change`}
+        aria-describedby={tooltipId}
+        className={cn(
+          "aspect-square h-[72px] w-[72px] rounded-lg border-2 flex items-center justify-center transition-all",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "hover:brightness-110",
+        )}
+        style={{
+          borderColor: rarityColor,
+          backgroundColor: `hsl(var(--rarity-${equippedItem.rarity}) / 0.40)`,
+        }}
+      >
+        <img
+          src={SLOT_SPRITES[slot]}
+          alt={equippedItem.name}
+          className="h-10 w-10 shrink-0 object-contain"
+        />
+      </button>
+
+      {/* Tooltip — same pattern as InventoryGrid tooltip */}
+      <div
+        id={tooltipId}
+        role="tooltip"
+        aria-hidden={!showTooltip}
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
+        className={cn(
+          "absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2",
+          "w-max max-w-[13rem] rounded-lg border border-card-border px-3 py-2.5",
+          "flex flex-col gap-1 select-none",
+          "transition-opacity duration-150",
+          showTooltip ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+        )}
+        style={{ backgroundColor: "hsl(var(--card))" }}
+      >
+        <span className="text-xs text-muted-foreground">
+          {SLOT_LABELS[slot]}
+        </span>
+        <span className="text-sm font-semibold text-foreground leading-snug">
+          {equippedItem.name}
+        </span>
+        <span className={cn("text-xs font-semibold uppercase tracking-wide", RARITY_TEXT_CLASS[equippedItem.rarity])}>
+          {RARITY_LABELS[equippedItem.rarity]}
+        </span>
+        <span className="text-xs font-mono text-foreground">
+          +{equippedItem.statValue} {equippedItem.statLabel}
+        </span>
+      </div>
+    </div>
   );
 }
 
