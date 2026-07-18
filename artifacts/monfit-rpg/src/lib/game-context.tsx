@@ -106,18 +106,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
     goldRef.current = gold;
   }, [gold]);
 
-  const hydratedFor = useRef<string | null>(null);
-
-  // Hydrate gold/xp/inventory from the server the first time a wallet signs in.
+  // Central wallet-change handler: reset ALL wallet-specific state immediately
+  // whenever the authenticated wallet address changes (sign-out → null, switch
+  // A → B, or first sign-in after guest). Then fetch fresh data if signed in.
+  //
+  // Keyed to `walletAddress` (derived from the server session user) rather than
+  // the raw wagmi address — so it fires exactly when the server-authoritative
+  // identity changes, not during SIWE in-progress states.
   useEffect(() => {
-    if (!isAuthenticated || !walletAddress) return;
-    if (hydratedFor.current === walletAddress) return;
-    hydratedFor.current = walletAddress;
+    // Always reset to defaults first — clears any previous wallet's data so
+    // nothing leaks across sign-out, guest, or wallet-switch transitions.
+    setGold(0);
+    setXp(0);
+    setInventory([]);
+    setEquippedItems({});
+    setMatchHistory([]);
+    setSelectedGoalState(null);
+    goldRef.current = 0;
 
+    if (!walletAddress) return; // signed out / guest — stay at empty defaults
+
+    // Fetch fresh state for this wallet.
+    let cancelled = false;
     (async () => {
       setIsSyncing(true);
       try {
         const [player, items] = await Promise.all([getMyPlayer(), listMyPlayerItems()]);
+        if (cancelled) return;
+
         setGold(player.gold);
         setXp(player.xp);
         if (player.selectedGoal && VALID_GOALS.has(player.selectedGoal)) {
@@ -134,12 +150,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
         setEquippedItems(equipped);
       } catch (err) {
-        console.error("Failed to hydrate inventory from server", err);
+        console.error("Failed to hydrate game state from server", err);
       } finally {
-        setIsSyncing(false);
+        if (!cancelled) setIsSyncing(false);
       }
     })();
-  }, [isAuthenticated, walletAddress]);
+
+    // If the address changes again while a fetch is in-flight, cancel the
+    // stale response so it doesn't overwrite the newer wallet's state.
+    return () => {
+      cancelled = true;
+    };
+  }, [walletAddress]);
 
   const addGold = useCallback(
     (delta: number) => {
