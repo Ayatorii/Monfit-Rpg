@@ -24,47 +24,6 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
-
-# "Project" starts both services in parallel.
-# - "API Server" — Express backend on port 8080
-# - "Monfit RPG Frontend" — Vite dev server on port 26223 (proxies /api -> localhost:8080)
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "API Server"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Monfit RPG Frontend"
-
-[[workflows.workflow]]
-name = "API Server"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm install && PORT=8080 pnpm --filter @workspace/api-server run dev"
-waitForPort = 8080
-
-[[workflows.workflow]]
-name = "Monfit RPG Frontend"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm install && BASE_PATH=/ PORT=26223 pnpm --filter @workspace/monfit-rpg run dev"
-waitForPort = 26223
 
 [agent]
 stack = "PNPM_WORKSPACE"
